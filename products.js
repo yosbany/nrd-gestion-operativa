@@ -152,6 +152,83 @@ function loadProductsForOrder() {
   });
 }
 
+// Initialize default products
+async function initializeProducts() {
+  const defaultProducts = [
+    'Sándwich Copetín (Blanco/Integral) Jamón y Queso',
+    'Sándwich Copetín (Blanco/Integral) Jamón y Choclo',
+    'Sándwich Copetín (Blanco/Integral) Atún y Tomate',
+    'Sándwich Copetín (Blanco/Integral) Atún y Lechuga',
+    'Sándwich Copetín (Blanco/Integral) Olímpicos',
+    'Sándwich Copetín (Blanco/Integral) Jamón y Huevo Duro',
+    'Sándwich Copetín (Blanco/Integral) Pollo y Jardinera',
+    'Sándwich Copetín (Blanco/Integral) Pollo y Aceitunas',
+    'Sándwich Copetín (Blanco/Integral) Lomito y Manteca',
+    'Sándwich Copetín (Blanco/Integral) Bondiola y Manteca',
+    'Sándwich Copetín (Blanco/Integral) Jamón y Tomate',
+    'Sándwich Copetín (Blanco/Integral) Doble Queso y Manteca',
+    'Sándwich Copetín (Blanco/Integral) Jamón y Palmito',
+    'Sándwich Copetín (Blanco/Integral) Salme y Queso',
+    'Bocaditos de Pizza',
+    'Pebetes de Jamón y Queso',
+    'Empanaditas de Carne',
+    'Empanaditas de Pollo',
+    'Empanaditas de Jamón y Queso',
+    'Medialunitas de Jamón y Queso(Dulce o Salada)',
+    'Medialunitas Dulces o Saladas Comunes',
+    'Bocaditos de Tarta de Jamón y Queso',
+    'Bocaditos de Tarta Pascualina',
+    'Alemanitas',
+    'Pan Tortuga de 65gr',
+    'Pan Miñon Blando',
+    'Pan Miñon Blando con Sesamo',
+    'Pan de Pancho'
+  ];
+
+  if (!confirm(`¿Desea inicializar ${defaultProducts.length} productos? Los productos se crearán con precio $0.00 y podrá editarlos después.`)) {
+    return;
+  }
+
+  try {
+    // Check existing products
+    const snapshot = await getProductsRef().once('value');
+    const existingProducts = snapshot.val() || {};
+    const existingNames = Object.values(existingProducts).map(p => p.name.toLowerCase());
+
+    let added = 0;
+    let skipped = 0;
+
+    for (const productName of defaultProducts) {
+      // Skip if product already exists
+      if (existingNames.includes(productName.toLowerCase())) {
+        skipped++;
+        continue;
+      }
+
+      await createProduct({
+        name: productName,
+        price: 0,
+        active: true
+      });
+      added++;
+    }
+
+    if (added > 0) {
+      alert(`Se agregaron ${added} productos exitosamente.${skipped > 0 ? ` ${skipped} productos ya existían y fueron omitidos.` : ''}`);
+    } else if (skipped > 0) {
+      alert(`Todos los productos ya existen en la base de datos.`);
+    }
+  } catch (error) {
+    alert('Error al inicializar productos: ' + error.message);
+    console.error(error);
+  }
+}
+
+// Initialize products button
+document.getElementById('init-products-btn').addEventListener('click', () => {
+  initializeProducts();
+});
+
 // Escape HTML to prevent XSS
 function escapeHtml(text) {
   const div = document.createElement('div');
