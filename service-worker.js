@@ -1,18 +1,19 @@
 // Service Worker for PWA offline support
 
 const CACHE_NAME = 'nrd-pedidos-v1';
+const BASE_PATH = self.location.pathname.replace('/service-worker.js', '');
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/app.js',
-  '/firebase.js',
-  '/auth.js',
-  '/db.js',
-  '/clients.js',
-  '/products.js',
-  '/orders.js',
-  '/manifest.json',
+  BASE_PATH + '/',
+  BASE_PATH + '/index.html',
+  BASE_PATH + '/styles.css',
+  BASE_PATH + '/app.js',
+  BASE_PATH + '/firebase.js',
+  BASE_PATH + '/auth.js',
+  BASE_PATH + '/db.js',
+  BASE_PATH + '/clients.js',
+  BASE_PATH + '/products.js',
+  BASE_PATH + '/orders.js',
+  BASE_PATH + '/manifest.json',
   'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js',
   'https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js'
@@ -59,7 +60,7 @@ self.addEventListener('fetch', (event) => {
       .catch(() => {
         // If both fail, return offline page for navigation requests
         if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
+          return caches.match(BASE_PATH + '/index.html');
         }
       })
   );
