@@ -7,7 +7,7 @@
   <title>NRD Pedidos</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765717657012">
+  <link rel="stylesheet" href="styles.css?v=1765717657823">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
 </head>
@@ -340,14 +340,14 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765717657012"></script>
-  <script src="modal.js?v=1765717657012"></script>
-  <script src="auth.js?v=1765717657012"></script>
-  <script src="db.js?v=1765717657012"></script>
-  <script src="clients.js?v=1765717657012"></script>
-  <script src="products.js?v=1765717657012"></script>
-  <script src="orders.js?v=1765717657012"></script>
-  <script src="app.js?v=1765717657012"></script>
+  <script src="firebase.js?v=1765717657823"></script>
+  <script src="modal.js?v=1765717657823"></script>
+  <script src="auth.js?v=1765717657823"></script>
+  <script src="db.js?v=1765717657823"></script>
+  <script src="clients.js?v=1765717657823"></script>
+  <script src="products.js?v=1765717657823"></script>
+  <script src="orders.js?v=1765717657823"></script>
+  <script src="app.js?v=1765717657823"></script>
 
   <script>
     // Global error handler
@@ -404,7 +404,7 @@
           });
         }).then(() => {
           // Register new service worker
-          return navigator.serviceWorker.register('service-worker.js?v=1765717657012')
+          return navigator.serviceWorker.register('service-worker.js?v=1765717657823')
             .then(reg => {
               console.log('Service Worker registered');
               // Force update
@@ -418,46 +418,98 @@
     }
 
     // PWA Install prompt
-    let deferredPrompt;
+    let deferredPrompt = null;
     const installBtn = document.getElementById('install-btn');
 
-    // Check if app is already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      // App is installed, hide install button
-      if (installBtn) installBtn.classList.add('hidden');
+    // Debug: Log PWA installability
+    function checkInstallability() {
+      console.log('=== PWA Installability Check ===');
+      console.log('Service Worker:', 'serviceWorker' in navigator ? 'Available' : 'Not available');
+      console.log('Standalone mode:', window.matchMedia('(display-mode: standalone)').matches ? 'Yes (already installed)' : 'No');
+      console.log('Install button element:', installBtn ? 'Found' : 'Not found');
+      console.log('Deferred prompt:', deferredPrompt ? 'Available' : 'Not available');
+      
+      // Check manifest
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(reg => {
+          console.log('Service Worker registered:', reg ? 'Yes' : 'No');
+        });
+      }
     }
 
-    // Listen for beforeinstallprompt event
+    // Check if app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches || 
+        window.navigator.standalone === true) {
+      // App is installed, hide install button
+      if (installBtn) installBtn.classList.add('hidden');
+      console.log('App is already installed');
+    }
+
+    // Listen for beforeinstallprompt event (Chrome, Edge, etc.)
     window.addEventListener('beforeinstallprompt', (e) => {
+      console.log('beforeinstallprompt event fired');
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
       // Stash the event so it can be triggered later
       deferredPrompt = e;
       // Show install button
-      if (installBtn) installBtn.classList.remove('hidden');
+      if (installBtn) {
+        installBtn.classList.remove('hidden');
+        console.log('Install button shown');
+      }
     });
 
     // Handle install button click
     if (installBtn) {
       installBtn.addEventListener('click', async () => {
+        console.log('Install button clicked');
+        
         if (!deferredPrompt) {
           // Show manual install instructions
-          await showInfo('Para instalar la app:\n\nChrome: Menú → "Agregar a pantalla de inicio"\nSafari: Compartir → "Agregar a pantalla de inicio"');
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          const isAndroid = /Android/.test(navigator.userAgent);
+          
+          let message = 'Para instalar la app:\n\n';
+          if (isIOS) {
+            message += '1. Toca el botón "Compartir" (cuadrado con flecha)\n';
+            message += '2. Selecciona "Agregar a pantalla de inicio"\n';
+            message += '3. Confirma la instalación';
+          } else if (isAndroid) {
+            message += '1. Abre el menú del navegador (3 puntos)\n';
+            message += '2. Busca "Instalar app" o "Agregar a pantalla de inicio"\n';
+            message += '3. Confirma la instalación';
+          } else {
+            message += 'Chrome: Menú → "Instalar app"\n';
+            message += 'Safari: Compartir → "Agregar a pantalla de inicio"';
+          }
+          
+          await showInfo(message);
           return;
         }
         
-        // Show the install prompt
-        deferredPrompt.prompt();
-        
-        // Wait for the user to respond to the prompt
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response to the install prompt: ${outcome}`);
-        
-        // Clear the deferredPrompt
-        deferredPrompt = null;
-        
-        // Hide install button
-        installBtn.classList.add('hidden');
+        try {
+          // Show the install prompt
+          deferredPrompt.prompt();
+          
+          // Wait for the user to respond to the prompt
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log(`User response to the install prompt: ${outcome}`);
+          
+          if (outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+          } else {
+            console.log('User dismissed the install prompt');
+          }
+          
+          // Clear the deferredPrompt
+          deferredPrompt = null;
+          
+          // Hide install button
+          installBtn.classList.add('hidden');
+        } catch (error) {
+          console.error('Error showing install prompt:', error);
+          await showError('Error al mostrar la opción de instalación. Intenta desde el menú del navegador.');
+        }
       });
     }
 
@@ -467,6 +519,9 @@
       deferredPrompt = null;
       if (installBtn) installBtn.classList.add('hidden');
     });
+
+    // Run check after page loads
+    setTimeout(checkInstallability, 2000);
   </script>
 </body>
 </html>
