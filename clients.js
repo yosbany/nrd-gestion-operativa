@@ -50,28 +50,36 @@ function showClientForm(clientId = null) {
   const form = document.getElementById('client-form');
   const list = document.getElementById('clients-list');
   const header = document.querySelector('#clients-view .flex.flex-col');
+  const detail = document.getElementById('client-detail');
   const title = document.getElementById('client-form-title');
   const formElement = document.getElementById('client-form-element');
   
-  form.classList.remove('hidden');
+  if (form) form.classList.remove('hidden');
   if (list) list.style.display = 'none';
   if (header) header.style.display = 'none';
+  if (detail) detail.classList.add('hidden');
   
-  formElement.reset();
-  document.getElementById('client-id').value = clientId || '';
+  if (formElement) {
+    formElement.reset();
+    const clientIdInput = document.getElementById('client-id');
+    if (clientIdInput) clientIdInput.value = clientId || '';
+  }
 
   if (clientId) {
-    title.textContent = 'Editar Cliente';
+    if (title) title.textContent = 'Editar Cliente';
     getClient(clientId).then(snapshot => {
       const client = snapshot.val();
       if (client) {
-        document.getElementById('client-name').value = client.name || '';
-        document.getElementById('client-phone').value = client.phone || '';
-        document.getElementById('client-address').value = client.address || '';
+        const nameInput = document.getElementById('client-name');
+        const phoneInput = document.getElementById('client-phone');
+        const addressInput = document.getElementById('client-address');
+        if (nameInput) nameInput.value = client.name || '';
+        if (phoneInput) phoneInput.value = client.phone || '';
+        if (addressInput) addressInput.value = client.address || '';
       }
     });
   } else {
-    title.textContent = 'Nuevo Cliente';
+    if (title) title.textContent = 'Nuevo Cliente';
   }
 }
 
@@ -80,10 +88,12 @@ function hideClientForm() {
   const form = document.getElementById('client-form');
   const list = document.getElementById('clients-list');
   const header = document.querySelector('#clients-view .flex.flex-col');
+  const detail = document.getElementById('client-detail');
   
-  form.classList.add('hidden');
+  if (form) form.classList.add('hidden');
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
+  if (detail) detail.classList.add('hidden');
 }
 
 // Save client
@@ -159,10 +169,12 @@ function backToClients() {
   const list = document.getElementById('clients-list');
   const header = document.querySelector('#clients-view .flex.flex-col');
   const detail = document.getElementById('client-detail');
+  const form = document.getElementById('client-form');
   
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
+  if (form) form.classList.add('hidden');
 }
 
 // Edit client
