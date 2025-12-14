@@ -635,8 +635,29 @@ async function sendWhatsAppMessage() {
       message += `\n${escapeHtml(orderData.notes)}`;
     }
 
-    // Clean phone number (remove spaces, dashes, etc.)
-    const phone = client.phone.replace(/\D/g, '');
+    // Clean and format phone number
+    let phone = client.phone.replace(/\D/g, ''); // Remove all non-digits
+    
+    // Check if phone starts with +598 or 598
+    if (phone.startsWith('598')) {
+      phone = phone.substring(3); // Remove 598 prefix
+    } else if (phone.startsWith('+598')) {
+      phone = phone.substring(4); // Remove +598 prefix
+    }
+    
+    // Remove leading 0 if present
+    if (phone.startsWith('0')) {
+      phone = phone.substring(1);
+    }
+    
+    // Add +598 prefix
+    phone = '598' + phone;
+    
+    // Validate phone number
+    if (!phone || phone.length < 8) {
+      await showError('El número de teléfono no es válido');
+      return;
+    }
     
     // Open WhatsApp
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
