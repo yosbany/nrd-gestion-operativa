@@ -5,6 +5,49 @@ let currentOrderProducts = [];
 let currentOrderClient = null;
 let selectedFilterDate = new Date(); // Default to today
 
+// Predefined orders templates
+const predefinedOrders = {
+  'oferta-5': {
+    name: 'Oferta para 5 personas',
+    items: [
+      { productName: 'Sándwich (Blanco/Integral) Copetín de Jamon, Queso y Mayonesa', quantity: 16 },
+      { productName: 'Sándwiches (Blanco/Integral) Copetín de Atun, Tomate Mayonesa', quantity: 16 },
+      { productName: 'Sándwiches (Blanco/Integral)  Copetín Pollo, Jardinera, Mayonesa (Pollo a la Jardinera)', quantity: 16 },
+      { productName: 'Sándwiches (Blanco/Integral)  Copetín Lomito y Manteca', quantity: 16 },
+      { productName: 'Bocaditos de Pizza', quantity: 10 },
+      { productName: 'Empanaditas de Pollo', quantity: 10 },
+      { productName: 'Medialunitas de J y Q', quantity: 8 },
+      { productName: 'Alemanitas', quantity: 8 }
+    ]
+  },
+  'oferta-10': {
+    name: 'Oferta para 10 personas',
+    items: [
+      { productName: 'Sándwich Copetín (Blanco/Integral) Jamón y Choclo', quantity: 32 },
+      { productName: 'Sándwich Copetín (Blanco/Integral) Olímpicos', quantity: 32 },
+      { productName: 'Sándwich Copetín (Blanco/Integral) Bondiola y Manteca', quantity: 32 },
+      { productName: 'Sándwich Copetín (Blanco/Integral) Jamón y Palmito', quantity: 32 },
+      { productName: 'Bocaditos de Pizza', quantity: 20 },
+      { productName: 'Empanaditas de Carne', quantity: 20 },
+      { productName: 'Bocaditos de Tartas de Jamón y Queso', quantity: 20 },
+      { productName: 'Yoyocitos', quantity: 12 }
+    ]
+  },
+  'oferta-15': {
+    name: 'Oferta para 15 personas',
+    items: [
+      { productName: 'Sándwich (Blanco/Integral) Copetín de Jamon, Queso y Mayonesa', quantity: 48 },
+      { productName: 'Sándwiches (Blanco/Integral) Copetín Atun, Keptup y Mayonesa', quantity: 48 },
+      { productName: 'Sándwiches (Blanco/Integral)  Copetín Huevo, Jamon Mayonesa', quantity: 48 },
+      { productName: 'Sándwiches (Blanco/Integral)  Copetín Lomito y Manteca', quantity: 48 },
+      { productName: 'Bocaditos de Pizza', quantity: 30 },
+      { productName: 'Medialunitas de J y Q', quantity: 24 },
+      { productName: 'Brochetitas Pollo', quantity: 30 },
+      { productName: 'Donitas', quantity: 24 }
+    ]
+  }
+};
+
 // Format date in 24-hour format
 function formatDate24h(date) {
   const day = String(date.getDate()).padStart(2, '0');
@@ -140,6 +183,9 @@ function loadOrders() {
 
 // Show new order form
 async function showNewOrderForm() {
+  // First show modal to select predefined order or start blank
+  const selectedPredefined = await showPredefinedOrdersModal();
+  
   const form = document.getElementById('new-order-form');
   const list = document.getElementById('orders-list');
   const header = document.querySelector('#orders-view .flex.flex-col');
@@ -172,6 +218,11 @@ async function showNewOrderForm() {
   document.getElementById('product-search-input').value = '';
   document.getElementById('product-search-results').classList.add('hidden');
   document.getElementById('order-notes').value = '';
+  
+  // If predefined order selected, load its products
+  if (selectedPredefined && predefinedOrders[selectedPredefined]) {
+    await loadPredefinedOrder(selectedPredefined);
+  }
   
   // Set default delivery date (tomorrow)
   const deliveryDateInput = document.getElementById('order-delivery-date');
@@ -308,6 +359,61 @@ function scrollToSelectedItem(item) {
     resultsDiv.scrollTop = itemTop;
   } else if (itemBottom > containerBottom) {
     resultsDiv.scrollTop = itemBottom - resultsDiv.offsetHeight;
+  }
+}
+
+// Load predefined order
+async function loadPredefinedOrder(orderId) {
+  const predefined = predefinedOrders[orderId];
+  if (!predefined) return;
+  
+  showSpinner('Cargando productos...');
+  try {
+    // Load all products
+    const products = await loadProductsForOrder();
+    const productMap = {};
+    products.forEach(p => {
+      productMap[p.name.toLowerCase()] = p;
+    });
+    
+    // Match predefined items with actual products
+    currentOrderProducts = [];
+    for (const item of predefined.items) {
+      // Try to find product by name (case insensitive, partial match)
+      const productNameLower = item.productName.toLowerCase();
+      let foundProduct = null;
+      
+      // First try exact match
+      if (productMap[productNameLower]) {
+        foundProduct = productMap[productNameLower];
+      } else {
+        // Try partial match
+        for (const [key, product] of Object.entries(productMap)) {
+          if (productNameLower.includes(key) || key.includes(productNameLower)) {
+            foundProduct = product;
+            break;
+          }
+        }
+      }
+      
+      if (foundProduct) {
+        currentOrderProducts.push({
+          productId: foundProduct.id,
+          quantity: item.quantity
+        });
+      } else {
+        console.warn('Product not found:', item.productName);
+      }
+    }
+    
+    // Render products
+    await renderOrderProducts();
+    await updateOrderTotal();
+    hideSpinner();
+  } catch (error) {
+    hideSpinner();
+    console.error('Error loading predefined order:', error);
+    await showError('Error al cargar pedido precargado: ' + error.message);
   }
 }
 
