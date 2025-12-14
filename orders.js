@@ -449,7 +449,7 @@ async function viewOrder(orderId) {
         </div>
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base gap-2">
           <span class="text-gray-600 font-light">Fecha y Hora de Entrega:</span>
-          <input type="datetime-local" id="order-detail-delivery-date" value="${deliveryDateValue}"
+          <input type="datetime-local" id="order-detail-delivery-date" value="${deliveryDateValue}" step="60"
             class="px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm rounded">
         </div>
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base">
