@@ -231,8 +231,13 @@ document.getElementById('client-form-element').addEventListener('submit', async 
       
       // Get the new client ID (if it's a new client, result.key will have the ID)
       let newClientId = clientId;
-      if (!clientId && result && result.key) {
-        newClientId = result.key;
+      if (!clientId && result) {
+        // Firebase push() returns a reference with a key property
+        if (result.key) {
+          newClientId = result.key;
+        } else if (result.getKey && typeof result.getKey === 'function') {
+          newClientId = result.getKey();
+        }
       }
       
       // Switch back to orders view
