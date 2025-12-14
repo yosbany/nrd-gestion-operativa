@@ -69,8 +69,15 @@ function loadOrders() {
       item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors relative';
       item.dataset.orderId = id;
       const date = new Date(order.createdAt);
+      const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
       const status = order.status || 'Pendiente';
       const statusColor = status === 'Completado' ? 'text-green-600' : 'text-red-600';
+      
+      // Format delivery date
+      let deliveryDateStr = 'No especificada';
+      if (deliveryDate) {
+        deliveryDateStr = `${formatDate24h(deliveryDate)} ${formatTime24h(deliveryDate)}`;
+      }
       
       item.innerHTML = `
         ${status === 'Pendiente' ? `
@@ -85,7 +92,8 @@ function loadOrders() {
           <div class="text-base sm:text-lg font-light text-red-600">$${parseFloat(order.total || 0).toFixed(2)}</div>
         </div>
         <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
-          <div>Fecha: ${formatDate24h(date)} ${formatTime24h(date)}</div>
+          <div>Fecha creación: ${formatDate24h(date)} ${formatTime24h(date)}</div>
+          <div>Fecha entrega: ${deliveryDateStr}</div>
           <div>
             <span class="px-2 py-0.5 ${status === 'Completado' ? 'bg-green-600' : 'bg-red-600'} text-white text-xs font-medium uppercase rounded">
               ${status === 'Completado' ? 'COMPLETADO' : 'PENDIENTE'}
@@ -192,10 +200,10 @@ async function showNewOrderForm() {
     searchInput.addEventListener('focus', () => {
       // Small delay to ensure the keyboard animation starts
       setTimeout(() => {
-        // Scroll to the top of the form or to the input itself
-        const form = document.getElementById('new-order-form');
-        if (form) {
-          form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Scroll to the top of the page or header to ensure input is fully visible
+        const header = document.querySelector('header');
+        if (header) {
+          header.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
           // Fallback: scroll to top of page
           window.scrollTo({ top: 0, behavior: 'smooth' });
