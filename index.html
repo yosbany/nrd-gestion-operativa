@@ -7,7 +7,7 @@
   <title>NRD Pedidos</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765713896789">
+  <link rel="stylesheet" href="styles.css?v=1765714086698">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
 </head>
@@ -220,25 +220,59 @@
     </main>
   </div>
 
+  <!-- Custom Modal -->
+  <div id="custom-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-md w-full border border-gray-200 shadow-lg">
+      <div class="p-4 sm:p-6">
+        <h3 id="modal-title" class="text-lg sm:text-xl font-light mb-3 sm:mb-4 text-black"></h3>
+        <p id="modal-message" class="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6"></p>
+        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <button id="modal-confirm" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+            Confirmar
+          </button>
+          <button id="modal-cancel" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Alert -->
+  <div id="custom-alert" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-md w-full border border-gray-200 shadow-lg">
+      <div class="p-4 sm:p-6">
+        <h3 id="alert-title" class="text-lg sm:text-xl font-light mb-3 sm:mb-4 text-black"></h3>
+        <p id="alert-message" class="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6"></p>
+        <div class="flex justify-end">
+          <button id="alert-ok" class="px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+            Aceptar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765713896789"></script>
-  <script src="auth.js?v=1765713896789"></script>
-  <script src="db.js?v=1765713896789"></script>
-  <script src="clients.js?v=1765713896789"></script>
-  <script src="products.js?v=1765713896789"></script>
-  <script src="orders.js?v=1765713896789"></script>
-  <script src="app.js?v=1765713896789"></script>
+  <script src="firebase.js?v=1765714086698"></script>
+  <script src="modal.js"></script>
+  <script src="auth.js?v=1765714086698"></script>
+  <script src="db.js?v=1765714086698"></script>
+  <script src="clients.js?v=1765714086698"></script>
+  <script src="products.js?v=1765714086698"></script>
+  <script src="orders.js?v=1765714086698"></script>
+  <script src="app.js?v=1765714086698"></script>
 
   <script>
     // Register service worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js?v=1765713896789')
+        navigator.serviceWorker.register('service-worker.js?v=1765714086698')
           .then(reg => console.log('Service Worker registered'))
           .catch(err => console.log('Service Worker registration failed'));
       });

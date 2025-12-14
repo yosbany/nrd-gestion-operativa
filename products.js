@@ -122,12 +122,13 @@ function editProduct(productId) {
 
 // Delete product handler
 async function deleteProductHandler(productId) {
-  if (!confirm('¿Está seguro de eliminar este producto?')) return;
+  const confirmed = await showConfirm('Eliminar Producto', '¿Está seguro de eliminar este producto?');
+  if (!confirmed) return;
 
   try {
     await deleteProduct(productId);
   } catch (error) {
-    alert('Error al eliminar producto: ' + error.message);
+    await showError('Error al eliminar producto: ' + error.message);
   }
 }
 
@@ -141,7 +142,7 @@ document.getElementById('product-form-element').addEventListener('submit', async
   const active = document.getElementById('product-active').checked;
 
   if (!name || isNaN(price) || price < 0) {
-    alert('Por favor complete todos los campos correctamente');
+    await showError('Por favor complete todos los campos correctamente');
     return;
   }
 
@@ -149,7 +150,7 @@ document.getElementById('product-form-element').addEventListener('submit', async
     await saveProduct(productId || null, { name, price, active });
     hideProductForm();
   } catch (error) {
-    alert('Error al guardar producto: ' + error.message);
+    await showError('Error al guardar producto: ' + error.message);
   }
 });
 
@@ -206,7 +207,11 @@ async function initializeProducts() {
     'Pan de Pancho'
   ];
 
-  if (!confirm(`¿Desea inicializar ${defaultProducts.length} productos? Los productos se crearán con precio $0.00 y podrá editarlos después.`)) {
+  const confirmed = await showConfirm(
+    'Inicializar Productos',
+    `¿Desea inicializar ${defaultProducts.length} productos? Los productos se crearán con precio $0.00 y podrá editarlos después.`
+  );
+  if (!confirmed) {
     return;
   }
 
@@ -235,12 +240,12 @@ async function initializeProducts() {
     }
 
     if (added > 0) {
-      alert(`Se agregaron ${added} productos exitosamente.${skipped > 0 ? ` ${skipped} productos ya existían y fueron omitidos.` : ''}`);
+      await showSuccess(`Se agregaron ${added} productos exitosamente.${skipped > 0 ? ` ${skipped} productos ya existían y fueron omitidos.` : ''}`);
     } else if (skipped > 0) {
-      alert(`Todos los productos ya existen en la base de datos.`);
+      await showInfo(`Todos los productos ya existen en la base de datos.`);
     }
   } catch (error) {
-    alert('Error al inicializar productos: ' + error.message);
+    await showError('Error al inicializar productos: ' + error.message);
     console.error(error);
   }
 }

@@ -89,7 +89,7 @@ function hideNewOrderForm() {
 async function addProductToOrder() {
   const products = await loadProductsForOrder();
   if (products.length === 0) {
-    alert('No hay productos activos disponibles');
+    await showError('No hay productos activos disponibles');
     return;
   }
 
@@ -175,12 +175,12 @@ async function updateOrderTotal() {
 async function saveOrder() {
   const clientId = document.getElementById('order-client-select').value;
   if (!clientId) {
-    alert('Por favor seleccione un cliente');
+    await showError('Por favor seleccione un cliente');
     return;
   }
 
   if (currentOrderProducts.length === 0) {
-    alert('Por favor agregue al menos un producto');
+    await showError('Por favor agregue al menos un producto');
     return;
   }
 
@@ -189,7 +189,7 @@ async function saveOrder() {
     const clientSnapshot = await getClient(clientId);
     const client = clientSnapshot.val();
     if (!client) {
-      alert('Cliente no encontrado');
+      await showError('Cliente no encontrado');
       return;
     }
 
@@ -224,9 +224,9 @@ async function saveOrder() {
 
     await createOrder(orderData);
     hideNewOrderForm();
-    alert('Pedido guardado exitosamente');
+    await showSuccess('Pedido guardado exitosamente');
   } catch (error) {
-    alert('Error al guardar pedido: ' + error.message);
+    await showError('Error al guardar pedido: ' + error.message);
   }
 }
 
@@ -236,7 +236,7 @@ async function viewOrder(orderId) {
     const snapshot = await getOrder(orderId);
     const order = snapshot.val();
     if (!order) {
-      alert('Pedido no encontrado');
+      await showError('Pedido no encontrado');
       return;
     }
 
@@ -286,7 +286,7 @@ async function viewOrder(orderId) {
     document.getElementById('order-detail').dataset.orderId = orderId;
     document.getElementById('order-detail').dataset.orderData = JSON.stringify(order);
   } catch (error) {
-    alert('Error al cargar pedido: ' + error.message);
+    await showError('Error al cargar pedido: ' + error.message);
   }
 }
 
@@ -298,12 +298,13 @@ function backToOrders() {
 
 // Delete order handler
 async function deleteOrderHandler(orderId) {
-  if (!confirm('¿Está seguro de eliminar este pedido?')) return;
+  const confirmed = await showConfirm('Eliminar Pedido', '¿Está seguro de eliminar este pedido?');
+  if (!confirmed) return;
 
   try {
     await deleteOrder(orderId);
   } catch (error) {
-    alert('Error al eliminar pedido: ' + error.message);
+    await showError('Error al eliminar pedido: ' + error.message);
   }
 }
 
@@ -318,7 +319,7 @@ async function sendWhatsAppMessage() {
     const clientSnapshot = await getClient(orderData.clientId);
     const client = clientSnapshot.val();
     if (!client || !client.phone) {
-      alert('El cliente no tiene teléfono registrado');
+      await showError('El cliente no tiene teléfono registrado');
       return;
     }
 
@@ -338,7 +339,7 @@ async function sendWhatsAppMessage() {
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   } catch (error) {
-    alert('Error al generar mensaje de WhatsApp: ' + error.message);
+    await showError('Error al generar mensaje de WhatsApp: ' + error.message);
   }
 }
 

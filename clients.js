@@ -102,12 +102,13 @@ function editClient(clientId) {
 
 // Delete client handler
 async function deleteClientHandler(clientId) {
-  if (!confirm('¿Está seguro de eliminar este cliente?')) return;
+  const confirmed = await showConfirm('Eliminar Cliente', '¿Está seguro de eliminar este cliente?');
+  if (!confirmed) return;
 
   try {
     await deleteClient(clientId);
   } catch (error) {
-    alert('Error al eliminar cliente: ' + error.message);
+    await showError('Error al eliminar cliente: ' + error.message);
   }
 }
 
@@ -121,7 +122,7 @@ document.getElementById('client-form-element').addEventListener('submit', async 
   const address = document.getElementById('client-address').value.trim();
 
   if (!name || !phone) {
-    alert('Por favor complete todos los campos requeridos');
+    await showError('Por favor complete todos los campos requeridos');
     return;
   }
 
@@ -129,7 +130,7 @@ document.getElementById('client-form-element').addEventListener('submit', async 
     await saveClient(clientId || null, { name, phone, address });
     hideClientForm();
   } catch (error) {
-    alert('Error al guardar cliente: ' + error.message);
+    await showError('Error al guardar cliente: ' + error.message);
   }
 });
 
