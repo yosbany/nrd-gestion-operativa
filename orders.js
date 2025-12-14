@@ -86,8 +86,7 @@ function loadOrders() {
         </div>
         <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
           <div>Fecha: ${formatDate24h(date)} ${formatTime24h(date)}</div>
-          <div class="flex items-center gap-2">
-            <span>Estado:</span>
+          <div>
             <span class="px-2 py-0.5 ${status === 'Completado' ? 'bg-green-600' : 'bg-red-600'} text-white text-xs font-medium uppercase rounded">
               ${status === 'Completado' ? 'COMPLETADO' : 'PENDIENTE'}
             </span>
