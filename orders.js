@@ -3,7 +3,7 @@
 let ordersListener = null;
 let currentOrderProducts = [];
 let currentOrderClient = null;
-let selectedFilterDate = null; // null = all dates, Date object = specific date
+let selectedFilterDate = new Date(); // Default to today
 
 // Format date in 24-hour format
 function formatDate24h(date) {
@@ -1276,10 +1276,27 @@ function updateDateFilterDisplay() {
   if (!display) return;
   
   if (selectedFilterDate) {
-    display.textContent = formatDate24h(selectedFilterDate);
+    // Check if it's today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const filterDate = new Date(selectedFilterDate);
+    filterDate.setHours(0, 0, 0, 0);
+    
+    if (filterDate.getTime() === today.getTime()) {
+      display.textContent = 'Hoy';
+    } else {
+      display.textContent = formatDate24h(selectedFilterDate);
+    }
   } else {
     display.textContent = 'Todas las fechas';
   }
+}
+
+function setToday() {
+  selectedFilterDate = new Date();
+  selectedFilterDate.setHours(0, 0, 0, 0);
+  updateDateFilterDisplay();
+  loadOrders();
 }
 
 function setFilterDate(date) {
@@ -1292,10 +1309,12 @@ function prevDate() {
   if (!selectedFilterDate) {
     // If no filter, start with today
     selectedFilterDate = new Date();
+    selectedFilterDate.setHours(0, 0, 0, 0);
   } else {
     // Go to previous day
     const prev = new Date(selectedFilterDate);
     prev.setDate(prev.getDate() - 1);
+    prev.setHours(0, 0, 0, 0);
     selectedFilterDate = prev;
   }
   updateDateFilterDisplay();
@@ -1306,10 +1325,12 @@ function nextDate() {
   if (!selectedFilterDate) {
     // If no filter, start with today
     selectedFilterDate = new Date();
+    selectedFilterDate.setHours(0, 0, 0, 0);
   } else {
     // Go to next day
     const next = new Date(selectedFilterDate);
     next.setDate(next.getDate() + 1);
+    next.setHours(0, 0, 0, 0);
     selectedFilterDate = next;
   }
   updateDateFilterDisplay();
@@ -1322,6 +1343,16 @@ function clearDateFilter() {
   loadOrders();
 }
 
+// Initialize date filter display on load
+document.addEventListener('DOMContentLoaded', () => {
+  // Set default to today
+  if (selectedFilterDate) {
+    selectedFilterDate.setHours(0, 0, 0, 0);
+    updateDateFilterDisplay();
+  }
+});
+
+document.getElementById('today-date-btn').addEventListener('click', setToday);
 document.getElementById('prev-date-btn').addEventListener('click', prevDate);
 document.getElementById('next-date-btn').addEventListener('click', nextDate);
 document.getElementById('clear-date-filter-btn').addEventListener('click', clearDateFilter);
