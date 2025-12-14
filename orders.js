@@ -1297,7 +1297,7 @@ function updateDateFilterDisplay() {
       display.textContent = formatDate24h(selectedFilterDate);
     }
   } else {
-    display.textContent = 'Todas las fechas';
+    display.textContent = 'Todas';
   }
 }
 
