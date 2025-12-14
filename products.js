@@ -78,10 +78,15 @@ function loadProducts() {
 // Show product form
 function showProductForm(productId = null) {
   const form = document.getElementById('product-form');
+  const list = document.getElementById('products-list');
+  const header = document.querySelector('#products-view .flex.flex-col');
   const title = document.getElementById('product-form-title');
   const formElement = document.getElementById('product-form-element');
   
   form.classList.remove('hidden');
+  if (list) list.style.display = 'none';
+  if (header) header.style.display = 'none';
+  
   formElement.reset();
   document.getElementById('product-id').value = productId || '';
 
@@ -103,7 +108,13 @@ function showProductForm(productId = null) {
 
 // Hide product form
 function hideProductForm() {
-  document.getElementById('product-form').classList.add('hidden');
+  const form = document.getElementById('product-form');
+  const list = document.getElementById('products-list');
+  const header = document.querySelector('#products-view .flex.flex-col');
+  
+  form.classList.add('hidden');
+  if (list) list.style.display = 'block';
+  if (header) header.style.display = 'flex';
 }
 
 // Save product
@@ -161,6 +172,11 @@ document.getElementById('new-product-btn').addEventListener('click', () => {
 
 // Cancel product form
 document.getElementById('cancel-product-btn').addEventListener('click', () => {
+  hideProductForm();
+});
+
+// Close product form button
+document.getElementById('close-product-form').addEventListener('click', () => {
   hideProductForm();
 });
 

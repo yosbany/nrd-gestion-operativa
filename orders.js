@@ -71,7 +71,13 @@ function loadOrders() {
 // Show new order form
 function showNewOrderForm() {
   const form = document.getElementById('new-order-form');
+  const list = document.getElementById('orders-list');
+  const header = document.querySelector('#orders-view .flex.flex-col');
+  
   form.classList.remove('hidden');
+  if (list) list.style.display = 'none';
+  if (header) header.style.display = 'none';
+  
   currentOrderProducts = [];
   currentOrderClient = null;
   document.getElementById('order-client-select').value = '';
@@ -82,7 +88,13 @@ function showNewOrderForm() {
 
 // Hide new order form
 function hideNewOrderForm() {
-  document.getElementById('new-order-form').classList.add('hidden');
+  const form = document.getElementById('new-order-form');
+  const list = document.getElementById('orders-list');
+  const header = document.querySelector('#orders-view .flex.flex-col');
+  
+  form.classList.add('hidden');
+  if (list) list.style.display = 'block';
+  if (header) header.style.display = 'flex';
 }
 
 // Add product to order
@@ -135,20 +147,23 @@ async function renderOrderProducts() {
     if (!product) return;
 
     const div = document.createElement('div');
-    div.className = 'flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center py-3 sm:py-4 border-b border-gray-200 mb-2 sm:mb-3';
+    div.className = 'flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center py-2 sm:py-3 border border-gray-200 rounded p-2 sm:p-3 bg-gray-50';
     const productTotal = (product.price * item.quantity).toFixed(2);
     
     div.innerHTML = `
       <select onchange="updateOrderProduct(${index}, 'productId', this.value)" required 
-        class="flex-1 sm:flex-2 px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+        class="flex-1 sm:flex-2 px-2 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm sm:text-base rounded">
         ${products.map(p => 
           `<option value="${p.id}" ${p.id === item.productId ? 'selected' : ''}>${escapeHtml(p.name)} - $${parseFloat(p.price).toFixed(2)}</option>`
         ).join('')}
       </select>
-      <input type="number" min="1" value="${item.quantity}" onchange="updateOrderProduct(${index}, 'quantity', this.value)" required 
-        class="flex-1 sm:flex-none sm:max-w-20 px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-center text-sm sm:text-base">
-      <div class="flex-1 text-left sm:text-right font-light text-sm sm:text-base text-black">$${productTotal}</div>
-      <button type="button" class="self-start sm:self-auto px-2 sm:px-2 py-1.5 sm:py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors text-lg sm:text-xl font-light remove-product" onclick="removeProductFromOrder(${index})">×</button>
+      <div class="flex items-center gap-2">
+        <label class="text-xs text-gray-600 sm:hidden">Cant:</label>
+        <input type="number" min="1" value="${item.quantity}" onchange="updateOrderProduct(${index}, 'quantity', this.value)" required 
+          class="flex-1 sm:flex-none sm:max-w-20 px-2 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-center text-sm sm:text-base rounded">
+      </div>
+      <div class="flex-1 text-left sm:text-right font-light text-sm sm:text-base text-red-600 font-medium">$${productTotal}</div>
+      <button type="button" class="self-start sm:self-auto px-3 py-1.5 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors text-base sm:text-lg font-light rounded remove-product" onclick="removeProductFromOrder(${index})">×</button>
     `;
     container.appendChild(div);
   });
@@ -240,8 +255,13 @@ async function viewOrder(orderId) {
       return;
     }
 
-    document.getElementById('orders-list').style.display = 'none';
-    document.getElementById('new-order-form').classList.add('hidden');
+    const list = document.getElementById('orders-list');
+    const header = document.querySelector('#orders-view .flex.flex-col');
+    const form = document.getElementById('new-order-form');
+    
+    if (list) list.style.display = 'none';
+    if (header) header.style.display = 'none';
+    if (form) form.classList.add('hidden');
     document.getElementById('order-detail').classList.remove('hidden');
 
     const date = new Date(order.createdAt);
@@ -292,8 +312,13 @@ async function viewOrder(orderId) {
 
 // Back to orders list
 function backToOrders() {
-  document.getElementById('orders-list').style.display = 'block';
-  document.getElementById('order-detail').classList.add('hidden');
+  const list = document.getElementById('orders-list');
+  const header = document.querySelector('#orders-view .flex.flex-col');
+  const detail = document.getElementById('order-detail');
+  
+  if (list) list.style.display = 'block';
+  if (header) header.style.display = 'flex';
+  if (detail) detail.classList.add('hidden');
 }
 
 // Delete order handler
@@ -354,6 +379,7 @@ document.getElementById('cancel-order-btn').addEventListener('click', hideNewOrd
 document.getElementById('save-order-btn').addEventListener('click', saveOrder);
 document.getElementById('add-product-to-order').addEventListener('click', addProductToOrder);
 document.getElementById('back-to-orders').addEventListener('click', backToOrders);
+document.getElementById('close-order-form').addEventListener('click', hideNewOrderForm);
 document.getElementById('whatsapp-order-btn').addEventListener('click', sendWhatsAppMessage);
 document.getElementById('print-order-btn').addEventListener('click', printOrder);
 

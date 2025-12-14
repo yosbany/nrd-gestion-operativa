@@ -59,10 +59,15 @@ function loadClients() {
 // Show client form
 function showClientForm(clientId = null) {
   const form = document.getElementById('client-form');
+  const list = document.getElementById('clients-list');
+  const header = document.querySelector('#clients-view .flex.flex-col');
   const title = document.getElementById('client-form-title');
   const formElement = document.getElementById('client-form-element');
   
   form.classList.remove('hidden');
+  if (list) list.style.display = 'none';
+  if (header) header.style.display = 'none';
+  
   formElement.reset();
   document.getElementById('client-id').value = clientId || '';
 
@@ -83,7 +88,13 @@ function showClientForm(clientId = null) {
 
 // Hide client form
 function hideClientForm() {
-  document.getElementById('client-form').classList.add('hidden');
+  const form = document.getElementById('client-form');
+  const list = document.getElementById('clients-list');
+  const header = document.querySelector('#clients-view .flex.flex-col');
+  
+  form.classList.add('hidden');
+  if (list) list.style.display = 'block';
+  if (header) header.style.display = 'flex';
 }
 
 // Save client
@@ -141,6 +152,11 @@ document.getElementById('new-client-btn').addEventListener('click', () => {
 
 // Cancel client form
 document.getElementById('cancel-client-btn').addEventListener('click', () => {
+  hideClientForm();
+});
+
+// Close client form button
+document.getElementById('close-client-form').addEventListener('click', () => {
   hideClientForm();
 });
 
