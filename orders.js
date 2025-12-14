@@ -51,22 +51,54 @@ function loadOrders() {
     });
 
     sortedOrders.forEach(([id, order]) => {
+      // Check if delivery date has passed and update status automatically
+      const currentStatus = order.status || 'Pendiente';
+      if (currentStatus === 'Pendiente' && order.deliveryDate) {
+        const deliveryDate = new Date(order.deliveryDate);
+        const now = new Date();
+        if (deliveryDate < now) {
+          // Update status to Completado (async, don't wait)
+          updateOrder(id, { status: 'Completado' }).catch(error => {
+            console.error('Error updating order status:', error);
+          });
+          order.status = 'Completado';
+        }
+      }
+
       const item = document.createElement('div');
-      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
+      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors';
       item.dataset.orderId = id;
       const date = new Date(order.createdAt);
+      const status = order.status || 'Pendiente';
+      const statusColor = status === 'Completado' ? 'text-green-600' : 'text-red-600';
+      
       item.innerHTML = `
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
           <div class="text-base sm:text-lg font-light">${escapeHtml(order.clientName || 'Cliente desconocido')}</div>
           <div class="text-base sm:text-lg font-light text-red-600">$${parseFloat(order.total || 0).toFixed(2)}</div>
         </div>
-        <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
+        <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1 mb-2">
           <div>Fecha: ${formatDate24h(date)} ${formatTime24h(date)}</div>
-          <div>Estado: ${escapeHtml(order.status || 'Pendiente')}</div>
+          <div class="flex items-center gap-2">
+            <span>Estado: <span class="${statusColor} font-medium">${escapeHtml(status)}</span></span>
+            <button class="toggle-status-btn ml-2 px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors rounded" 
+                    data-order-id="${id}" 
+                    data-current-status="${status}"
+                    onclick="event.stopPropagation(); toggleOrderStatus('${id}', '${status}')">
+              ${status === 'Pendiente' ? 'Marcar Completado' : 'Marcar Pendiente'}
+            </button>
+          </div>
           <div>Productos: ${order.items ? order.items.length : 0}</div>
         </div>
       `;
-      item.addEventListener('click', () => viewOrder(id));
+      
+      // Make the card clickable (except for the status button)
+      item.addEventListener('click', (e) => {
+        if (!e.target.closest('.toggle-status-btn')) {
+          viewOrder(id);
+        }
+      });
+      
       ordersList.appendChild(item);
     });
   });
@@ -81,6 +113,21 @@ async function showNewOrderForm() {
   form.classList.remove('hidden');
   if (list) list.style.display = 'none';
   if (header) header.style.display = 'none';
+  
+  // Clear editing state
+  delete form.dataset.editingOrderId;
+  
+  // Reset form title
+  const formTitle = document.querySelector('#new-order-form h3');
+  if (formTitle) {
+    formTitle.textContent = 'Nuevo Pedido';
+  }
+  
+  // Reset save button text
+  const saveBtn = document.getElementById('save-order-btn');
+  if (saveBtn) {
+    saveBtn.textContent = 'Guardar';
+  }
   
   currentOrderProducts = [];
   currentOrderClient = null;
@@ -337,6 +384,9 @@ async function updateOrderTotal() {
 
 // Save order
 async function saveOrder() {
+  const form = document.getElementById('new-order-form');
+  const isEditing = form.dataset.editingOrderId;
+  
   const clientId = document.getElementById('order-client-select').value;
   if (!clientId) {
     await showError('Por favor seleccione un cliente');
@@ -393,23 +443,48 @@ async function saveOrder() {
       deliveryDate = new Date(dateTimeString).getTime();
     }
 
-    // Create order
-    const orderData = {
-      clientId,
-      clientName: client.name,
-      createdAt: Date.now(),
-      status: 'Pendiente',
-      items,
-      total,
-      notes: notes || null,
-      deliveryDate: deliveryDate
-    };
+    if (isEditing) {
+      // Update existing order
+      const orderId = isEditing;
+      // Get existing order to preserve createdAt
+      const existingOrderSnapshot = await getOrder(orderId);
+      const existingOrder = existingOrderSnapshot.val();
+      
+      const orderData = {
+        clientId,
+        clientName: client.name,
+        createdAt: existingOrder.createdAt, // Preserve original creation date
+        status: existingOrder.status || 'Pendiente', // Preserve status
+        items,
+        total,
+        notes: notes || null,
+        deliveryDate: deliveryDate
+      };
 
-    showSpinner('Guardando pedido...');
-    await createOrder(orderData);
-    hideSpinner();
-    hideNewOrderForm();
-    await showSuccess('Pedido guardado exitosamente');
+      showSpinner('Actualizando pedido...');
+      await updateOrder(orderId, orderData);
+      hideSpinner();
+      hideNewOrderForm();
+      await showSuccess('Pedido actualizado exitosamente');
+    } else {
+      // Create new order
+      const orderData = {
+        clientId,
+        clientName: client.name,
+        createdAt: Date.now(),
+        status: 'Pendiente',
+        items,
+        total,
+        notes: notes || null,
+        deliveryDate: deliveryDate
+      };
+
+      showSpinner('Guardando pedido...');
+      await createOrder(orderData);
+      hideSpinner();
+      hideNewOrderForm();
+      await showSuccess('Pedido guardado exitosamente');
+    }
   } catch (error) {
     hideSpinner();
     await showError('Error al guardar pedido: ' + error.message);
@@ -474,7 +549,7 @@ async function viewOrder(orderId) {
         </div>
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base">
           <span class="text-gray-600 font-light">Estado:</span>
-          <span class="font-light">${escapeHtml(order.status)}</span>
+          <span class="font-light ${statusColor} font-medium">${escapeHtml(status)}</span>
         </div>
       </div>
       <div class="mt-4 sm:mt-6">
@@ -497,6 +572,16 @@ async function viewOrder(orderId) {
     document.getElementById('order-detail').dataset.orderId = orderId;
     document.getElementById('order-detail').dataset.orderData = JSON.stringify(order);
     
+    // Show/hide edit button based on status
+    const editBtn = document.getElementById('edit-order-btn');
+    if (editBtn) {
+      if (canEdit) {
+        editBtn.classList.remove('hidden');
+        editBtn.onclick = () => editOrder(orderId, order);
+      } else {
+        editBtn.classList.add('hidden');
+      }
+    }
     
     // Attach delete button handler
     const deleteBtn = document.getElementById('delete-order-detail-btn');
@@ -518,6 +603,83 @@ function backToOrders() {
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
+}
+
+// Toggle order status (Pendiente/Completado)
+async function toggleOrderStatus(orderId, currentStatus) {
+  const newStatus = currentStatus === 'Pendiente' ? 'Completado' : 'Pendiente';
+  
+  showSpinner('Actualizando estado...');
+  try {
+    await updateOrder(orderId, { status: newStatus });
+    hideSpinner();
+    await showSuccess(`Estado actualizado a ${newStatus}`);
+    // Reload orders to reflect the change
+    loadOrders();
+  } catch (error) {
+    hideSpinner();
+    await showError('Error al actualizar estado: ' + error.message);
+  }
+}
+
+// Edit order
+async function editOrder(orderId, order) {
+  // Hide detail view and show form
+  document.getElementById('order-detail').classList.add('hidden');
+  
+  const form = document.getElementById('new-order-form');
+  const list = document.getElementById('orders-list');
+  const header = document.querySelector('#orders-view .flex.flex-col');
+  
+  form.classList.remove('hidden');
+  if (list) list.style.display = 'none';
+  if (header) header.style.display = 'none';
+  
+  // Set form title to indicate editing
+  const formTitle = document.querySelector('#new-order-form h3');
+  if (formTitle) {
+    formTitle.textContent = 'Editar Pedido';
+  }
+  
+  // Store order ID for update
+  form.dataset.editingOrderId = orderId;
+  
+  // Load client
+  document.getElementById('order-client-select').value = order.clientId;
+  currentOrderClient = order.clientId;
+  
+  // Load products
+  currentOrderProducts = order.items.map(item => ({
+    productId: item.productId,
+    quantity: item.quantity
+  }));
+  await renderOrderProducts();
+  await updateOrderTotal();
+  
+  // Load notes
+  document.getElementById('order-notes').value = order.notes || '';
+  
+  // Load delivery date and time
+  const deliveryDateInput = document.getElementById('order-delivery-date');
+  const deliveryTimeInput = document.getElementById('order-delivery-time');
+  
+  if (order.deliveryDate && deliveryDateInput && deliveryTimeInput) {
+    const deliveryDate = new Date(order.deliveryDate);
+    const year = deliveryDate.getFullYear();
+    const month = String(deliveryDate.getMonth() + 1).padStart(2, '0');
+    const day = String(deliveryDate.getDate()).padStart(2, '0');
+    const hours = String(deliveryDate.getHours()).padStart(2, '0');
+    const minutes = String(deliveryDate.getMinutes()).padStart(2, '0');
+    
+    deliveryDateInput.value = `${year}-${month}-${day}`;
+    deliveryTimeInput.value = `${hours}:${minutes}`;
+  }
+  
+  // Change save button text
+  const saveBtn = document.getElementById('save-order-btn');
+  if (saveBtn) {
+    saveBtn.textContent = 'Actualizar Pedido';
+  }
 }
 
 // Delete order handler
@@ -937,6 +1099,7 @@ document.getElementById('report-orders-btn').addEventListener('click', generateP
 // Make functions available globally for inline handlers
 window.updateOrderProduct = updateOrderProduct;
 window.removeProductFromOrder = removeProductFromOrder;
+window.toggleOrderStatus = toggleOrderStatus;
 
 // Escape HTML to prevent XSS
 function escapeHtml(text) {
