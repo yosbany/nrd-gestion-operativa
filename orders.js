@@ -421,6 +421,7 @@ async function deleteOrderHandler(orderId) {
 
   try {
     await deleteOrder(orderId);
+    backToOrders();
   } catch (error) {
     await showError('Error al eliminar pedido: ' + error.message);
   }
