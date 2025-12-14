@@ -553,20 +553,37 @@ async function sendWhatsAppMessage() {
     }
 
     // Build message
-    let message = `*Pedido - ${escapeHtml(orderData.clientName)}*\n\n`;
-    message += `*Productos:*\n`;
-    orderData.items.forEach(item => {
-      message += `• ${escapeHtml(item.productName)} - ${item.quantity} x $${parseFloat(item.price).toFixed(2)} = $${(item.price * item.quantity).toFixed(2)}\n`;
-    });
-    if (orderData.notes) {
-      message += `\n*Observaciones:*\n${escapeHtml(orderData.notes)}\n`;
-    }
+    // Format delivery date with day of week
+    let deliveryDateStr = 'No especificada';
     if (orderData.deliveryDate) {
       const deliveryDate = new Date(orderData.deliveryDate);
-      message += `\n*Fecha de Entrega:*\n${deliveryDate.toLocaleDateString()} ${deliveryDate.toLocaleTimeString()}\n`;
+      const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const dayName = daysOfWeek[deliveryDate.getDay()];
+      const dateStr = deliveryDate.toLocaleDateString('es-ES', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      });
+      const timeStr = deliveryDate.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+      deliveryDateStr = `${dayName} ${dateStr} ${timeStr}`;
     }
-    message += `\n*Total: $${parseFloat(orderData.total).toFixed(2)}*\n`;
-    message += `\nFecha de Creación: ${new Date(orderData.createdAt).toLocaleString()}`;
+    
+    // Build message with new format
+    let message = `Pedido para: ${escapeHtml(orderData.clientName)}\n`;
+    message += `Fecha entrega: ${deliveryDateStr}\n`;
+    
+    // Add products
+    orderData.items.forEach(item => {
+      message += `• ${item.quantity} ${escapeHtml(item.productName)}\n`;
+    });
+    
+    // Add observations if they exist
+    if (orderData.notes && orderData.notes.trim()) {
+      message += `\n${escapeHtml(orderData.notes)}`;
+    }
 
     // Clean phone number (remove spaces, dashes, etc.)
     const phone = client.phone.replace(/\D/g, '');
