@@ -440,17 +440,10 @@ async function viewOrder(orderId) {
     const date = new Date(order.createdAt);
     const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
     
-    // Format delivery date and time for inputs
-    let deliveryDateValue = '';
-    let deliveryTimeValue = '12:00';
+    // Format delivery date and time for display
+    let deliveryDateStr = 'No especificada';
     if (deliveryDate) {
-      const year = deliveryDate.getFullYear();
-      const month = String(deliveryDate.getMonth() + 1).padStart(2, '0');
-      const day = String(deliveryDate.getDate()).padStart(2, '0');
-      const hours = String(deliveryDate.getHours()).padStart(2, '0');
-      const minutes = String(deliveryDate.getMinutes()).padStart(2, '0');
-      deliveryDateValue = `${year}-${month}-${day}`;
-      deliveryTimeValue = `${hours}:${minutes}`;
+      deliveryDateStr = `${formatDate24h(deliveryDate)} ${formatTime24h(deliveryDate)}`;
     }
     
     const itemsHtml = order.items.map(item => `
@@ -475,17 +468,9 @@ async function viewOrder(orderId) {
           <span class="text-gray-600 font-light">Fecha de Creación:</span>
           <span class="font-light">${formatDate24h(date)} ${formatTime24h(date)}</span>
         </div>
-        <div class="flex flex-col py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base gap-2">
-          <div class="flex justify-between items-center">
-            <span class="text-gray-600 font-light">Fecha de Entrega:</span>
-            <input type="date" id="order-detail-delivery-date" value="${deliveryDateValue}"
-              class="px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm rounded">
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-600 font-light">Hora de Entrega:</span>
-            <input type="time" id="order-detail-delivery-time" value="${deliveryTimeValue}" step="60"
-              class="px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm rounded">
-          </div>
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base">
+          <span class="text-gray-600 font-light">Fecha de Entrega:</span>
+          <span class="font-light">${deliveryDateStr}</span>
         </div>
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base">
           <span class="text-gray-600 font-light">Estado:</span>
@@ -512,40 +497,6 @@ async function viewOrder(orderId) {
     document.getElementById('order-detail').dataset.orderId = orderId;
     document.getElementById('order-detail').dataset.orderData = JSON.stringify(order);
     
-    // Attach delivery date and time change handlers
-    const deliveryDateInput = document.getElementById('order-detail-delivery-date');
-    const deliveryTimeInput = document.getElementById('order-detail-delivery-time');
-    
-    const updateDeliveryDateTime = async () => {
-      const dateValue = deliveryDateInput ? deliveryDateInput.value : '';
-      const timeValue = deliveryTimeInput ? deliveryTimeInput.value : '12:00';
-      
-      let newDeliveryDate = null;
-      if (dateValue) {
-        const dateTimeString = `${dateValue}T${timeValue}`;
-        newDeliveryDate = new Date(dateTimeString).getTime();
-      }
-      
-      showSpinner('Actualizando fecha de entrega...');
-      try {
-        await updateOrder(orderId, { deliveryDate: newDeliveryDate });
-        hideSpinner();
-        // Update stored order data
-        order.deliveryDate = newDeliveryDate;
-        document.getElementById('order-detail').dataset.orderData = JSON.stringify(order);
-        await showSuccess('Fecha de entrega actualizada');
-      } catch (error) {
-        hideSpinner();
-        await showError('Error al actualizar fecha de entrega: ' + error.message);
-      }
-    };
-    
-    if (deliveryDateInput) {
-      deliveryDateInput.addEventListener('change', updateDeliveryDateTime);
-    }
-    if (deliveryTimeInput) {
-      deliveryTimeInput.addEventListener('change', updateDeliveryDateTime);
-    }
     
     // Attach delete button handler
     const deleteBtn = document.getElementById('delete-order-detail-btn');
