@@ -89,3 +89,18 @@ function showInfo(message) {
   return showAlert('Información', message);
 }
 
+// Loading spinner functions
+function showSpinner(message = 'Cargando...') {
+  const spinner = document.getElementById('loading-spinner');
+  const messageEl = spinner.querySelector('p');
+  if (messageEl) {
+    messageEl.textContent = message;
+  }
+  spinner.classList.remove('hidden');
+}
+
+function hideSpinner() {
+  const spinner = document.getElementById('loading-spinner');
+  spinner.classList.add('hidden');
+}
+

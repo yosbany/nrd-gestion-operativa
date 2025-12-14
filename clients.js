@@ -97,9 +97,11 @@ function saveClient(clientId, clientData) {
 
 // View client detail
 async function viewClient(clientId) {
+  showSpinner('Cargando cliente...');
   try {
     const snapshot = await getClient(clientId);
     const client = snapshot.val();
+    hideSpinner();
     if (!client) {
       await showError('Cliente no encontrado');
       return;
@@ -147,6 +149,7 @@ async function viewClient(clientId) {
       deleteBtn.onclick = () => deleteClientHandler(clientId);
     }
   } catch (error) {
+    hideSpinner();
     await showError('Error al cargar cliente: ' + error.message);
   }
 }
@@ -172,10 +175,13 @@ async function deleteClientHandler(clientId) {
   const confirmed = await showConfirm('Eliminar Cliente', '¿Está seguro de eliminar este cliente?');
   if (!confirmed) return;
 
+  showSpinner('Eliminando cliente...');
   try {
     await deleteClient(clientId);
+    hideSpinner();
     backToClients();
   } catch (error) {
+    hideSpinner();
     await showError('Error al eliminar cliente: ' + error.message);
   }
 }
@@ -194,10 +200,13 @@ document.getElementById('client-form-element').addEventListener('submit', async 
     return;
   }
 
+  showSpinner('Guardando cliente...');
   try {
     await saveClient(clientId || null, { name, phone, address });
+    hideSpinner();
     hideClientForm();
   } catch (error) {
+    hideSpinner();
     await showError('Error al guardar cliente: ' + error.message);
   }
 });

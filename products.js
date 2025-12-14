@@ -117,9 +117,11 @@ function saveProduct(productId, productData) {
 
 // View product detail
 async function viewProduct(productId) {
+  showSpinner('Cargando producto...');
   try {
     const snapshot = await getProduct(productId);
     const product = snapshot.val();
+    hideSpinner();
     if (!product) {
       await showError('Producto no encontrado');
       return;
@@ -169,6 +171,7 @@ async function viewProduct(productId) {
       deleteBtn.onclick = () => deleteProductHandler(productId);
     }
   } catch (error) {
+    hideSpinner();
     await showError('Error al cargar producto: ' + error.message);
   }
 }
@@ -194,10 +197,13 @@ async function deleteProductHandler(productId) {
   const confirmed = await showConfirm('Eliminar Producto', '¿Está seguro de eliminar este producto?');
   if (!confirmed) return;
 
+  showSpinner('Eliminando producto...');
   try {
     await deleteProduct(productId);
+    hideSpinner();
     backToProducts();
   } catch (error) {
+    hideSpinner();
     await showError('Error al eliminar producto: ' + error.message);
   }
 }
@@ -216,10 +222,13 @@ document.getElementById('product-form-element').addEventListener('submit', async
     return;
   }
 
+  showSpinner('Guardando producto...');
   try {
     await saveProduct(productId || null, { name, price, active });
+    hideSpinner();
     hideProductForm();
   } catch (error) {
+    hideSpinner();
     await showError('Error al guardar producto: ' + error.message);
   }
 });
@@ -295,6 +304,7 @@ async function initializeProducts() {
     return;
   }
 
+  showSpinner('Inicializando productos...');
   try {
     // Check existing products
     const snapshot = await getProductsRef().once('value');
@@ -319,12 +329,14 @@ async function initializeProducts() {
       added++;
     }
 
+    hideSpinner();
     if (added > 0) {
       await showSuccess(`Se agregaron ${added} productos exitosamente.${skipped > 0 ? ` ${skipped} productos ya existían y fueron omitidos.` : ''}`);
     } else if (skipped > 0) {
       await showInfo(`Todos los productos ya existen en la base de datos.`);
     }
   } catch (error) {
+    hideSpinner();
     await showError('Error al inicializar productos: ' + error.message);
     console.error(error);
   }

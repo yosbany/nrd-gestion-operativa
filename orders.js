@@ -324,19 +324,24 @@ async function saveOrder() {
       total
     };
 
+    showSpinner('Guardando pedido...');
     await createOrder(orderData);
+    hideSpinner();
     hideNewOrderForm();
     await showSuccess('Pedido guardado exitosamente');
   } catch (error) {
+    hideSpinner();
     await showError('Error al guardar pedido: ' + error.message);
   }
 }
 
 // View order detail
 async function viewOrder(orderId) {
+  showSpinner('Cargando pedido...');
   try {
     const snapshot = await getOrder(orderId);
     const order = snapshot.val();
+    hideSpinner();
     if (!order) {
       await showError('Pedido no encontrado');
       return;
@@ -399,6 +404,7 @@ async function viewOrder(orderId) {
       deleteBtn.onclick = () => deleteOrderHandler(orderId);
     }
   } catch (error) {
+    hideSpinner();
     await showError('Error al cargar pedido: ' + error.message);
   }
 }
@@ -419,10 +425,13 @@ async function deleteOrderHandler(orderId) {
   const confirmed = await showConfirm('Eliminar Pedido', '¿Está seguro de eliminar este pedido?');
   if (!confirmed) return;
 
+  showSpinner('Eliminando pedido...');
   try {
     await deleteOrder(orderId);
+    hideSpinner();
     backToOrders();
   } catch (error) {
+    hideSpinner();
     await showError('Error al eliminar pedido: ' + error.message);
   }
 }
@@ -433,10 +442,12 @@ async function sendWhatsAppMessage() {
   const orderData = JSON.parse(orderDetail.dataset.orderData);
   const orderId = orderDetail.dataset.orderId;
 
+  showSpinner('Preparando mensaje...');
   try {
     // Get client data
     const clientSnapshot = await getClient(orderData.clientId);
     const client = clientSnapshot.val();
+    hideSpinner();
     if (!client || !client.phone) {
       await showError('El cliente no tiene teléfono registrado');
       return;
@@ -458,6 +469,7 @@ async function sendWhatsAppMessage() {
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   } catch (error) {
+    hideSpinner();
     await showError('Error al generar mensaje de WhatsApp: ' + error.message);
   }
 }
