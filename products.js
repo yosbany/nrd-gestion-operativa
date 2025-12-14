@@ -25,7 +25,7 @@ function loadProducts() {
       productsList.innerHTML = `
         <div class="text-center py-8 sm:py-12 border border-gray-200 p-4 sm:p-8">
           <p class="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">No hay productos registrados</p>
-          <button id="auto-init-products" class="px-4 sm:px-6 py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+          <button id="auto-init-products" class="px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
             Cargar Productos por Defecto
           </button>
         </div>
@@ -45,11 +45,11 @@ function loadProducts() {
 
     Object.entries(products).forEach(([id, product]) => {
       const item = document.createElement('div');
-      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-black transition-colors';
+      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors';
       item.innerHTML = `
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
           <div class="text-base sm:text-lg font-light flex-1">${escapeHtml(product.name)}</div>
-          <span class="px-2 sm:px-3 py-0.5 sm:py-1 text-xs uppercase tracking-wider border ${product.active ? 'border-black text-black' : 'border-gray-300 text-gray-600'}">
+          <span class="px-2 sm:px-3 py-0.5 sm:py-1 text-xs uppercase tracking-wider border ${product.active ? 'border-red-600 text-red-600' : 'border-gray-300 text-gray-600'}">
             ${product.active ? 'Activo' : 'Inactivo'}
           </span>
         </div>
@@ -57,8 +57,8 @@ function loadProducts() {
           Precio: $${parseFloat(product.price || 0).toFixed(2)}
         </div>
         <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
-          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light edit-product" data-id="${id}">Editar</button>
-          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light delete-product" data-id="${id}">Eliminar</button>
+          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs font-light edit-product" data-id="${id}">Editar</button>
+          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs font-light delete-product" data-id="${id}">Eliminar</button>
         </div>
       `;
       productsList.appendChild(item);

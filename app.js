@@ -27,13 +27,13 @@ function switchView(viewName) {
 
   // Update nav buttons
   document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.classList.remove('border-black', 'text-black');
+    btn.classList.remove('border-red-600', 'text-red-600');
     btn.classList.add('border-transparent', 'text-gray-600');
   });
   const activeBtn = document.querySelector(`[data-view="${viewName}"]`);
   if (activeBtn) {
     activeBtn.classList.remove('border-transparent', 'text-gray-600');
-    activeBtn.classList.add('border-black', 'text-black');
+    activeBtn.classList.add('border-red-600', 'text-red-600');
   }
 
   // Load data for the view

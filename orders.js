@@ -37,7 +37,7 @@ function loadOrders() {
 
     sortedOrders.forEach(([id, order]) => {
       const item = document.createElement('div');
-      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-black transition-colors cursor-pointer';
+      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
       const date = new Date(order.createdAt);
       item.innerHTML = `
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
@@ -50,8 +50,8 @@ function loadOrders() {
           <div>Productos: ${order.items ? order.items.length : 0}</div>
         </div>
         <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
-          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-xs font-light view-order" data-id="${id}">Ver</button>
-          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light delete-order" data-id="${id}">Eliminar</button>
+          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs font-light view-order" data-id="${id}">Ver</button>
+          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs font-light delete-order" data-id="${id}">Eliminar</button>
         </div>
       `;
       ordersList.appendChild(item);
@@ -140,15 +140,15 @@ async function renderOrderProducts() {
     
     div.innerHTML = `
       <select onchange="updateOrderProduct(${index}, 'productId', this.value)" required 
-        class="flex-1 sm:flex-2 px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent text-sm sm:text-base">
+        class="flex-1 sm:flex-2 px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
         ${products.map(p => 
           `<option value="${p.id}" ${p.id === item.productId ? 'selected' : ''}>${escapeHtml(p.name)} - $${parseFloat(p.price).toFixed(2)}</option>`
         ).join('')}
       </select>
       <input type="number" min="1" value="${item.quantity}" onchange="updateOrderProduct(${index}, 'quantity', this.value)" required 
-        class="flex-1 sm:flex-none sm:max-w-20 px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent text-center text-sm sm:text-base">
+        class="flex-1 sm:flex-none sm:max-w-20 px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-center text-sm sm:text-base">
       <div class="flex-1 text-left sm:text-right font-light text-sm sm:text-base text-black">$${productTotal}</div>
-      <button type="button" class="self-start sm:self-auto px-2 sm:px-2 py-1.5 sm:py-2 border border-gray-300 hover:border-black transition-colors text-lg sm:text-xl font-light remove-product" onclick="removeProductFromOrder(${index})">×</button>
+      <button type="button" class="self-start sm:self-auto px-2 sm:px-2 py-1.5 sm:py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors text-lg sm:text-xl font-light remove-product" onclick="removeProductFromOrder(${index})">×</button>
     `;
     container.appendChild(div);
   });
@@ -276,7 +276,7 @@ async function viewOrder(orderId) {
         <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Productos:</h4>
         ${itemsHtml}
       </div>
-      <div class="flex justify-between mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-black text-lg sm:text-xl font-light">
+      <div class="flex justify-between mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-red-600 text-lg sm:text-xl font-light">
         <span>Total:</span>
         <span>$${parseFloat(order.total).toFixed(2)}</span>
       </div>

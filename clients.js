@@ -28,7 +28,7 @@ function loadClients() {
 
     Object.entries(clients).forEach(([id, client]) => {
       const item = document.createElement('div');
-      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-black transition-colors';
+      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors';
       item.innerHTML = `
         <div class="flex justify-between items-center mb-2 sm:mb-3">
           <div class="text-base sm:text-lg font-light">${escapeHtml(client.name)}</div>
@@ -38,8 +38,8 @@ function loadClients() {
           <div>Dirección: ${escapeHtml(client.address || 'N/A')}</div>
         </div>
         <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
-          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light edit-client" data-id="${id}">Editar</button>
-          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light delete-client" data-id="${id}">Eliminar</button>
+          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs font-light edit-client" data-id="${id}">Editar</button>
+          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs font-light delete-client" data-id="${id}">Eliminar</button>
         </div>
       `;
       clientsList.appendChild(item);
