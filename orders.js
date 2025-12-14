@@ -1139,6 +1139,8 @@ document.getElementById('report-orders-btn').addEventListener('click', generateP
 const addNewClientFromOrderBtn = document.getElementById('add-new-client-from-order-btn');
 if (addNewClientFromOrderBtn) {
   addNewClientFromOrderBtn.addEventListener('click', () => {
+    // Mark that we're coming from order form
+    sessionStorage.setItem('creatingClientFromOrder', 'true');
     // Switch to clients view
     if (typeof switchView === 'function') {
       switchView('clients');

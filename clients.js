@@ -218,11 +218,50 @@ document.getElementById('client-form-element').addEventListener('submit', async 
     return;
   }
 
+  const isFromOrder = sessionStorage.getItem('creatingClientFromOrder') === 'true';
+  
   showSpinner('Guardando cliente...');
   try {
-    await saveClient(clientId || null, { name, phone, address });
+    const result = await saveClient(clientId || null, { name, phone, address });
     hideSpinner();
-    hideClientForm();
+    
+    // If coming from order form, return to order form with client selected
+    if (isFromOrder) {
+      sessionStorage.removeItem('creatingClientFromOrder');
+      
+      // Get the new client ID (if it's a new client, result.key will have the ID)
+      let newClientId = clientId;
+      if (!clientId && result && result.key) {
+        newClientId = result.key;
+      }
+      
+      // Switch back to orders view
+      if (typeof switchView === 'function') {
+        switchView('orders');
+      }
+      
+      // Show new order form
+      if (typeof showNewOrderForm === 'function') {
+        await showNewOrderForm();
+        
+        // Wait a bit for the form to render and clients to load
+        setTimeout(() => {
+          // Reload clients and select the new client
+          loadClientsForOrder();
+          setTimeout(() => {
+            const select = document.getElementById('order-client-select');
+            if (select && newClientId) {
+              select.value = newClientId;
+              // Trigger change event to update currentOrderClient
+              const event = new Event('change', { bubbles: true });
+              select.dispatchEvent(event);
+            }
+          }, 300);
+        }, 100);
+      }
+    } else {
+      hideClientForm();
+    }
   } catch (error) {
     hideSpinner();
     await showError('Error al guardar cliente: ' + error.message);
