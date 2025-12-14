@@ -7,7 +7,7 @@
   <title>NRD Pedidos</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765714475410">
+  <link rel="stylesheet" href="styles.css?v=1765714918103">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
 </head>
@@ -77,10 +77,18 @@
           <div class="mb-3 sm:mb-4">
             <label class="block mb-1.5 text-xs uppercase tracking-wider text-gray-600">Productos</label>
             <div id="order-products-list" class="mb-2 sm:mb-3 space-y-2"></div>
-            <button type="button" id="add-product-to-order" 
-              class="w-full px-3 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs font-light">
-              + Agregar Producto
-            </button>
+            
+            <!-- Product Search Input -->
+            <div class="relative">
+              <input type="text" id="product-search-input" 
+                placeholder="Buscar producto..." 
+                autocomplete="off"
+                class="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm sm:text-base rounded">
+              
+              <!-- Dropdown Results -->
+              <div id="product-search-results" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto">
+              </div>
+            </div>
           </div>
 
           <div class="py-3 sm:py-4 my-3 sm:my-4 bg-gray-50 border border-gray-200 rounded">
@@ -269,20 +277,20 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765714475410"></script>
-  <script src="modal.js?v=1765714475410"></script>
-  <script src="auth.js?v=1765714475410"></script>
-  <script src="db.js?v=1765714475410"></script>
-  <script src="clients.js?v=1765714475410"></script>
-  <script src="products.js?v=1765714475410"></script>
-  <script src="orders.js?v=1765714475410"></script>
-  <script src="app.js?v=1765714475410"></script>
+  <script src="firebase.js?v=1765714918103"></script>
+  <script src="modal.js?v=1765714918103"></script>
+  <script src="auth.js?v=1765714918103"></script>
+  <script src="db.js?v=1765714918103"></script>
+  <script src="clients.js?v=1765714918103"></script>
+  <script src="products.js?v=1765714918103"></script>
+  <script src="orders.js?v=1765714918103"></script>
+  <script src="app.js?v=1765714918103"></script>
 
   <script>
     // Register service worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js?v=1765714475410')
+        navigator.serviceWorker.register('service-worker.js?v=1765714918103')
           .then(reg => console.log('Service Worker registered'))
           .catch(err => console.log('Service Worker registration failed'));
       });

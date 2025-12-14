@@ -69,7 +69,7 @@ function loadOrders() {
 }
 
 // Show new order form
-function showNewOrderForm() {
+async function showNewOrderForm() {
   const form = document.getElementById('new-order-form');
   const list = document.getElementById('orders-list');
   const header = document.querySelector('#orders-view .flex.flex-col');
@@ -82,8 +82,30 @@ function showNewOrderForm() {
   currentOrderClient = null;
   document.getElementById('order-client-select').value = '';
   document.getElementById('order-products-list').innerHTML = '';
+  document.getElementById('product-search-input').value = '';
+  document.getElementById('product-search-results').classList.add('hidden');
+  
+  await loadAvailableProducts();
   updateOrderTotal();
   loadClientsForOrder();
+  
+  // Setup product search input
+  const searchInput = document.getElementById('product-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(productSearchTimeout);
+      productSearchTimeout = setTimeout(() => {
+        searchProducts(e.target.value);
+      }, 200);
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !document.getElementById('product-search-results').contains(e.target)) {
+        document.getElementById('product-search-results').classList.add('hidden');
+      }
+    });
+  }
 }
 
 // Hide new order form
@@ -97,7 +119,83 @@ function hideNewOrderForm() {
   if (header) header.style.display = 'flex';
 }
 
-// Add product to order
+// Product search functionality
+let availableProducts = [];
+let productSearchTimeout = null;
+
+// Load available products for search
+async function loadAvailableProducts() {
+  availableProducts = await loadProductsForOrder();
+}
+
+// Search products
+function searchProducts(query) {
+  const searchInput = document.getElementById('product-search-input');
+  const resultsDiv = document.getElementById('product-search-results');
+  
+  if (!searchInput || !resultsDiv) return;
+  
+  const searchTerm = query.toLowerCase().trim();
+  
+  if (searchTerm.length === 0) {
+    resultsDiv.classList.add('hidden');
+    return;
+  }
+  
+  // Filter products
+  const filtered = availableProducts.filter(product => 
+    product.name.toLowerCase().includes(searchTerm)
+  );
+  
+  if (filtered.length === 0) {
+    resultsDiv.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500">No se encontraron productos</div>';
+    resultsDiv.classList.remove('hidden');
+    return;
+  }
+  
+  // Show results
+  resultsDiv.innerHTML = filtered.map(product => `
+    <div class="product-search-item px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0" 
+         data-product-id="${product.id}" 
+         data-product-name="${escapeHtml(product.name)}" 
+         data-product-price="${product.price}">
+      <div class="font-light text-sm">${escapeHtml(product.name)}</div>
+      <div class="text-xs text-gray-600">$${parseFloat(product.price).toFixed(2)}</div>
+    </div>
+  `).join('');
+  
+  resultsDiv.classList.remove('hidden');
+  
+  // Attach click handlers
+  document.querySelectorAll('.product-search-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const productId = item.dataset.productId;
+      const productName = item.dataset.productName;
+      const productPrice = parseFloat(item.dataset.productPrice);
+      
+      // Check if product already added
+      if (currentOrderProducts.find(p => p.productId === productId)) {
+        showError('Este producto ya está en el pedido');
+        return;
+      }
+      
+      // Add product
+      currentOrderProducts.push({
+        productId,
+        quantity: 1
+      });
+      
+      renderOrderProducts();
+      updateOrderTotal();
+      
+      // Clear search
+      searchInput.value = '';
+      resultsDiv.classList.add('hidden');
+    });
+  });
+}
+
+// Add product to order (kept for compatibility)
 async function addProductToOrder() {
   const products = await loadProductsForOrder();
   if (products.length === 0) {
@@ -377,7 +475,6 @@ function printOrder() {
 document.getElementById('new-order-btn').addEventListener('click', showNewOrderForm);
 document.getElementById('cancel-order-btn').addEventListener('click', hideNewOrderForm);
 document.getElementById('save-order-btn').addEventListener('click', saveOrder);
-document.getElementById('add-product-to-order').addEventListener('click', addProductToOrder);
 document.getElementById('back-to-orders').addEventListener('click', backToOrders);
 document.getElementById('close-order-form').addEventListener('click', hideNewOrderForm);
 document.getElementById('whatsapp-order-btn').addEventListener('click', sendWhatsAppMessage);
