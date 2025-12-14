@@ -73,6 +73,7 @@ async function showNewOrderForm() {
   document.getElementById('order-products-list').innerHTML = '';
   document.getElementById('product-search-input').value = '';
   document.getElementById('product-search-results').classList.add('hidden');
+  document.getElementById('order-notes').value = '';
   
   await loadAvailableProducts();
   updateOrderTotal();
@@ -313,6 +314,9 @@ async function saveOrder() {
     // Calculate total
     const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
+    // Get observations
+    const notes = document.getElementById('order-notes').value.trim();
+
     // Create order
     const orderData = {
       clientId,
@@ -320,7 +324,8 @@ async function saveOrder() {
       createdAt: Date.now(),
       status: 'Pendiente',
       items,
-      total
+      total,
+      notes: notes || null
     };
 
     showSpinner('Guardando pedido...');
@@ -387,9 +392,15 @@ async function viewOrder(orderId) {
         <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Productos:</h4>
         ${itemsHtml}
       </div>
-      <div class="flex justify-between mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-red-600 text-lg sm:text-xl font-light">
+      ${order.notes ? `
+      <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+        <h4 class="mb-2 sm:mb-3 text-xs uppercase tracking-wider text-gray-600">Observaciones:</h4>
+        <p class="text-sm sm:text-base font-light text-gray-700 whitespace-pre-wrap">${escapeHtml(order.notes)}</p>
+      </div>
+      ` : ''}
+      <div class="flex justify-between mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200 text-sm sm:text-base font-light text-gray-600">
         <span>Total:</span>
-        <span>$${parseFloat(order.total).toFixed(2)}</span>
+        <span class="text-gray-700">$${parseFloat(order.total).toFixed(2)}</span>
       </div>
     `;
 
@@ -458,6 +469,9 @@ async function sendWhatsAppMessage() {
     orderData.items.forEach(item => {
       message += `• ${escapeHtml(item.productName)} - ${item.quantity} x $${parseFloat(item.price).toFixed(2)} = $${(item.price * item.quantity).toFixed(2)}\n`;
     });
+    if (orderData.notes) {
+      message += `\n*Observaciones:*\n${escapeHtml(orderData.notes)}\n`;
+    }
     message += `\n*Total: $${parseFloat(orderData.total).toFixed(2)}*\n`;
     message += `\nFecha: ${new Date(orderData.createdAt).toLocaleString()}`;
 
