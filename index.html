@@ -7,7 +7,7 @@
   <title>NRD Pedidos</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765751490937">
+  <link rel="stylesheet" href="styles.css?v=1765751616065">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
   
@@ -101,7 +101,7 @@
         <!-- Date Filter -->
         <div class="flex items-center justify-center gap-3 sm:gap-4 mb-3 sm:mb-4">
           <button id="today-date-btn" 
-            class="px-3 py-2 text-xs sm:text-sm text-gray-600 hover:text-red-600 transition-colors border border-gray-300 hover:border-red-600 rounded">
+            class="px-3 py-2 text-xs text-gray-500 hover:text-red-600 transition-colors">
             Hoy
           </button>
           <button id="prev-date-btn" 
@@ -415,14 +415,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765751490937"></script>
-  <script src="modal.js?v=1765751490937"></script>
-  <script src="auth.js?v=1765751490937"></script>
-  <script src="db.js?v=1765751490937"></script>
-  <script src="clients.js?v=1765751490937"></script>
-  <script src="products.js?v=1765751490937"></script>
-  <script src="orders.js?v=1765751490937"></script>
-  <script src="app.js?v=1765751490937"></script>
+  <script src="firebase.js?v=1765751616065"></script>
+  <script src="modal.js?v=1765751616065"></script>
+  <script src="auth.js?v=1765751616065"></script>
+  <script src="db.js?v=1765751616065"></script>
+  <script src="clients.js?v=1765751616065"></script>
+  <script src="products.js?v=1765751616065"></script>
+  <script src="orders.js?v=1765751616065"></script>
+  <script src="app.js?v=1765751616065"></script>
 
   <script>
     // Global error handler
@@ -473,7 +473,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1765751490937')
+        navigator.serviceWorker.register('service-worker.js?v=1765751616065')
           .then(reg => {
             console.log('Service Worker registered');
             
