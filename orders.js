@@ -1246,20 +1246,8 @@ async function generateProductReport() {
     
     hideSpinner();
     
-    // Ask user what they want to do before generating
-    const action = await showConfirmWithOptions(
-      'Reporte de Productos',
-      '¿Qué desea hacer con el reporte?',
-      'Imprimir y WhatsApp',
-      'Solo Imprimir'
-    );
-    
-    if (!action) {
-      return; // User cancelled
-    }
-    
-    // Generate PDF if needed
-    if (action === 'option1' || action === 'option2') {
+    // Generate PDF if action is print
+    if (action === 'print') {
       showSpinner('Generando PDF...');
       const { jsPDF } = window.jspdf;
       // 80mm width for thermal printer
@@ -1356,10 +1344,11 @@ async function generateProductReport() {
       
       // Small delay to ensure PDF download starts
       await new Promise(resolve => setTimeout(resolve, 300));
+      await showSuccess('Reporte generado exitosamente');
     }
     
-    // Generate WhatsApp message if option1 (both) or if user wants WhatsApp
-    if (action === 'option1') {
+    // Generate WhatsApp message if action is whatsapp
+    if (action === 'whatsapp') {
       // Generate WhatsApp message with same format as PDF
       let message = `REPORTE DE PRODUCTOS\n`;
       message += `Fecha entrega: ${formatDate24h(selectedDateObj)}\n\n`;
@@ -1375,8 +1364,6 @@ async function generateProductReport() {
       const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
       await showSuccess('Reporte generado y WhatsApp abierto');
-    } else if (action === 'option2') {
-      await showSuccess('Reporte generado exitosamente');
     }
   } catch (error) {
     hideSpinner();

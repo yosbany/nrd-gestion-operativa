@@ -217,6 +217,116 @@ function showDatePicker(title, message) {
   });
 }
 
+// Show report modal with date picker and action buttons
+function showReportModal() {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('custom-modal');
+    const titleEl = document.getElementById('modal-title');
+    const messageEl = document.getElementById('modal-message');
+    const confirmBtn = document.getElementById('modal-confirm');
+    const cancelBtn = document.getElementById('modal-cancel');
+
+    titleEl.textContent = 'Reporte de Productos';
+    messageEl.innerHTML = `
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-700 mb-2">Seleccione la fecha de entrega para filtrar los pedidos:</label>
+          <input type="date" id="report-date-input" class="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm sm:text-base rounded">
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button id="report-whatsapp-btn" class="flex-1 px-4 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light rounded">
+            Enviar por WhatsApp
+          </button>
+          <button id="report-print-btn" class="flex-1 px-4 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light rounded">
+            Imprimir
+          </button>
+        </div>
+      </div>
+    `;
+    
+    confirmBtn.style.display = 'none';
+    cancelBtn.textContent = 'Cancelar';
+
+    // Set default date to today
+    setTimeout(() => {
+      const dateInput = document.getElementById('report-date-input');
+      if (dateInput) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${year}-${month}-${day}`;
+      }
+    }, 10);
+
+    modal.classList.remove('hidden');
+
+    const handleWhatsApp = () => {
+      const dateInput = document.getElementById('report-date-input');
+      const selectedDate = dateInput ? dateInput.value : null;
+      if (!selectedDate) {
+        return;
+      }
+      modal.classList.add('hidden');
+      messageEl.innerHTML = '';
+      confirmBtn.style.display = '';
+      document.getElementById('report-whatsapp-btn')?.removeEventListener('click', handleWhatsApp);
+      document.getElementById('report-print-btn')?.removeEventListener('click', handlePrint);
+      cancelBtn.removeEventListener('click', handleCancel);
+      modal.removeEventListener('click', handleBackgroundClick);
+      resolve({ selectedDate, action: 'whatsapp' });
+    };
+
+    const handlePrint = () => {
+      const dateInput = document.getElementById('report-date-input');
+      const selectedDate = dateInput ? dateInput.value : null;
+      if (!selectedDate) {
+        return;
+      }
+      modal.classList.add('hidden');
+      messageEl.innerHTML = '';
+      confirmBtn.style.display = '';
+      document.getElementById('report-whatsapp-btn')?.removeEventListener('click', handleWhatsApp);
+      document.getElementById('report-print-btn')?.removeEventListener('click', handlePrint);
+      cancelBtn.removeEventListener('click', handleCancel);
+      modal.removeEventListener('click', handleBackgroundClick);
+      resolve({ selectedDate, action: 'print' });
+    };
+
+    const handleCancel = () => {
+      modal.classList.add('hidden');
+      messageEl.innerHTML = '';
+      confirmBtn.style.display = '';
+      document.getElementById('report-whatsapp-btn')?.removeEventListener('click', handleWhatsApp);
+      document.getElementById('report-print-btn')?.removeEventListener('click', handlePrint);
+      cancelBtn.removeEventListener('click', handleCancel);
+      modal.removeEventListener('click', handleBackgroundClick);
+      resolve(null);
+    };
+
+    // Close on background click
+    const handleBackgroundClick = (e) => {
+      if (e.target === modal) {
+        handleCancel();
+      }
+    };
+
+    // Wait for DOM to update before attaching listeners
+    setTimeout(() => {
+      const whatsappBtn = document.getElementById('report-whatsapp-btn');
+      const printBtn = document.getElementById('report-print-btn');
+      if (whatsappBtn) {
+        whatsappBtn.addEventListener('click', handleWhatsApp);
+      }
+      if (printBtn) {
+        printBtn.addEventListener('click', handlePrint);
+      }
+      cancelBtn.addEventListener('click', handleCancel);
+      modal.addEventListener('click', handleBackgroundClick);
+    }, 10);
+  });
+}
+
 // Show predefined orders selection modal
 function showPredefinedOrdersModal() {
   return new Promise((resolve) => {
