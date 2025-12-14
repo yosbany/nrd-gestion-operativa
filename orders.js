@@ -668,9 +668,73 @@ async function sendWhatsAppMessage() {
   }
 }
 
-// Print order
-function printOrder() {
-  window.print();
+// Print order as PDF
+async function printOrder() {
+  const orderDetail = document.getElementById('order-detail');
+  const orderData = JSON.parse(orderDetail.dataset.orderData);
+  
+  try {
+    // Format delivery date with day of week (same as WhatsApp)
+    let deliveryDateStr = 'No especificada';
+    if (orderData.deliveryDate) {
+      const deliveryDate = new Date(orderData.deliveryDate);
+      const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const dayName = daysOfWeek[deliveryDate.getDay()];
+      const dateStr = formatDate24h(deliveryDate);
+      const timeStr = formatTime24h(deliveryDate);
+      deliveryDateStr = `${dayName} ${dateStr} ${timeStr}`;
+    }
+    
+    // Create PDF using jsPDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Set font and margins
+    const margin = 20;
+    let yPos = margin;
+    const lineHeight = 7;
+    
+    // Title
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text('Pedido para: ' + orderData.clientName, margin, yPos);
+    yPos += lineHeight + 2;
+    
+    // Delivery date
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'normal');
+    doc.text('Fecha entrega: ' + deliveryDateStr, margin, yPos);
+    yPos += lineHeight + 3;
+    
+    // Products
+    doc.setFontSize(12);
+    orderData.items.forEach(item => {
+      doc.text('• ' + item.quantity + ' ' + item.productName, margin, yPos);
+      yPos += lineHeight;
+      
+      // Check if we need a new page
+      if (yPos > 280) {
+        doc.addPage();
+        yPos = margin;
+      }
+    });
+    
+    // Observations
+    if (orderData.notes && orderData.notes.trim()) {
+      yPos += lineHeight;
+      doc.text(orderData.notes, margin, yPos);
+    }
+    
+    // Generate filename
+    const date = new Date(orderData.createdAt);
+    const filename = `Pedido_${orderData.clientName}_${formatDate24h(date).replace(/\//g, '-')}.pdf`;
+    
+    // Save PDF
+    doc.save(filename);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    await showError('Error al generar PDF: ' + error.message);
+  }
 }
 
 // Event listeners
