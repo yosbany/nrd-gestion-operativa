@@ -6,156 +6,218 @@
   <meta name="description" content="Sistema de gestión de pedidos">
   <title>NRD Pedidos</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
   <meta name="theme-color" content="#000000">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    .hidden { display: none !important; }
+    @media print {
+      .no-print { display: none !important; }
+    }
+  </style>
 </head>
-<body>
+<body class="bg-white text-black font-sans antialiased">
   <!-- Login Screen -->
-  <div id="login-screen" class="screen">
-    <div class="login-container">
-      <h1>NRD Pedidos</h1>
-      <form id="login-form">
-        <input type="email" id="login-email" placeholder="Email" required>
-        <input type="password" id="login-password" placeholder="Contraseña" required>
-        <button type="submit">Iniciar Sesión</button>
+  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <h1 class="text-2xl font-light text-center mb-8 tracking-tight">NRD Pedidos</h1>
+      <form id="login-form" class="space-y-4">
+        <input type="email" id="login-email" placeholder="Email" required 
+          class="w-full px-0 py-3 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent">
+        <input type="password" id="login-password" placeholder="Contraseña" required 
+          class="w-full px-0 py-3 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent">
+        <button type="submit" 
+          class="w-full mt-6 py-3 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-sm font-light">
+          Iniciar Sesión
+        </button>
       </form>
-      <div id="login-error" class="error-message"></div>
+      <div id="login-error" class="mt-4 text-center text-sm text-gray-600"></div>
     </div>
   </div>
 
   <!-- Main App Screen -->
-  <div id="app-screen" class="screen hidden">
-    <header class="app-header">
-      <h1>NRD Pedidos</h1>
-      <button id="logout-btn" class="btn-secondary">Salir</button>
+  <div id="app-screen" class="min-h-screen flex flex-col hidden">
+    <header class="bg-white border-b border-gray-200 px-4 py-4 flex justify-between items-center">
+      <h1 class="text-xl font-light tracking-tight">NRD Pedidos</h1>
+      <button id="logout-btn" 
+        class="px-4 py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light">
+        Salir
+      </button>
     </header>
 
-    <nav class="main-nav">
-      <button class="nav-btn active" data-view="orders">Pedidos</button>
-      <button class="nav-btn" data-view="clients">Clientes</button>
-      <button class="nav-btn" data-view="products">Productos</button>
+    <nav class="bg-white border-b border-gray-200 flex overflow-x-auto">
+      <button class="nav-btn flex-1 px-4 py-4 border-b-2 border-transparent text-gray-600 hover:text-black transition-colors uppercase tracking-wider text-sm font-light" data-view="orders">Pedidos</button>
+      <button class="nav-btn flex-1 px-4 py-4 border-b-2 border-transparent text-gray-600 hover:text-black transition-colors uppercase tracking-wider text-sm font-light" data-view="clients">Clientes</button>
+      <button class="nav-btn flex-1 px-4 py-4 border-b-2 border-transparent text-gray-600 hover:text-black transition-colors uppercase tracking-wider text-sm font-light" data-view="products">Productos</button>
     </nav>
 
-    <main class="main-content">
+    <main class="flex-1 p-6 overflow-y-auto max-w-6xl mx-auto w-full">
       <!-- Orders View -->
-      <div id="orders-view" class="view">
-        <div class="view-header">
-          <h2>Pedidos</h2>
-          <button id="new-order-btn" class="btn-primary">Nuevo Pedido</button>
+      <div id="orders-view" class="space-y-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-light tracking-tight">Pedidos</h2>
+          <button id="new-order-btn" 
+            class="px-6 py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-sm font-light">
+            Nuevo Pedido
+          </button>
         </div>
         
-        <div id="orders-list" class="list-container"></div>
+        <div id="orders-list" class="space-y-4"></div>
 
         <!-- New Order Form -->
-        <div id="new-order-form" class="form-container hidden">
-          <h3>Nuevo Pedido</h3>
-          <div class="form-group">
-            <label>Cliente</label>
-            <select id="order-client-select" required>
+        <div id="new-order-form" class="border border-gray-200 p-6 mt-4 hidden">
+          <h3 class="text-xl font-light mb-6 tracking-tight">Nuevo Pedido</h3>
+          <div class="mb-6">
+            <label class="block mb-2 text-xs uppercase tracking-wider text-gray-600">Cliente</label>
+            <select id="order-client-select" required 
+              class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent">
               <option value="">Seleccionar cliente</option>
             </select>
           </div>
           
-          <div class="form-group">
-            <label>Productos</label>
-            <div id="order-products-list"></div>
-            <button type="button" id="add-product-to-order" class="btn-secondary">Agregar Producto</button>
+          <div class="mb-6">
+            <label class="block mb-2 text-xs uppercase tracking-wider text-gray-600">Productos</label>
+            <div id="order-products-list" class="mb-4"></div>
+            <button type="button" id="add-product-to-order" 
+              class="px-4 py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light">
+              Agregar Producto
+            </button>
           </div>
 
-          <div class="order-summary">
-            <div class="summary-row">
+          <div class="py-6 my-6 border-t border-b border-gray-200">
+            <div class="flex justify-between text-xl font-light">
               <span>Total:</span>
               <span id="order-total">$0.00</span>
             </div>
           </div>
 
-          <div class="form-actions">
-            <button id="save-order-btn" class="btn-primary">Guardar</button>
-            <button id="cancel-order-btn" class="btn-secondary">Cancelar</button>
+          <div class="flex gap-4 pt-6 border-t border-gray-200">
+            <button id="save-order-btn" 
+              class="flex-1 px-6 py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-sm font-light">
+              Guardar
+            </button>
+            <button id="cancel-order-btn" 
+              class="flex-1 px-6 py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-sm font-light">
+              Cancelar
+            </button>
           </div>
         </div>
 
         <!-- Order Detail View -->
-        <div id="order-detail" class="order-detail hidden">
-          <div class="order-detail-header">
-            <button id="back-to-orders" class="btn-secondary">← Volver</button>
-            <h3>Detalle del Pedido</h3>
+        <div id="order-detail" class="border border-gray-200 p-6 hidden">
+          <div class="mb-6 pb-6 border-b border-gray-200">
+            <button id="back-to-orders" 
+              class="mb-4 px-4 py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light">
+              ← Volver
+            </button>
+            <h3 class="text-xl font-light tracking-tight">Detalle del Pedido</h3>
           </div>
           <div id="order-detail-content"></div>
-          <div class="order-actions">
-            <button id="whatsapp-order-btn" class="btn-primary">Enviar WhatsApp</button>
-            <button id="print-order-btn" class="btn-primary">Imprimir</button>
+          <div class="flex gap-4 mt-6 pt-6 border-t border-gray-200">
+            <button id="whatsapp-order-btn" 
+              class="flex-1 px-6 py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-sm font-light">
+              Enviar WhatsApp
+            </button>
+            <button id="print-order-btn" 
+              class="flex-1 px-6 py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-sm font-light">
+              Imprimir
+            </button>
           </div>
         </div>
       </div>
 
       <!-- Clients View -->
-      <div id="clients-view" class="view hidden">
-        <div class="view-header">
-          <h2>Clientes</h2>
-          <button id="new-client-btn" class="btn-primary">Nuevo Cliente</button>
+      <div id="clients-view" class="space-y-6 hidden">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-light tracking-tight">Clientes</h2>
+          <button id="new-client-btn" 
+            class="px-6 py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-sm font-light">
+            Nuevo Cliente
+          </button>
         </div>
         
-        <div id="clients-list" class="list-container"></div>
+        <div id="clients-list" class="space-y-4"></div>
 
-        <div id="client-form" class="form-container hidden">
-          <h3 id="client-form-title">Nuevo Cliente</h3>
+        <div id="client-form" class="border border-gray-200 p-6 mt-4 hidden">
+          <h3 id="client-form-title" class="text-xl font-light mb-6 tracking-tight">Nuevo Cliente</h3>
           <form id="client-form-element">
             <input type="hidden" id="client-id">
-            <div class="form-group">
-              <label>Nombre</label>
-              <input type="text" id="client-name" required>
+            <div class="mb-6">
+              <label class="block mb-2 text-xs uppercase tracking-wider text-gray-600">Nombre</label>
+              <input type="text" id="client-name" required 
+                class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent">
             </div>
-            <div class="form-group">
-              <label>Teléfono</label>
-              <input type="tel" id="client-phone" required>
+            <div class="mb-6">
+              <label class="block mb-2 text-xs uppercase tracking-wider text-gray-600">Teléfono</label>
+              <input type="tel" id="client-phone" required 
+                class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent">
             </div>
-            <div class="form-group">
-              <label>Dirección</label>
-              <textarea id="client-address" rows="3"></textarea>
+            <div class="mb-6">
+              <label class="block mb-2 text-xs uppercase tracking-wider text-gray-600">Dirección</label>
+              <textarea id="client-address" rows="3" 
+                class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent resize-y"></textarea>
             </div>
-            <div class="form-actions">
-              <button type="submit" class="btn-primary">Guardar</button>
-              <button type="button" id="cancel-client-btn" class="btn-secondary">Cancelar</button>
+            <div class="flex gap-4 pt-6 border-t border-gray-200">
+              <button type="submit" 
+                class="flex-1 px-6 py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-sm font-light">
+                Guardar
+              </button>
+              <button type="button" id="cancel-client-btn" 
+                class="flex-1 px-6 py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-sm font-light">
+                Cancelar
+              </button>
             </div>
           </form>
         </div>
       </div>
 
       <!-- Products View -->
-      <div id="products-view" class="view hidden">
-        <div class="view-header">
-          <h2>Productos</h2>
-          <div style="display: flex; gap: 0.75rem;">
-            <button id="init-products-btn" class="btn-secondary">Inicializar Productos</button>
-            <button id="new-product-btn" class="btn-primary">Nuevo Producto</button>
+      <div id="products-view" class="space-y-6 hidden">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-light tracking-tight">Productos</h2>
+          <div class="flex gap-3">
+            <button id="init-products-btn" 
+              class="px-4 py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light">
+              Inicializar Productos
+            </button>
+            <button id="new-product-btn" 
+              class="px-6 py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-sm font-light">
+              Nuevo Producto
+            </button>
           </div>
         </div>
         
-        <div id="products-list" class="list-container"></div>
+        <div id="products-list" class="space-y-4"></div>
 
-        <div id="product-form" class="form-container hidden">
-          <h3 id="product-form-title">Nuevo Producto</h3>
+        <div id="product-form" class="border border-gray-200 p-6 mt-4 hidden">
+          <h3 id="product-form-title" class="text-xl font-light mb-6 tracking-tight">Nuevo Producto</h3>
           <form id="product-form-element">
             <input type="hidden" id="product-id">
-            <div class="form-group">
-              <label>Nombre</label>
-              <input type="text" id="product-name" required>
+            <div class="mb-6">
+              <label class="block mb-2 text-xs uppercase tracking-wider text-gray-600">Nombre</label>
+              <input type="text" id="product-name" required 
+                class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent">
             </div>
-            <div class="form-group">
-              <label>Precio</label>
-              <input type="number" id="product-price" step="0.01" min="0" required>
+            <div class="mb-6">
+              <label class="block mb-2 text-xs uppercase tracking-wider text-gray-600">Precio</label>
+              <input type="number" id="product-price" step="0.01" min="0" required 
+                class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent">
             </div>
-            <div class="form-group">
-              <label>
-                <input type="checkbox" id="product-active" checked>
-                Activo
+            <div class="mb-6">
+              <label class="flex items-center">
+                <input type="checkbox" id="product-active" checked class="mr-2">
+                <span class="text-xs uppercase tracking-wider text-gray-600">Activo</span>
               </label>
             </div>
-            <div class="form-actions">
-              <button type="submit" class="btn-primary">Guardar</button>
-              <button type="button" id="cancel-product-btn" class="btn-secondary">Cancelar</button>
+            <div class="flex gap-4 pt-6 border-t border-gray-200">
+              <button type="submit" 
+                class="flex-1 px-6 py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-sm font-light">
+                Guardar
+              </button>
+              <button type="button" id="cancel-product-btn" 
+                class="flex-1 px-6 py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-sm font-light">
+                Cancelar
+              </button>
             </div>
           </form>
         </div>
@@ -186,7 +248,18 @@
           .catch(err => console.log('Service Worker registration failed'));
       });
     }
+
+    // Update nav button active state
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.nav-btn').forEach(b => {
+          b.classList.remove('border-black', 'text-black');
+          b.classList.add('border-transparent', 'text-gray-600');
+        });
+        this.classList.remove('border-transparent', 'text-gray-600');
+        this.classList.add('border-black', 'text-black');
+      });
+    });
   </script>
 </body>
 </html>
-

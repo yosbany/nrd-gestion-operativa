@@ -20,7 +20,7 @@ function loadOrders() {
     const orders = snapshot.val() || {};
 
     if (Object.keys(orders).length === 0) {
-      ordersList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">No hay pedidos registrados</p>';
+      ordersList.innerHTML = '<p class="text-center text-gray-600 py-8">No hay pedidos registrados</p>';
       return;
     }
 
@@ -33,21 +33,21 @@ function loadOrders() {
 
     sortedOrders.forEach(([id, order]) => {
       const item = document.createElement('div');
-      item.className = 'list-item';
+      item.className = 'border border-gray-200 p-6 hover:border-black transition-colors cursor-pointer';
       const date = new Date(order.createdAt);
       item.innerHTML = `
-        <div class="list-item-header">
-          <div class="list-item-title">${escapeHtml(order.clientName || 'Cliente desconocido')}</div>
-          <div>$${parseFloat(order.total || 0).toFixed(2)}</div>
+        <div class="flex justify-between items-center mb-3">
+          <div class="text-lg font-light">${escapeHtml(order.clientName || 'Cliente desconocido')}</div>
+          <div class="text-lg font-light">$${parseFloat(order.total || 0).toFixed(2)}</div>
         </div>
-        <div class="list-item-meta">
+        <div class="text-sm text-gray-600 space-y-1">
           <div>Fecha: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}</div>
           <div>Estado: ${escapeHtml(order.status || 'Pendiente')}</div>
           <div>Productos: ${order.items ? order.items.length : 0}</div>
         </div>
-        <div class="list-item-actions">
-          <button class="btn-primary btn-small view-order" data-id="${id}">Ver</button>
-          <button class="btn-danger btn-small delete-order" data-id="${id}">Eliminar</button>
+        <div class="flex gap-3 mt-4 pt-4 border-t border-gray-200">
+          <button class="px-4 py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-xs font-light view-order" data-id="${id}">Ver</button>
+          <button class="px-4 py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light delete-order" data-id="${id}">Eliminar</button>
         </div>
       `;
       ordersList.appendChild(item);
@@ -131,18 +131,20 @@ async function renderOrderProducts() {
     if (!product) return;
 
     const div = document.createElement('div');
-    div.className = 'order-product-item';
+    div.className = 'flex gap-3 items-center py-4 border-b border-gray-200 mb-3';
     const productTotal = (product.price * item.quantity).toFixed(2);
     
     div.innerHTML = `
-      <select onchange="updateOrderProduct(${index}, 'productId', this.value)" required>
+      <select onchange="updateOrderProduct(${index}, 'productId', this.value)" required 
+        class="flex-2 px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent">
         ${products.map(p => 
           `<option value="${p.id}" ${p.id === item.productId ? 'selected' : ''}>${escapeHtml(p.name)} - $${parseFloat(p.price).toFixed(2)}</option>`
         ).join('')}
       </select>
-      <input type="number" min="1" value="${item.quantity}" onchange="updateOrderProduct(${index}, 'quantity', this.value)" required>
-      <div class="product-total">$${productTotal}</div>
-      <button type="button" class="remove-product" onclick="removeProductFromOrder(${index})">×</button>
+      <input type="number" min="1" value="${item.quantity}" onchange="updateOrderProduct(${index}, 'quantity', this.value)" required 
+        class="flex-1 max-w-24 px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent text-center">
+      <div class="flex-1 text-right font-light text-base text-black">$${productTotal}</div>
+      <button type="button" class="px-2 py-2 border border-gray-300 hover:border-black transition-colors text-xl font-light remove-product" onclick="removeProductFromOrder(${index})">×</button>
     `;
     container.appendChild(div);
   });
@@ -240,37 +242,37 @@ async function viewOrder(orderId) {
 
     const date = new Date(order.createdAt);
     const itemsHtml = order.items.map(item => `
-      <div class="order-item">
+      <div class="flex justify-between py-4 border-b border-gray-200">
         <div>
-          <div>${escapeHtml(item.productName)}</div>
-          <div style="font-size: 0.9rem; color: var(--text-secondary);">
+          <div class="font-light">${escapeHtml(item.productName)}</div>
+          <div class="text-sm text-gray-600">
             ${item.quantity} x $${parseFloat(item.price).toFixed(2)}
           </div>
         </div>
-        <div>$${(item.price * item.quantity).toFixed(2)}</div>
+        <div class="font-light">$${(item.price * item.quantity).toFixed(2)}</div>
       </div>
     `).join('');
 
     document.getElementById('order-detail-content').innerHTML = `
-      <div class="order-info">
-        <div class="order-info-row">
-          <span>Cliente:</span>
-          <span>${escapeHtml(order.clientName)}</span>
+      <div class="py-6 mb-6">
+        <div class="flex justify-between py-3 border-b border-gray-200 text-base">
+          <span class="text-gray-600 font-light">Cliente:</span>
+          <span class="font-light">${escapeHtml(order.clientName)}</span>
         </div>
-        <div class="order-info-row">
-          <span>Fecha:</span>
-          <span>${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>
+        <div class="flex justify-between py-3 border-b border-gray-200 text-base">
+          <span class="text-gray-600 font-light">Fecha:</span>
+          <span class="font-light">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>
         </div>
-        <div class="order-info-row">
-          <span>Estado:</span>
-          <span>${escapeHtml(order.status)}</span>
+        <div class="flex justify-between py-3 border-b border-gray-200 text-base">
+          <span class="text-gray-600 font-light">Estado:</span>
+          <span class="font-light">${escapeHtml(order.status)}</span>
         </div>
       </div>
-      <div class="order-items">
-        <h4>Productos:</h4>
+      <div class="mt-6">
+        <h4 class="mb-4 text-xs uppercase tracking-wider text-gray-600">Productos:</h4>
         ${itemsHtml}
       </div>
-      <div class="order-total-row">
+      <div class="flex justify-between mt-6 pt-6 border-t border-black text-xl font-light">
         <span>Total:</span>
         <span>$${parseFloat(order.total).toFixed(2)}</span>
       </div>

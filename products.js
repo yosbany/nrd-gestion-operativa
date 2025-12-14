@@ -18,26 +18,26 @@ function loadProducts() {
     const products = snapshot.val() || {};
 
     if (Object.keys(products).length === 0) {
-      productsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">No hay productos registrados</p>';
+      productsList.innerHTML = '<p class="text-center text-gray-600 py-8">No hay productos registrados</p>';
       return;
     }
 
     Object.entries(products).forEach(([id, product]) => {
       const item = document.createElement('div');
-      item.className = 'list-item';
+      item.className = 'border border-gray-200 p-6 hover:border-black transition-colors';
       item.innerHTML = `
-        <div class="list-item-header">
-          <div class="list-item-title">${escapeHtml(product.name)}</div>
-          <span class="status-badge ${product.active ? 'active' : 'inactive'}">
+        <div class="flex justify-between items-center mb-3">
+          <div class="text-lg font-light">${escapeHtml(product.name)}</div>
+          <span class="px-3 py-1 text-xs uppercase tracking-wider border ${product.active ? 'border-black text-black' : 'border-gray-300 text-gray-600'}">
             ${product.active ? 'Activo' : 'Inactivo'}
           </span>
         </div>
-        <div class="list-item-meta">
+        <div class="text-sm text-gray-600">
           Precio: $${parseFloat(product.price || 0).toFixed(2)}
         </div>
-        <div class="list-item-actions">
-          <button class="btn-secondary btn-small edit-product" data-id="${id}">Editar</button>
-          <button class="btn-danger btn-small delete-product" data-id="${id}">Eliminar</button>
+        <div class="flex gap-3 mt-4 pt-4 border-t border-gray-200">
+          <button class="px-4 py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light edit-product" data-id="${id}">Editar</button>
+          <button class="px-4 py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light delete-product" data-id="${id}">Eliminar</button>
         </div>
       `;
       productsList.appendChild(item);
