@@ -7,14 +7,9 @@
   <title>NRD Pedidos</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css">
   <meta name="theme-color" content="#000000">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <style>
-    .hidden { display: none !important; }
-    @media print {
-      .no-print { display: none !important; }
-    }
-  </style>
 </head>
 <body class="bg-white text-black font-sans antialiased">
   <!-- Login Screen -->
@@ -46,7 +41,7 @@
     </header>
 
     <nav class="bg-white border-b border-gray-200 flex overflow-x-auto">
-      <button class="nav-btn flex-1 px-4 py-4 border-b-2 border-transparent text-gray-600 hover:text-black transition-colors uppercase tracking-wider text-sm font-light" data-view="orders">Pedidos</button>
+      <button class="nav-btn flex-1 px-4 py-4 border-b-2 border-black text-black transition-colors uppercase tracking-wider text-sm font-light" data-view="orders">Pedidos</button>
       <button class="nav-btn flex-1 px-4 py-4 border-b-2 border-transparent text-gray-600 hover:text-black transition-colors uppercase tracking-wider text-sm font-light" data-view="clients">Clientes</button>
       <button class="nav-btn flex-1 px-4 py-4 border-b-2 border-transparent text-gray-600 hover:text-black transition-colors uppercase tracking-wider text-sm font-light" data-view="products">Productos</button>
     </nav>
@@ -249,17 +244,6 @@
       });
     }
 
-    // Update nav button active state
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.nav-btn').forEach(b => {
-          b.classList.remove('border-black', 'text-black');
-          b.classList.add('border-transparent', 'text-gray-600');
-        });
-        this.classList.remove('border-transparent', 'text-gray-600');
-        this.classList.add('border-black', 'text-black');
-      });
-    });
   </script>
 </body>
 </html>

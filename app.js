@@ -12,9 +12,12 @@ function switchView(viewName) {
 
   // Update nav buttons
   document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.classList.remove('active');
+    btn.classList.remove('border-black', 'text-black');
+    btn.classList.add('border-transparent', 'text-gray-600');
   });
-  document.querySelector(`[data-view="${viewName}"]`).classList.add('active');
+  const activeBtn = document.querySelector(`[data-view="${viewName}"]`);
+  activeBtn.classList.remove('border-transparent', 'text-gray-600');
+  activeBtn.classList.add('border-black', 'text-black');
 
   // Load data for the view
   if (viewName === 'orders') {
