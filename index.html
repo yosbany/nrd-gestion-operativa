@@ -7,9 +7,30 @@
   <title>NRD Pedidos</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765751068420">
+  <link rel="stylesheet" href="styles.css?v=1765751283122">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
+  
+  <!-- Force cache reload with version parameter in URL -->
+  <script>
+    (function() {
+      // Get current version from stylesheet link
+      const stylesheet = document.querySelector('link[href*="styles.css"]');
+      const versionMatch = stylesheet ? stylesheet.href.match(/[?&]v=(\d+)/) : null;
+      const currentVersion = versionMatch ? versionMatch[1] : Date.now();
+      
+      // Get version from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlVersion = urlParams.get('v');
+      
+      // If URL version doesn't match current version, reload with new version
+      if (urlVersion !== currentVersion) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('v', currentVersion);
+        window.location.replace(url.toString());
+      }
+    })();
+  </script>
 </head>
 <body class="bg-white text-black font-sans antialiased">
   <!-- Loading Spinner -->
@@ -390,14 +411,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765751068420"></script>
-  <script src="modal.js?v=1765751068420"></script>
-  <script src="auth.js?v=1765751068420"></script>
-  <script src="db.js?v=1765751068420"></script>
-  <script src="clients.js?v=1765751068420"></script>
-  <script src="products.js?v=1765751068420"></script>
-  <script src="orders.js?v=1765751068420"></script>
-  <script src="app.js?v=1765751068420"></script>
+  <script src="firebase.js?v=1765751283122"></script>
+  <script src="modal.js?v=1765751283122"></script>
+  <script src="auth.js?v=1765751283122"></script>
+  <script src="db.js?v=1765751283122"></script>
+  <script src="clients.js?v=1765751283122"></script>
+  <script src="products.js?v=1765751283122"></script>
+  <script src="orders.js?v=1765751283122"></script>
+  <script src="app.js?v=1765751283122"></script>
 
   <script>
     // Global error handler
@@ -448,7 +469,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1765751068420')
+        navigator.serviceWorker.register('service-worker.js?v=1765751283122')
           .then(reg => {
             console.log('Service Worker registered');
             
