@@ -1098,26 +1098,40 @@ async function generateProductReport() {
     
     hideSpinner();
     
-    // Generate PDF
-    const { jsPDF } = window.jspdf;
-    // 80mm width for thermal printer
-    const width = 80 * 2.83465; // 226.77 points
-    const height = 297; // A4 height
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'pt',
-      format: [width, height]
-    });
+    // Ask user what they want to do before generating
+    const action = await showConfirmWithOptions(
+      'Reporte de Productos',
+      '¿Qué desea hacer con el reporte?',
+      'Imprimir y WhatsApp',
+      'Solo Imprimir'
+    );
     
-    // Set margins
-    const margin = 10;
-    const maxWidth = width - (margin * 2);
-    let yPos = margin + 10;
-    const lineHeight = 10;
-    const fontSize = 9;
+    if (!action) {
+      return; // User cancelled
+    }
     
-    // Helper function to split long text
-    function splitText(text, maxWidth) {
+    // Generate PDF if needed
+    if (action === 'option1' || action === 'option2') {
+      showSpinner('Generando PDF...');
+      const { jsPDF } = window.jspdf;
+      // 80mm width for thermal printer
+      const width = 80 * 2.83465; // 226.77 points
+      const height = 297; // A4 height
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: [width, height]
+      });
+    
+      // Set margins
+      const margin = 10;
+      const maxWidth = width - (margin * 2);
+      let yPos = margin + 10;
+      const lineHeight = 10;
+      const fontSize = 9;
+      
+      // Helper function to split long text
+      function splitText(text, maxWidth) {
       const words = text.split(' ');
       const lines = [];
       let currentLine = '';
@@ -1138,71 +1152,66 @@ async function generateProductReport() {
         lines.push(currentLine);
       }
       
-      return lines;
-    }
-    
-    // Title
-    doc.setFontSize(fontSize + 3);
-    doc.setFont(undefined, 'bold');
-    const titleLines = splitText('REPORTE DE PRODUCTOS', maxWidth);
-    titleLines.forEach(line => {
-      doc.text(line, margin, yPos);
-      yPos += lineHeight;
-    });
-    yPos += 5;
-    
-    // Delivery date only
-    doc.setFontSize(fontSize);
-    doc.setFont(undefined, 'bold');
-    const deliveryDateText = `Fecha entrega: ${formatDate24h(selectedDateObj)}`;
-    doc.text(deliveryDateText, margin, yPos);
-    yPos += lineHeight + 5;
-    
-    // Products summary
-    doc.setFontSize(fontSize);
-    doc.setFont(undefined, 'bold');
-    
-    sortedProducts.forEach(([productName, quantity]) => {
-      const productText = `${quantity} x ${productName}`;
-      const productLines = splitText(productText, maxWidth);
-      productLines.forEach(line => {
+        return lines;
+      }
+      
+      // Title
+      doc.setFontSize(fontSize + 3);
+      doc.setFont(undefined, 'bold');
+      const titleLines = splitText('REPORTE DE PRODUCTOS', maxWidth);
+      titleLines.forEach(line => {
         doc.text(line, margin, yPos);
         yPos += lineHeight;
       });
+      yPos += 5;
       
-      // Check if we need a new page
-      if (yPos > height - 30) {
-        doc.addPage();
-        yPos = margin + 10;
-        doc.setFont(undefined, 'bold');
-      }
-    });
+      // Delivery date only
+      doc.setFontSize(fontSize);
+      doc.setFont(undefined, 'bold');
+      const deliveryDateText = `Fecha entrega: ${formatDate24h(selectedDateObj)}`;
+      doc.text(deliveryDateText, margin, yPos);
+      yPos += lineHeight + 5;
+      
+      // Products summary
+      doc.setFontSize(fontSize);
+      doc.setFont(undefined, 'bold');
+      
+      sortedProducts.forEach(([productName, quantity]) => {
+        const productText = `${quantity} x ${productName}`;
+        const productLines = splitText(productText, maxWidth);
+        productLines.forEach(line => {
+          doc.text(line, margin, yPos);
+          yPos += lineHeight;
+        });
+        
+        // Check if we need a new page
+        if (yPos > height - 30) {
+          doc.addPage();
+          yPos = margin + 10;
+          doc.setFont(undefined, 'bold');
+        }
+      });
+      
+      // Total
+      yPos += lineHeight;
+      doc.setFontSize(fontSize + 1);
+      doc.setFont(undefined, 'bold');
+      const totalText = `TOTAL: ${totalItems} productos`;
+      doc.text(totalText, margin, yPos);
+      
+      // Generate filename
+      const filename = `Reporte_Productos_${formatDate24h(selectedDateObj).replace(/\//g, '-')}.pdf`;
+      
+      // Save PDF
+      doc.save(filename);
+      hideSpinner();
+      
+      // Small delay to ensure PDF download starts
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
     
-    // Total
-    yPos += lineHeight;
-    doc.setFontSize(fontSize + 1);
-    doc.setFont(undefined, 'bold');
-    const totalText = `TOTAL: ${totalItems} productos`;
-    doc.text(totalText, margin, yPos);
-    
-    // Generate filename
-    const filename = `Reporte_Productos_${formatDate24h(selectedDateObj).replace(/\//g, '-')}.pdf`;
-    
-    // Save PDF
-    doc.save(filename);
-    
-    // Small delay to ensure PDF download starts
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Ask if user wants to send via WhatsApp
-    const sendWhatsApp = await showConfirmWithOptions(
-      'Reporte Generado',
-      '¿Desea enviar el reporte por WhatsApp?',
-      'Enviar WhatsApp',
-      'Solo Imprimir'
-    );
-    
-    if (sendWhatsApp === 'option1') {
+    // Generate WhatsApp message if option1 (both) or if user wants WhatsApp
+    if (action === 'option1') {
       // Generate WhatsApp message with same format as PDF
       let message = `REPORTE DE PRODUCTOS\n`;
       message += `Fecha entrega: ${formatDate24h(selectedDateObj)}\n\n`;
@@ -1218,7 +1227,7 @@ async function generateProductReport() {
       const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
       await showSuccess('Reporte generado y WhatsApp abierto');
-    } else {
+    } else if (action === 'option2') {
       await showSuccess('Reporte generado exitosamente');
     }
   } catch (error) {
