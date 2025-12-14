@@ -217,3 +217,77 @@ function showDatePicker(title, message) {
   });
 }
 
+// Show predefined orders selection modal
+function showPredefinedOrdersModal() {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('custom-modal');
+    const titleEl = document.getElementById('modal-title');
+    const messageEl = document.getElementById('modal-message');
+    const confirmBtn = document.getElementById('modal-confirm');
+    const cancelBtn = document.getElementById('modal-cancel');
+
+    titleEl.textContent = 'Seleccionar Pedido Precargado';
+    messageEl.innerHTML = `
+      <div class="space-y-2">
+        <button class="predefined-order-btn w-full px-4 py-3 border border-gray-300 hover:border-red-600 hover:bg-red-50 transition-colors text-left rounded" data-order-id="oferta-5">
+          <div class="font-medium">Oferta para 5 personas</div>
+        </button>
+        <button class="predefined-order-btn w-full px-4 py-3 border border-gray-300 hover:border-red-600 hover:bg-red-50 transition-colors text-left rounded" data-order-id="oferta-10">
+          <div class="font-medium">Oferta para 10 personas</div>
+        </button>
+        <button class="predefined-order-btn w-full px-4 py-3 border border-gray-300 hover:border-red-600 hover:bg-red-50 transition-colors text-left rounded" data-order-id="oferta-15">
+          <div class="font-medium">Oferta para 15 personas</div>
+        </button>
+      </div>
+    `;
+    
+    confirmBtn.style.display = 'none';
+    cancelBtn.textContent = 'Cancelar';
+
+    modal.classList.remove('hidden');
+
+    const handleOrderSelect = (e) => {
+      const btn = e.target.closest('.predefined-order-btn');
+      if (btn) {
+        const orderId = btn.dataset.orderId;
+        modal.classList.add('hidden');
+        messageEl.innerHTML = '';
+        confirmBtn.style.display = '';
+        document.querySelectorAll('.predefined-order-btn').forEach(b => {
+          b.removeEventListener('click', handleOrderSelect);
+        });
+        cancelBtn.removeEventListener('click', handleCancel);
+        modal.removeEventListener('click', handleBackgroundClick);
+        resolve(orderId);
+      }
+    };
+
+    const handleCancel = () => {
+      modal.classList.add('hidden');
+      messageEl.innerHTML = '';
+      confirmBtn.style.display = '';
+      document.querySelectorAll('.predefined-order-btn').forEach(b => {
+        b.removeEventListener('click', handleOrderSelect);
+      });
+      cancelBtn.removeEventListener('click', handleCancel);
+      modal.removeEventListener('click', handleBackgroundClick);
+      resolve(null);
+    };
+
+    // Wait for DOM to update before attaching listeners
+    setTimeout(() => {
+      document.querySelectorAll('.predefined-order-btn').forEach(btn => {
+        btn.addEventListener('click', handleOrderSelect);
+      });
+      cancelBtn.addEventListener('click', handleCancel);
+
+      // Close on background click
+      const handleBackgroundClick = (e) => {
+        if (e.target === modal) {
+          handleCancel();
+        }
+      };
+      modal.addEventListener('click', handleBackgroundClick);
+    }, 10);
+  });
+}
