@@ -803,6 +803,16 @@ async function printOrder() {
 
 // Generate product summary report
 async function generateProductReport() {
+  // Show date picker
+  const selectedDate = await showDatePicker(
+    'Reporte de Productos',
+    'Seleccione la fecha de entrega para el reporte:'
+  );
+  
+  if (!selectedDate) {
+    return; // User cancelled
+  }
+  
   showSpinner('Generando reporte...');
   try {
     // Get all orders
@@ -815,10 +825,28 @@ async function generateProductReport() {
       return;
     }
     
+    // Parse selected date (YYYY-MM-DD)
+    const selectedDateObj = new Date(selectedDate);
+    const selectedDateStart = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 0, 0, 0, 0).getTime();
+    const selectedDateEnd = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 23, 59, 59, 999).getTime();
+    
+    // Filter orders by delivery date
+    const filteredOrders = Object.values(orders).filter(order => {
+      if (!order.deliveryDate) return false;
+      const deliveryDate = order.deliveryDate;
+      return deliveryDate >= selectedDateStart && deliveryDate <= selectedDateEnd;
+    });
+    
+    if (filteredOrders.length === 0) {
+      hideSpinner();
+      await showInfo('No hay pedidos con fecha de entrega ' + formatDate24h(selectedDateObj));
+      return;
+    }
+    
     // Aggregate products by name
     const productSummary = {};
     
-    Object.values(orders).forEach(order => {
+    filteredOrders.forEach(order => {
       if (order.items && Array.isArray(order.items)) {
         order.items.forEach(item => {
           const productName = item.productName;

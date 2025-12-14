@@ -153,3 +153,67 @@ function hideSpinner() {
   spinner.classList.add('hidden');
 }
 
+// Show date picker modal
+function showDatePicker(title, message) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('custom-modal');
+    const titleEl = document.getElementById('modal-title');
+    const messageEl = document.getElementById('modal-message');
+    const confirmBtn = document.getElementById('modal-confirm');
+    const cancelBtn = document.getElementById('modal-cancel');
+
+    titleEl.textContent = title;
+    messageEl.innerHTML = message;
+    
+    // Create date input
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.id = 'report-date-input';
+    dateInput.className = 'w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm sm:text-base rounded mt-2';
+    
+    // Set default to today
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    dateInput.value = `${year}-${month}-${day}`;
+    
+    // Insert date input after message
+    messageEl.appendChild(dateInput);
+    
+    confirmBtn.textContent = 'Generar';
+    cancelBtn.textContent = 'Cancelar';
+
+    modal.classList.remove('hidden');
+
+    const handleConfirm = () => {
+      const selectedDate = dateInput.value;
+      modal.classList.add('hidden');
+      messageEl.innerHTML = ''; // Clean up
+      confirmBtn.removeEventListener('click', handleConfirm);
+      cancelBtn.removeEventListener('click', handleCancel);
+      resolve(selectedDate);
+    };
+
+    const handleCancel = () => {
+      modal.classList.add('hidden');
+      messageEl.innerHTML = ''; // Clean up
+      confirmBtn.removeEventListener('click', handleConfirm);
+      cancelBtn.removeEventListener('click', handleCancel);
+      resolve(null);
+    };
+
+    confirmBtn.addEventListener('click', handleConfirm);
+    cancelBtn.addEventListener('click', handleCancel);
+
+    // Close on background click
+    const handleBackgroundClick = (e) => {
+      if (e.target === modal) {
+        handleCancel();
+        modal.removeEventListener('click', handleBackgroundClick);
+      }
+    };
+    modal.addEventListener('click', handleBackgroundClick);
+  });
+}
+
