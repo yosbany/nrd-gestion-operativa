@@ -74,7 +74,7 @@ function loadOrders() {
       
       item.innerHTML = `
         ${status === 'Pendiente' ? `
-        <button class="complete-order-card-btn absolute top-2 right-2 sm:top-3 sm:right-3 px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 text-white rounded-full shadow-md hover:bg-green-700 transition-colors uppercase tracking-wider text-xs font-light z-10"
+        <button class="complete-order-card-btn absolute bottom-2 right-2 sm:bottom-3 sm:right-3 px-2 py-1 sm:px-2.5 sm:py-1.5 bg-green-600 text-white rounded shadow-md hover:bg-green-700 transition-colors uppercase tracking-wider text-xs font-light z-10"
                 data-order-id="${id}"
                 onclick="event.stopPropagation(); toggleOrderStatus('${id}', '${status}')">
           ✓
