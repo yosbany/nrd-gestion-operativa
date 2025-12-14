@@ -7,19 +7,19 @@ function getUserRef() {
   return database.ref(`users/${user.uid}`);
 }
 
-// Get clients reference
+// Get clients reference (shared across all users)
 function getClientsRef() {
-  return getUserRef().child('clients');
+  return database.ref('clients');
 }
 
-// Get products reference
+// Get products reference (shared across all users)
 function getProductsRef() {
-  return getUserRef().child('products');
+  return database.ref('products');
 }
 
-// Get orders reference
+// Get orders reference (shared across all users)
 function getOrdersRef() {
-  return getUserRef().child('orders');
+  return database.ref('orders');
 }
 
 // Get client by ID

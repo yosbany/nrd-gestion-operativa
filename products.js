@@ -291,10 +291,10 @@ async function initializeProducts() {
     { name: "MEDIALUNITAS - DULCES", price: 13.00 },
     { name: "MEDIALUNITAS - SALADAS", price: 13.00 },
     { name: "ALEMANITAS", price: 15.00 },
-    { name: "PAN TORTUGA - 65 G", price: 0 },
-    { name: "PAN MINON BLANDO", price: 0 },
-    { name: "PAN MINON BLANDO CON SESAMO", price: 0 },
-    { name: "PAN DE PANCHO", price: 0 }
+    { name: "PAN TORTUGA - 65 G", price: 8 },
+    { name: "PAN MINON BLANDO", price: 4 },
+    { name: "PAN MINON BLANDO CON SESAMO", price: 5 },
+    { name: "PAN DE PANCHO", price: 6 }
   ];
 
   showSpinner('Inicializando productos...');
