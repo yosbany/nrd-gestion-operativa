@@ -51,6 +51,10 @@ function switchView(viewName) {
     if (newOrderForm) {
       newOrderForm.classList.add('hidden');
     }
+    const dateFilter = document.getElementById('date-filter-container');
+    if (dateFilter) {
+      dateFilter.style.display = 'flex';
+    }
   } else if (viewName === 'clients') {
     loadClients();
     hideClientForm();

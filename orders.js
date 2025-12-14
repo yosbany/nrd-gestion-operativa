@@ -142,10 +142,12 @@ async function showNewOrderForm() {
   const form = document.getElementById('new-order-form');
   const list = document.getElementById('orders-list');
   const header = document.querySelector('#orders-view .flex.flex-col');
+  const dateFilter = document.getElementById('date-filter-container');
   
   form.classList.remove('hidden');
   if (list) list.style.display = 'none';
   if (header) header.style.display = 'none';
+  if (dateFilter) dateFilter.style.display = 'none';
   
   // Clear editing state
   delete form.dataset.editingOrderId;
@@ -313,10 +315,12 @@ function hideNewOrderForm() {
   const form = document.getElementById('new-order-form');
   const list = document.getElementById('orders-list');
   const header = document.querySelector('#orders-view .flex.flex-col');
+  const dateFilter = document.getElementById('date-filter-container');
   
   form.classList.add('hidden');
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
+  if (dateFilter) dateFilter.style.display = 'flex';
 }
 
 // Product search functionality
@@ -636,10 +640,12 @@ async function viewOrder(orderId) {
     const list = document.getElementById('orders-list');
     const header = document.querySelector('#orders-view .flex.flex-col');
     const form = document.getElementById('new-order-form');
+    const dateFilter = document.getElementById('date-filter-container');
     
     if (list) list.style.display = 'none';
     if (header) header.style.display = 'none';
     if (form) form.classList.add('hidden');
+    if (dateFilter) dateFilter.style.display = 'none';
     document.getElementById('order-detail').classList.remove('hidden');
 
     const date = new Date(order.createdAt);
@@ -734,10 +740,12 @@ function backToOrders() {
   const list = document.getElementById('orders-list');
   const header = document.querySelector('#orders-view .flex.flex-col');
   const detail = document.getElementById('order-detail');
+  const dateFilter = document.getElementById('date-filter-container');
   
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
+  if (dateFilter) dateFilter.style.display = 'flex';
 }
 
 // Toggle order status (Pendiente/Completado)
