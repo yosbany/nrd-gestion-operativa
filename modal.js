@@ -228,26 +228,41 @@ function showPredefinedOrdersModal() {
 
     titleEl.textContent = 'Seleccionar Pedido Precargado';
     messageEl.innerHTML = `
-      <div class="space-y-2">
-        <button class="predefined-order-btn w-full px-4 py-3 border border-gray-300 hover:border-red-600 hover:bg-red-50 transition-colors text-left rounded" data-order-id="">
-          <div class="font-medium">Crear pedido vacío</div>
-        </button>
-        <button class="predefined-order-btn w-full px-4 py-3 border border-gray-300 hover:border-red-600 hover:bg-red-50 transition-colors text-left rounded" data-order-id="oferta-5">
-          <div class="font-medium">Oferta para 5 personas</div>
-        </button>
-        <button class="predefined-order-btn w-full px-4 py-3 border border-gray-300 hover:border-red-600 hover:bg-red-50 transition-colors text-left rounded" data-order-id="oferta-10">
-          <div class="font-medium">Oferta para 10 personas</div>
-        </button>
-        <button class="predefined-order-btn w-full px-4 py-3 border border-gray-300 hover:border-red-600 hover:bg-red-50 transition-colors text-left rounded" data-order-id="oferta-15">
-          <div class="font-medium">Oferta para 15 personas</div>
-        </button>
+      <div class="space-y-3">
+        <label class="block text-sm text-gray-700 mb-2">Seleccione una opción:</label>
+        <select id="predefined-order-select" class="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm sm:text-base rounded">
+          <option value="">Crear pedido vacío</option>
+          <option value="oferta-5">Oferta para 5 personas</option>
+          <option value="oferta-10">Oferta para 10 personas</option>
+          <option value="oferta-15">Oferta para 15 personas</option>
+        </select>
       </div>
     `;
     
-    confirmBtn.style.display = 'none';
+    confirmBtn.textContent = 'Continuar';
     cancelBtn.textContent = 'Cancelar';
 
     modal.classList.remove('hidden');
+
+    const handleConfirm = () => {
+      const select = document.getElementById('predefined-order-select');
+      const selectedValue = select ? select.value : '';
+      modal.classList.add('hidden');
+      messageEl.innerHTML = '';
+      confirmBtn.removeEventListener('click', handleConfirm);
+      cancelBtn.removeEventListener('click', handleCancel);
+      modal.removeEventListener('click', handleBackgroundClick);
+      resolve(selectedValue);
+    };
+
+    const handleCancel = () => {
+      modal.classList.add('hidden');
+      messageEl.innerHTML = '';
+      confirmBtn.removeEventListener('click', handleConfirm);
+      cancelBtn.removeEventListener('click', handleCancel);
+      modal.removeEventListener('click', handleBackgroundClick);
+      resolve(null);
+    };
 
     // Close on background click
     const handleBackgroundClick = (e) => {
@@ -256,41 +271,22 @@ function showPredefinedOrdersModal() {
       }
     };
 
-    const handleOrderSelect = (e) => {
-      const btn = e.target.closest('.predefined-order-btn');
-      if (btn) {
-        const orderId = btn.dataset.orderId;
-        modal.classList.add('hidden');
-        messageEl.innerHTML = '';
-        confirmBtn.style.display = '';
-        document.querySelectorAll('.predefined-order-btn').forEach(b => {
-          b.removeEventListener('click', handleOrderSelect);
-        });
-        cancelBtn.removeEventListener('click', handleCancel);
-        modal.removeEventListener('click', handleBackgroundClick);
-        resolve(orderId);
-      }
-    };
-
-    const handleCancel = () => {
-      modal.classList.add('hidden');
-      messageEl.innerHTML = '';
-      confirmBtn.style.display = '';
-      document.querySelectorAll('.predefined-order-btn').forEach(b => {
-        b.removeEventListener('click', handleOrderSelect);
-      });
-      cancelBtn.removeEventListener('click', handleCancel);
-      modal.removeEventListener('click', handleBackgroundClick);
-      resolve(null);
-    };
-
     // Wait for DOM to update before attaching listeners
     setTimeout(() => {
-      document.querySelectorAll('.predefined-order-btn').forEach(btn => {
-        btn.addEventListener('click', handleOrderSelect);
-      });
+      confirmBtn.addEventListener('click', handleConfirm);
       cancelBtn.addEventListener('click', handleCancel);
       modal.addEventListener('click', handleBackgroundClick);
+      
+      // Allow Enter key to confirm
+      const select = document.getElementById('predefined-order-select');
+      if (select) {
+        select.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleConfirm();
+          }
+        });
+      }
     }, 10);
   });
 }
