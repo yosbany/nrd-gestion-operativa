@@ -278,17 +278,13 @@ async function showNewOrderForm() {
     
     // Scroll to top when focusing on mobile to avoid keyboard covering the input
     searchInput.addEventListener('focus', () => {
-      // Small delay to ensure the keyboard animation starts
+      // Scroll immediately to top of page to ensure input is fully visible above keyboard
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Also scroll the input itself into view after a small delay to account for keyboard
       setTimeout(() => {
-        // Scroll to the top of the page or header to ensure input is fully visible
-        const header = document.querySelector('header');
-        if (header) {
-          header.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else {
-          // Fallback: scroll to top of page
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      }, 100);
+        searchInput.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+      }, 300);
     });
     
     // Keyboard navigation for product search
