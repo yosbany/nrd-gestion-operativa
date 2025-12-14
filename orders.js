@@ -1191,6 +1191,9 @@ async function generateProductReport() {
     // Save PDF
     doc.save(filename);
     
+    // Small delay to ensure PDF download starts
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     // Ask if user wants to send via WhatsApp
     const sendWhatsApp = await showConfirmWithOptions(
       'Reporte Generado',
@@ -1214,9 +1217,10 @@ async function generateProductReport() {
       // Open WhatsApp (user needs to select contact)
       const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
+      await showSuccess('Reporte generado y WhatsApp abierto');
+    } else {
+      await showSuccess('Reporte generado exitosamente');
     }
-    
-    await showSuccess('Reporte generado exitosamente');
   } catch (error) {
     hideSpinner();
     console.error('Error generating report:', error);
