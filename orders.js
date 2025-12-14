@@ -24,7 +24,7 @@ function loadOrders() {
     const orders = snapshot.val() || {};
 
     if (Object.keys(orders).length === 0) {
-      ordersList.innerHTML = '<p class="text-center text-gray-600 py-8">No hay pedidos registrados</p>';
+      ordersList.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No hay pedidos registrados</p>';
       return;
     }
 
@@ -37,21 +37,21 @@ function loadOrders() {
 
     sortedOrders.forEach(([id, order]) => {
       const item = document.createElement('div');
-      item.className = 'border border-gray-200 p-6 hover:border-black transition-colors cursor-pointer';
+      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-black transition-colors cursor-pointer';
       const date = new Date(order.createdAt);
       item.innerHTML = `
-        <div class="flex justify-between items-center mb-3">
-          <div class="text-lg font-light">${escapeHtml(order.clientName || 'Cliente desconocido')}</div>
-          <div class="text-lg font-light">$${parseFloat(order.total || 0).toFixed(2)}</div>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
+          <div class="text-base sm:text-lg font-light">${escapeHtml(order.clientName || 'Cliente desconocido')}</div>
+          <div class="text-base sm:text-lg font-light">$${parseFloat(order.total || 0).toFixed(2)}</div>
         </div>
-        <div class="text-sm text-gray-600 space-y-1">
+        <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
           <div>Fecha: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}</div>
           <div>Estado: ${escapeHtml(order.status || 'Pendiente')}</div>
           <div>Productos: ${order.items ? order.items.length : 0}</div>
         </div>
-        <div class="flex gap-3 mt-4 pt-4 border-t border-gray-200">
-          <button class="px-4 py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-xs font-light view-order" data-id="${id}">Ver</button>
-          <button class="px-4 py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light delete-order" data-id="${id}">Eliminar</button>
+        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
+          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-xs font-light view-order" data-id="${id}">Ver</button>
+          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-black transition-colors uppercase tracking-wider text-xs font-light delete-order" data-id="${id}">Eliminar</button>
         </div>
       `;
       ordersList.appendChild(item);
@@ -135,20 +135,20 @@ async function renderOrderProducts() {
     if (!product) return;
 
     const div = document.createElement('div');
-    div.className = 'flex gap-3 items-center py-4 border-b border-gray-200 mb-3';
+    div.className = 'flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center py-3 sm:py-4 border-b border-gray-200 mb-2 sm:mb-3';
     const productTotal = (product.price * item.quantity).toFixed(2);
     
     div.innerHTML = `
       <select onchange="updateOrderProduct(${index}, 'productId', this.value)" required 
-        class="flex-2 px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent">
+        class="flex-1 sm:flex-2 px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent text-sm sm:text-base">
         ${products.map(p => 
           `<option value="${p.id}" ${p.id === item.productId ? 'selected' : ''}>${escapeHtml(p.name)} - $${parseFloat(p.price).toFixed(2)}</option>`
         ).join('')}
       </select>
       <input type="number" min="1" value="${item.quantity}" onchange="updateOrderProduct(${index}, 'quantity', this.value)" required 
-        class="flex-1 max-w-24 px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent text-center">
-      <div class="flex-1 text-right font-light text-base text-black">$${productTotal}</div>
-      <button type="button" class="px-2 py-2 border border-gray-300 hover:border-black transition-colors text-xl font-light remove-product" onclick="removeProductFromOrder(${index})">×</button>
+        class="flex-1 sm:flex-none sm:max-w-20 px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-black bg-transparent text-center text-sm sm:text-base">
+      <div class="flex-1 text-left sm:text-right font-light text-sm sm:text-base text-black">$${productTotal}</div>
+      <button type="button" class="self-start sm:self-auto px-2 sm:px-2 py-1.5 sm:py-2 border border-gray-300 hover:border-black transition-colors text-lg sm:text-xl font-light remove-product" onclick="removeProductFromOrder(${index})">×</button>
     `;
     container.appendChild(div);
   });
@@ -246,37 +246,37 @@ async function viewOrder(orderId) {
 
     const date = new Date(order.createdAt);
     const itemsHtml = order.items.map(item => `
-      <div class="flex justify-between py-4 border-b border-gray-200">
-        <div>
-          <div class="font-light">${escapeHtml(item.productName)}</div>
-          <div class="text-sm text-gray-600">
+      <div class="flex justify-between py-3 sm:py-4 border-b border-gray-200">
+        <div class="flex-1">
+          <div class="font-light text-sm sm:text-base">${escapeHtml(item.productName)}</div>
+          <div class="text-xs sm:text-sm text-gray-600">
             ${item.quantity} x $${parseFloat(item.price).toFixed(2)}
           </div>
         </div>
-        <div class="font-light">$${(item.price * item.quantity).toFixed(2)}</div>
+        <div class="font-light text-sm sm:text-base">$${(item.price * item.quantity).toFixed(2)}</div>
       </div>
     `).join('');
 
     document.getElementById('order-detail-content').innerHTML = `
-      <div class="py-6 mb-6">
-        <div class="flex justify-between py-3 border-b border-gray-200 text-base">
+      <div class="py-4 sm:py-6 mb-4 sm:mb-6">
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base">
           <span class="text-gray-600 font-light">Cliente:</span>
           <span class="font-light">${escapeHtml(order.clientName)}</span>
         </div>
-        <div class="flex justify-between py-3 border-b border-gray-200 text-base">
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base">
           <span class="text-gray-600 font-light">Fecha:</span>
           <span class="font-light">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>
         </div>
-        <div class="flex justify-between py-3 border-b border-gray-200 text-base">
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base">
           <span class="text-gray-600 font-light">Estado:</span>
           <span class="font-light">${escapeHtml(order.status)}</span>
         </div>
       </div>
-      <div class="mt-6">
-        <h4 class="mb-4 text-xs uppercase tracking-wider text-gray-600">Productos:</h4>
+      <div class="mt-4 sm:mt-6">
+        <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Productos:</h4>
         ${itemsHtml}
       </div>
-      <div class="flex justify-between mt-6 pt-6 border-t border-black text-xl font-light">
+      <div class="flex justify-between mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-black text-lg sm:text-xl font-light">
         <span>Total:</span>
         <span>$${parseFloat(order.total).toFixed(2)}</span>
       </div>
