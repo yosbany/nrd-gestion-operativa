@@ -4,6 +4,21 @@ let ordersListener = null;
 let currentOrderProducts = [];
 let currentOrderClient = null;
 
+// Format date in 24-hour format
+function formatDate24h(date) {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+// Format time in 24-hour format
+function formatTime24h(date) {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
 // Load orders
 function loadOrders() {
   const ordersList = document.getElementById('orders-list');
@@ -46,7 +61,7 @@ function loadOrders() {
           <div class="text-base sm:text-lg font-light text-red-600">$${parseFloat(order.total || 0).toFixed(2)}</div>
         </div>
         <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
-          <div>Fecha: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}</div>
+          <div>Fecha: ${formatDate24h(date)} ${formatTime24h(date)}</div>
           <div>Estado: ${escapeHtml(order.status || 'Pendiente')}</div>
           <div>Productos: ${order.items ? order.items.length : 0}</div>
         </div>
@@ -425,15 +440,17 @@ async function viewOrder(orderId) {
     const date = new Date(order.createdAt);
     const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
     
-    // Format delivery date for input
+    // Format delivery date and time for inputs
     let deliveryDateValue = '';
+    let deliveryTimeValue = '12:00';
     if (deliveryDate) {
       const year = deliveryDate.getFullYear();
       const month = String(deliveryDate.getMonth() + 1).padStart(2, '0');
       const day = String(deliveryDate.getDate()).padStart(2, '0');
       const hours = String(deliveryDate.getHours()).padStart(2, '0');
       const minutes = String(deliveryDate.getMinutes()).padStart(2, '0');
-      deliveryDateValue = `${year}-${month}-${day}T${hours}:${minutes}`;
+      deliveryDateValue = `${year}-${month}-${day}`;
+      deliveryTimeValue = `${hours}:${minutes}`;
     }
     
     const itemsHtml = order.items.map(item => `
@@ -456,7 +473,7 @@ async function viewOrder(orderId) {
         </div>
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base">
           <span class="text-gray-600 font-light">Fecha de Creación:</span>
-          <span class="font-light">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>
+          <span class="font-light">${formatDate24h(date)} ${formatTime24h(date)}</span>
         </div>
         <div class="flex flex-col py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base gap-2">
           <div class="flex justify-between items-center">
