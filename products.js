@@ -266,74 +266,84 @@ function loadProductsForOrder() {
 // Initialize default products
 async function initializeProducts() {
   const defaultProducts = [
-    'Sándwich Copetín (Blanco/Integral) Jamón y Queso',
-    'Sándwich Copetín (Blanco/Integral) Jamón y Choclo',
-    'Sándwich Copetín (Blanco/Integral) Atún y Tomate',
-    'Sándwich Copetín (Blanco/Integral) Atún y Lechuga',
-    'Sándwich Copetín (Blanco/Integral) Olímpicos',
-    'Sándwich Copetín (Blanco/Integral) Jamón y Huevo Duro',
-    'Sándwich Copetín (Blanco/Integral) Pollo y Jardinera',
-    'Sándwich Copetín (Blanco/Integral) Pollo y Aceitunas',
-    'Sándwich Copetín (Blanco/Integral) Lomito y Manteca',
-    'Sándwich Copetín (Blanco/Integral) Bondiola y Manteca',
-    'Sándwich Copetín (Blanco/Integral) Jamón y Tomate',
-    'Sándwich Copetín (Blanco/Integral) Doble Queso y Manteca',
-    'Sándwich Copetín (Blanco/Integral) Jamón y Palmito',
-    'Sándwich Copetín (Blanco/Integral) Salme y Queso',
-    'Bocaditos de Pizza',
-    'Pebetes de Jamón y Queso',
-    'Empanaditas de Carne',
-    'Empanaditas de Pollo',
-    'Empanaditas de Jamón y Queso',
-    'Medialunitas de Jamón y Queso(Dulce o Salada)',
-    'Medialunitas Dulces o Saladas Comunes',
-    'Bocaditos de Tarta de Jamón y Queso',
-    'Bocaditos de Tarta Pascualina',
-    'Alemanitas',
-    'Pan Tortuga de 65gr',
-    'Pan Miñon Blando',
-    'Pan Miñon Blando con Sesamo',
-    'Pan de Pancho'
+    { name: "SANDWICH COPETIN - JAMON Y QUESO", price: 0 },
+    { name: "SANDWICH COPETIN - JAMON Y CHOCLO", price: 0 },
+    { name: "SANDWICH COPETIN - ATUN Y TOMATE", price: 0 },
+    { name: "SANDWICH COPETIN - ATUN Y LECHUGA", price: 0 },
+    { name: "SANDWICH COPETIN - OLIMPICO", price: 0 },
+    { name: "SANDWICH COPETIN - JAMON Y HUEVO", price: 0 },
+    { name: "SANDWICH COPETIN - POLLO Y JARDINERA", price: 0 },
+    { name: "SANDWICH COPETIN - POLLO Y ACEITUNAS", price: 0 },
+    { name: "SANDWICH COPETIN - LOMITO Y MANTECA", price: 0 },
+    { name: "SANDWICH COPETIN - BONDIOLA Y MANTECA", price: 0 },
+    { name: "SANDWICH COPETIN - JAMON Y TOMATE", price: 0 },
+    { name: "SANDWICH COPETIN - DOBLE QUESO", price: 0 },
+    { name: "SANDWICH COPETIN - JAMON Y PALMITOS", price: 0 },
+    { name: "SANDWICH COPETIN - SALAME Y QUESO", price: 0 },
+    { name: "BOCADITOS DE PIZZA", price: 0 },
+    { name: "PEBETE - JAMON Y QUESO", price: 0 },
+    { name: "EMPANADITAS - CARNE", price: 0 },
+    { name: "EMPANADITAS - POLLO", price: 0 },
+    { name: "EMPANADITAS - JAMON Y QUESO", price: 0 },
+    { name: "BOCADITOS DE TARTA - JAMON Y QUESO", price: 0 },
+    { name: "BOCADITOS DE TARTA - PASCUALINA", price: 0 },
+    { name: "MEDIALUNITAS - JAMON Y QUESO", price: 0 },
+    { name: "MEDIALUNITAS - DULCES", price: 0 },
+    { name: "MEDIALUNITAS - SALADAS", price: 0 },
+    { name: "ALEMANITAS", price: 0 },
+    { name: "PAN TORTUGA - 65 G", price: 0 },
+    { name: "PAN MINON BLANDO", price: 0 },
+    { name: "PAN MINON BLANDO CON SESAMO", price: 0 },
+    { name: "PAN DE PANCHO", price: 0 }
   ];
-
-  const confirmed = await showConfirm(
-    'Inicializar Productos',
-    `¿Desea inicializar ${defaultProducts.length} productos? Los productos se crearán con precio $0.00 y podrá editarlos después.`
-  );
-  if (!confirmed) {
-    return;
-  }
 
   showSpinner('Inicializando productos...');
   try {
-    // Check existing products
+    // Get existing products
     const snapshot = await getProductsRef().once('value');
     const existingProducts = snapshot.val() || {};
-    const existingNames = Object.values(existingProducts).map(p => p.name.toLowerCase());
+    
+    // Create a map of existing products by name (lowercase) to their IDs
+    const existingProductsMap = {};
+    Object.entries(existingProducts).forEach(([id, product]) => {
+      existingProductsMap[product.name.toLowerCase()] = { id, ...product };
+    });
 
     let added = 0;
-    let skipped = 0;
+    let updated = 0;
 
-    for (const productName of defaultProducts) {
-      // Skip if product already exists
-      if (existingNames.includes(productName.toLowerCase())) {
-        skipped++;
-        continue;
+    for (const product of defaultProducts) {
+      const productNameLower = product.name.toLowerCase();
+      
+      // If product exists, update only the price
+      if (existingProductsMap[productNameLower]) {
+        await updateProduct(existingProductsMap[productNameLower].id, {
+          price: product.price
+        });
+        updated++;
+      } else {
+        // If product doesn't exist, create it
+        await createProduct({
+          name: product.name,
+          price: product.price,
+          active: true
+        });
+        added++;
       }
-
-      await createProduct({
-        name: productName,
-        price: 0,
-        active: true
-      });
-      added++;
     }
 
     hideSpinner();
-    if (added > 0) {
-      await showSuccess(`Se agregaron ${added} productos exitosamente.${skipped > 0 ? ` ${skipped} productos ya existían y fueron omitidos.` : ''}`);
-    } else if (skipped > 0) {
-      await showInfo(`Todos los productos ya existen en la base de datos.`);
+    let message = '';
+    if (added > 0 && updated > 0) {
+      message = `Se agregaron ${added} productos y se actualizaron ${updated} productos existentes.`;
+    } else if (added > 0) {
+      message = `Se agregaron ${added} productos exitosamente.`;
+    } else if (updated > 0) {
+      message = `Se actualizaron ${updated} productos existentes.`;
+    }
+    
+    if (message) {
+      await showSuccess(message);
     }
   } catch (error) {
     hideSpinner();

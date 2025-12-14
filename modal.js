@@ -1,7 +1,7 @@
 // Custom Modal and Alert System
 
 // Show confirmation modal
-function showConfirm(title, message) {
+function showConfirm(title, message, confirmText = 'Confirmar', cancelText = 'Cancelar') {
   return new Promise((resolve) => {
     const modal = document.getElementById('custom-modal');
     const titleEl = document.getElementById('modal-title');
@@ -11,6 +11,8 @@ function showConfirm(title, message) {
 
     titleEl.textContent = title;
     messageEl.textContent = message;
+    confirmBtn.textContent = confirmText;
+    cancelBtn.textContent = cancelText;
 
     modal.classList.remove('hidden');
 
@@ -36,6 +38,53 @@ function showConfirm(title, message) {
       if (e.target === modal) {
         handleCancel();
         modal.removeEventListener('click', handleBackgroundClick);
+      }
+    };
+    modal.addEventListener('click', handleBackgroundClick);
+  });
+}
+
+// Show confirmation modal with two options (returns 'option1', 'option2', or null)
+function showConfirmWithOptions(title, message, option1Text, option2Text) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('custom-modal');
+    const titleEl = document.getElementById('modal-title');
+    const messageEl = document.getElementById('modal-message');
+    const confirmBtn = document.getElementById('modal-confirm');
+    const cancelBtn = document.getElementById('modal-cancel');
+
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    confirmBtn.textContent = option1Text;
+    cancelBtn.textContent = option2Text;
+
+    modal.classList.remove('hidden');
+
+    const handleOption1 = () => {
+      modal.classList.add('hidden');
+      confirmBtn.removeEventListener('click', handleOption1);
+      cancelBtn.removeEventListener('click', handleOption2);
+      resolve('option1');
+    };
+
+    const handleOption2 = () => {
+      modal.classList.add('hidden');
+      confirmBtn.removeEventListener('click', handleOption1);
+      cancelBtn.removeEventListener('click', handleOption2);
+      resolve('option2');
+    };
+
+    confirmBtn.addEventListener('click', handleOption1);
+    cancelBtn.addEventListener('click', handleOption2);
+
+    // Close on background click - cancels
+    const handleBackgroundClick = (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+        confirmBtn.removeEventListener('click', handleOption1);
+        cancelBtn.removeEventListener('click', handleOption2);
+        modal.removeEventListener('click', handleBackgroundClick);
+        resolve(null);
       }
     };
     modal.addEventListener('click', handleBackgroundClick);
