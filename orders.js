@@ -75,19 +75,23 @@ async function showNewOrderForm() {
   document.getElementById('product-search-results').classList.add('hidden');
   document.getElementById('order-notes').value = '';
   
-  // Set default delivery date (tomorrow at 12:00)
+  // Set default delivery date (tomorrow)
   const deliveryDateInput = document.getElementById('order-delivery-date');
+  const deliveryTimeInput = document.getElementById('order-delivery-time');
+  
   if (deliveryDateInput) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(12, 0, 0, 0);
-    // Format for datetime-local input (YYYY-MM-DDTHH:mm)
+    // Format for date input (YYYY-MM-DD)
     const year = tomorrow.getFullYear();
     const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
     const day = String(tomorrow.getDate()).padStart(2, '0');
-    const hours = String(tomorrow.getHours()).padStart(2, '0');
-    const minutes = String(tomorrow.getMinutes()).padStart(2, '0');
-    deliveryDateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    deliveryDateInput.value = `${year}-${month}-${day}`;
+  }
+  
+  // Set default delivery time (12:00)
+  if (deliveryTimeInput) {
+    deliveryTimeInput.value = '12:00';
   }
   
   await loadAvailableProducts();
@@ -360,11 +364,18 @@ async function saveOrder() {
     // Get observations
     const notes = document.getElementById('order-notes').value.trim();
     
-    // Get delivery date
+    // Get delivery date and time
     const deliveryDateInput = document.getElementById('order-delivery-date');
+    const deliveryTimeInput = document.getElementById('order-delivery-time');
     let deliveryDate = null;
+    
     if (deliveryDateInput && deliveryDateInput.value) {
-      deliveryDate = new Date(deliveryDateInput.value).getTime();
+      const dateValue = deliveryDateInput.value;
+      const timeValue = deliveryTimeInput ? deliveryTimeInput.value : '12:00';
+      
+      // Combine date and time
+      const dateTimeString = `${dateValue}T${timeValue}`;
+      deliveryDate = new Date(dateTimeString).getTime();
     }
 
     // Create order
@@ -447,10 +458,17 @@ async function viewOrder(orderId) {
           <span class="text-gray-600 font-light">Fecha de Creación:</span>
           <span class="font-light">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>
         </div>
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base gap-2">
-          <span class="text-gray-600 font-light">Fecha y Hora de Entrega:</span>
-          <input type="datetime-local" id="order-detail-delivery-date" value="${deliveryDateValue}" step="60"
-            class="px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm rounded">
+        <div class="flex flex-col py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base gap-2">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 font-light">Fecha de Entrega:</span>
+            <input type="date" id="order-detail-delivery-date" value="${deliveryDateValue}"
+              class="px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm rounded">
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 font-light">Hora de Entrega:</span>
+            <input type="time" id="order-detail-delivery-time" value="${deliveryTimeValue}" step="60"
+              class="px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm rounded">
+          </div>
         </div>
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base">
           <span class="text-gray-600 font-light">Estado:</span>
@@ -477,24 +495,39 @@ async function viewOrder(orderId) {
     document.getElementById('order-detail').dataset.orderId = orderId;
     document.getElementById('order-detail').dataset.orderData = JSON.stringify(order);
     
-    // Attach delivery date change handler
+    // Attach delivery date and time change handlers
     const deliveryDateInput = document.getElementById('order-detail-delivery-date');
+    const deliveryTimeInput = document.getElementById('order-detail-delivery-time');
+    
+    const updateDeliveryDateTime = async () => {
+      const dateValue = deliveryDateInput ? deliveryDateInput.value : '';
+      const timeValue = deliveryTimeInput ? deliveryTimeInput.value : '12:00';
+      
+      let newDeliveryDate = null;
+      if (dateValue) {
+        const dateTimeString = `${dateValue}T${timeValue}`;
+        newDeliveryDate = new Date(dateTimeString).getTime();
+      }
+      
+      showSpinner('Actualizando fecha de entrega...');
+      try {
+        await updateOrder(orderId, { deliveryDate: newDeliveryDate });
+        hideSpinner();
+        // Update stored order data
+        order.deliveryDate = newDeliveryDate;
+        document.getElementById('order-detail').dataset.orderData = JSON.stringify(order);
+        await showSuccess('Fecha de entrega actualizada');
+      } catch (error) {
+        hideSpinner();
+        await showError('Error al actualizar fecha de entrega: ' + error.message);
+      }
+    };
+    
     if (deliveryDateInput) {
-      deliveryDateInput.addEventListener('change', async () => {
-        const newDeliveryDate = deliveryDateInput.value ? new Date(deliveryDateInput.value).getTime() : null;
-        showSpinner('Actualizando fecha de entrega...');
-        try {
-          await updateOrder(orderId, { deliveryDate: newDeliveryDate });
-          hideSpinner();
-          // Update stored order data
-          order.deliveryDate = newDeliveryDate;
-          document.getElementById('order-detail').dataset.orderData = JSON.stringify(order);
-          await showSuccess('Fecha de entrega actualizada');
-        } catch (error) {
-          hideSpinner();
-          await showError('Error al actualizar fecha de entrega: ' + error.message);
-        }
-      });
+      deliveryDateInput.addEventListener('change', updateDeliveryDateTime);
+    }
+    if (deliveryTimeInput) {
+      deliveryTimeInput.addEventListener('change', updateDeliveryDateTime);
     }
     
     // Attach delete button handler
