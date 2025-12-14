@@ -1036,7 +1036,7 @@ async function generateProductReport() {
   // Show date picker
   const selectedDate = await showDatePicker(
     'Reporte de Productos',
-    'Seleccione la fecha de entrega para el reporte:'
+    'Seleccione la fecha de entrega para filtrar los pedidos:'
   );
   
   if (!selectedDate) {
@@ -1190,6 +1190,32 @@ async function generateProductReport() {
     
     // Save PDF
     doc.save(filename);
+    
+    // Ask if user wants to send via WhatsApp
+    const sendWhatsApp = await showConfirmWithOptions(
+      'Reporte Generado',
+      '¿Desea enviar el reporte por WhatsApp?',
+      'Enviar WhatsApp',
+      'Solo Imprimir'
+    );
+    
+    if (sendWhatsApp === 'option1') {
+      // Generate WhatsApp message with same format as PDF
+      let message = `REPORTE DE PRODUCTOS\n`;
+      message += `Fecha entrega: ${formatDate24h(selectedDateObj)}\n\n`;
+      
+      // Add products
+      sortedProducts.forEach(([productName, quantity]) => {
+        message += `${quantity} x ${productName}\n`;
+      });
+      
+      message += `\nTOTAL: ${totalItems} productos`;
+      
+      // Open WhatsApp (user needs to select contact)
+      const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+    }
+    
     await showSuccess('Reporte generado exitosamente');
   } catch (error) {
     hideSpinner();
