@@ -79,22 +79,37 @@ async function showNewOrderForm() {
   updateOrderTotal();
   loadClientsForOrder();
   
-  // Setup product search input
+  // Setup product search input - remove old listeners first
   const searchInput = document.getElementById('product-search-input');
+  const resultsDiv = document.getElementById('product-search-results');
+  
   if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
+    // Remove previous listener if exists
+    if (searchInputHandler) {
+      searchInput.removeEventListener('input', searchInputHandler);
+    }
+    
+    // Add new listener
+    searchInputHandler = (e) => {
       clearTimeout(productSearchTimeout);
       productSearchTimeout = setTimeout(() => {
         searchProducts(e.target.value);
       }, 200);
-    });
+    };
+    searchInput.addEventListener('input', searchInputHandler);
+    
+    // Remove previous click outside handler if exists
+    if (clickOutsideHandler) {
+      document.removeEventListener('click', clickOutsideHandler);
+    }
     
     // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!searchInput.contains(e.target) && !document.getElementById('product-search-results').contains(e.target)) {
-        document.getElementById('product-search-results').classList.add('hidden');
+    clickOutsideHandler = (e) => {
+      if (resultsDiv && !searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+        resultsDiv.classList.add('hidden');
       }
-    });
+    };
+    document.addEventListener('click', clickOutsideHandler);
   }
 }
 
@@ -112,10 +127,18 @@ function hideNewOrderForm() {
 // Product search functionality
 let availableProducts = [];
 let productSearchTimeout = null;
+let searchInputHandler = null;
+let clickOutsideHandler = null;
 
 // Load available products for search
 async function loadAvailableProducts() {
-  availableProducts = await loadProductsForOrder();
+  try {
+    availableProducts = await loadProductsForOrder();
+    console.log('Products loaded for search:', availableProducts.length);
+  } catch (error) {
+    console.error('Error loading products for search:', error);
+    availableProducts = [];
+  }
 }
 
 // Search products
@@ -123,7 +146,10 @@ function searchProducts(query) {
   const searchInput = document.getElementById('product-search-input');
   const resultsDiv = document.getElementById('product-search-results');
   
-  if (!searchInput || !resultsDiv) return;
+  if (!searchInput || !resultsDiv) {
+    console.error('Search elements not found');
+    return;
+  }
   
   const searchTerm = query.toLowerCase().trim();
   
@@ -134,8 +160,10 @@ function searchProducts(query) {
   
   // Filter products
   const filtered = availableProducts.filter(product => 
-    product.name.toLowerCase().includes(searchTerm)
+    product.name && product.name.toLowerCase().includes(searchTerm)
   );
+  
+  console.log('Search query:', searchTerm, 'Found:', filtered.length, 'products');
   
   if (filtered.length === 0) {
     resultsDiv.innerHTML = '<div class="px-3 py-2 text-sm text-gray-500">No se encontraron productos</div>';
@@ -150,7 +178,7 @@ function searchProducts(query) {
          data-product-name="${escapeHtml(product.name)}" 
          data-product-price="${product.price}">
       <div class="font-light text-sm">${escapeHtml(product.name)}</div>
-      <div class="text-xs text-gray-600">$${parseFloat(product.price).toFixed(2)}</div>
+      <div class="text-xs text-gray-600">$${parseFloat(product.price || 0).toFixed(2)}</div>
     </div>
   `).join('');
   
