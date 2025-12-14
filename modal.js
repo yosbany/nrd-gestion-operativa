@@ -246,6 +246,13 @@ function showPredefinedOrdersModal() {
 
     modal.classList.remove('hidden');
 
+    // Close on background click
+    const handleBackgroundClick = (e) => {
+      if (e.target === modal) {
+        handleCancel();
+      }
+    };
+
     const handleOrderSelect = (e) => {
       const btn = e.target.closest('.predefined-order-btn');
       if (btn) {
@@ -280,13 +287,6 @@ function showPredefinedOrdersModal() {
         btn.addEventListener('click', handleOrderSelect);
       });
       cancelBtn.addEventListener('click', handleCancel);
-
-      // Close on background click
-      const handleBackgroundClick = (e) => {
-        if (e.target === modal) {
-          handleCancel();
-        }
-      };
       modal.addEventListener('click', handleBackgroundClick);
     }, 10);
   });
