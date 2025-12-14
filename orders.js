@@ -1181,15 +1181,14 @@ async function printOrder() {
 
 // Generate product summary report
 async function generateProductReport() {
-  // Show date picker
-  const selectedDate = await showDatePicker(
-    'Reporte de Productos',
-    'Seleccione la fecha de entrega para filtrar los pedidos:'
-  );
+  // Show report modal with date picker and action buttons
+  const result = await showReportModal();
   
-  if (!selectedDate) {
+  if (!result) {
     return; // User cancelled
   }
+  
+  const { selectedDate, action } = result;
   
   showSpinner('Generando reporte...');
   try {
