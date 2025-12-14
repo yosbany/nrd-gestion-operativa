@@ -571,6 +571,17 @@ async function viewOrder(orderId) {
       }
     }
     
+    // Show/hide complete button based on status (only show if Pendiente)
+    const completeBtn = document.getElementById('complete-order-btn');
+    if (completeBtn) {
+      if (status === 'Pendiente') {
+        completeBtn.classList.remove('hidden');
+        completeBtn.onclick = () => toggleOrderStatus(orderId, status);
+      } else {
+        completeBtn.classList.add('hidden');
+      }
+    }
+    
     // Attach delete button handler
     const deleteBtn = document.getElementById('delete-order-detail-btn');
     if (deleteBtn) {
@@ -587,6 +598,12 @@ function backToOrders() {
   const list = document.getElementById('orders-list');
   const header = document.querySelector('#orders-view .flex.flex-col');
   const detail = document.getElementById('order-detail');
+  
+  // Hide complete button when going back
+  const completeBtn = document.getElementById('complete-order-btn');
+  if (completeBtn) {
+    completeBtn.classList.add('hidden');
+  }
   
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
