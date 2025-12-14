@@ -234,23 +234,22 @@ async function renderOrderProducts() {
     if (!product) return;
 
     const div = document.createElement('div');
-    div.className = 'flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center py-2 sm:py-3 border border-gray-200 rounded p-2 sm:p-3 bg-gray-50';
+    div.className = 'flex flex-col gap-2 sm:gap-3 py-2 sm:py-3 border border-gray-200 rounded p-2 sm:p-3 bg-gray-50';
     const productTotal = (product.price * item.quantity).toFixed(2);
     
     div.innerHTML = `
-      <select onchange="updateOrderProduct(${index}, 'productId', this.value)" required 
-        class="flex-1 sm:flex-2 px-2 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm sm:text-base rounded">
-        ${products.map(p => 
-          `<option value="${p.id}" ${p.id === item.productId ? 'selected' : ''}>${escapeHtml(p.name)} - $${parseFloat(p.price).toFixed(2)}</option>`
-        ).join('')}
-      </select>
-      <div class="flex items-center gap-2">
-        <label class="text-xs text-gray-600 sm:hidden">Cant:</label>
+      <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center">
+        <select onchange="updateOrderProduct(${index}, 'productId', this.value)" required 
+          class="flex-1 sm:flex-2 px-2 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm sm:text-base rounded">
+          ${products.map(p => 
+            `<option value="${p.id}" ${p.id === item.productId ? 'selected' : ''}>${escapeHtml(p.name)} - $${parseFloat(p.price).toFixed(2)}</option>`
+          ).join('')}
+        </select>
         <input type="number" min="1" value="${item.quantity}" onchange="updateOrderProduct(${index}, 'quantity', this.value)" required 
           class="flex-1 sm:flex-none sm:max-w-20 px-2 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-center text-sm sm:text-base rounded">
+        <div class="flex-1 text-left sm:text-right font-light text-sm sm:text-base text-red-600 font-medium">$${productTotal}</div>
       </div>
-      <div class="flex-1 text-left sm:text-right font-light text-sm sm:text-base text-red-600 font-medium">$${productTotal}</div>
-      <button type="button" class="self-start sm:self-auto px-3 py-1.5 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors text-base sm:text-lg font-light rounded remove-product" onclick="removeProductFromOrder(${index})">×</button>
+      <button type="button" class="w-full px-4 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors text-sm sm:text-base font-light rounded remove-product" onclick="removeProductFromOrder(${index})">Quitar Producto</button>
     `;
     container.appendChild(div);
   });
