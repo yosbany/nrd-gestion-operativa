@@ -121,13 +121,19 @@ async function viewClient(clientId) {
     const header = document.querySelector('#clients-view .flex.flex-col');
     const form = document.getElementById('client-form');
     const detail = document.getElementById('client-detail');
+    const detailContent = document.getElementById('client-detail-content');
+    
+    if (!detail || !detailContent) {
+      await showError('Error: Elemento de detalle no encontrado. Por favor, recarga la página.');
+      return;
+    }
     
     if (list) list.style.display = 'none';
     if (header) header.style.display = 'none';
     if (form) form.classList.add('hidden');
     if (detail) detail.classList.remove('hidden');
 
-    document.getElementById('client-detail-content').innerHTML = `
+    detailContent.innerHTML = `
       <div class="space-y-3 sm:space-y-4">
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
           <span class="text-gray-600 font-light text-sm sm:text-base">Nombre:</span>
