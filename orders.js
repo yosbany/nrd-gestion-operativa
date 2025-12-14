@@ -1328,7 +1328,7 @@ async function generateProductReport() {
       doc.setFont(undefined, 'bold');
       
       sortedProducts.forEach(([productName, quantity]) => {
-        const productText = `${quantity} x ${productName}`;
+        const productText = `• ${quantity} ${productName}`;
         const productLines = splitText(productText, maxWidth);
         productLines.forEach(line => {
           doc.text(line, margin, yPos);
@@ -1370,7 +1370,7 @@ async function generateProductReport() {
       
       // Add products
       sortedProducts.forEach(([productName, quantity]) => {
-        message += `${quantity} x ${productName}\n`;
+        message += `• ${quantity} ${productName}\n`;
       });
       
       message += `\nTOTAL: ${totalItems} productos`;
