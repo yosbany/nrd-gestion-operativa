@@ -27,12 +27,15 @@ function loadProducts() {
         </div>
       `;
       // Attach event listener to auto-init button
-      const autoInitBtn = document.getElementById('auto-init-products');
-      if (autoInitBtn) {
-        autoInitBtn.addEventListener('click', () => {
-          initializeProducts();
-        });
-      }
+      setTimeout(() => {
+        const autoInitBtn = document.getElementById('auto-init-products');
+        if (autoInitBtn) {
+          autoInitBtn.addEventListener('click', async () => {
+            await initializeProducts();
+            // The listener will automatically refresh the list
+          });
+        }
+      }, 100);
       return;
     }
 
