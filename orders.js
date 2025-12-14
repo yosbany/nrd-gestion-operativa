@@ -66,13 +66,20 @@ function loadOrders() {
       }
 
       const item = document.createElement('div');
-      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors';
+      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors relative';
       item.dataset.orderId = id;
       const date = new Date(order.createdAt);
       const status = order.status || 'Pendiente';
       const statusColor = status === 'Completado' ? 'text-green-600' : 'text-red-600';
       
       item.innerHTML = `
+        ${status === 'Pendiente' ? `
+        <button class="complete-order-card-btn absolute top-2 right-2 sm:top-3 sm:right-3 px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 text-white rounded-full shadow-md hover:bg-green-700 transition-colors uppercase tracking-wider text-xs font-light z-10"
+                data-order-id="${id}"
+                onclick="event.stopPropagation(); toggleOrderStatus('${id}', '${status}')">
+          ✓
+        </button>
+        ` : ''}
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
           <div class="text-base sm:text-lg font-light">${escapeHtml(order.clientName || 'Cliente desconocido')}</div>
           <div class="text-base sm:text-lg font-light text-red-600">$${parseFloat(order.total || 0).toFixed(2)}</div>
@@ -84,8 +91,12 @@ function loadOrders() {
         </div>
       `;
       
-      // Make the card clickable
-      item.addEventListener('click', () => viewOrder(id));
+      // Make the card clickable (except for the complete button)
+      item.addEventListener('click', (e) => {
+        if (!e.target.closest('.complete-order-card-btn')) {
+          viewOrder(id);
+        }
+      });
       
       ordersList.appendChild(item);
     });
@@ -638,8 +649,13 @@ async function toggleOrderStatus(orderId, currentStatus) {
     await updateOrder(orderId, { status: newStatus });
     hideSpinner();
     await showSuccess(`Estado actualizado a ${newStatus}`);
-    // Reload the order detail to reflect the change
-    await viewOrder(orderId);
+    // Reload orders to reflect the change in the list
+    loadOrders();
+    // If viewing order detail, reload it
+    const orderDetail = document.getElementById('order-detail');
+    if (orderDetail && !orderDetail.classList.contains('hidden')) {
+      await viewOrder(orderId);
+    }
   } catch (error) {
     hideSpinner();
     await showError('Error al actualizar estado: ' + error.message);
@@ -1058,14 +1074,9 @@ async function generateProductReport() {
     });
     yPos += 5;
     
-    // Report date and delivery date
+    // Delivery date only
     doc.setFontSize(fontSize);
     doc.setFont(undefined, 'bold');
-    const reportDate = new Date();
-    const reportDateText = `Reporte generado: ${formatDate24h(reportDate)} ${formatTime24h(reportDate)}`;
-    doc.text(reportDateText, margin, yPos);
-    yPos += lineHeight;
-    
     const deliveryDateText = `Fecha entrega: ${formatDate24h(selectedDateObj)}`;
     doc.text(deliveryDateText, margin, yPos);
     yPos += lineHeight + 5;
