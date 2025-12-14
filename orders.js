@@ -1135,6 +1135,21 @@ document.getElementById('whatsapp-order-btn').addEventListener('click', sendWhat
 document.getElementById('print-order-btn').addEventListener('click', printOrder);
 document.getElementById('report-orders-btn').addEventListener('click', generateProductReport);
 
+// Add new client from order form
+const addNewClientFromOrderBtn = document.getElementById('add-new-client-from-order-btn');
+if (addNewClientFromOrderBtn) {
+  addNewClientFromOrderBtn.addEventListener('click', () => {
+    // Switch to clients view
+    if (typeof switchView === 'function') {
+      switchView('clients');
+    }
+    // Show new client form
+    if (typeof showClientForm === 'function') {
+      showClientForm();
+    }
+  });
+}
+
 // Make functions available globally for inline handlers
 window.updateOrderProduct = updateOrderProduct;
 window.removeProductFromOrder = removeProductFromOrder;
