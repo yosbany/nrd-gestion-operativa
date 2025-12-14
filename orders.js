@@ -38,32 +38,21 @@ function loadOrders() {
     sortedOrders.forEach(([id, order]) => {
       const item = document.createElement('div');
       item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
+      item.dataset.orderId = id;
       const date = new Date(order.createdAt);
       item.innerHTML = `
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
           <div class="text-base sm:text-lg font-light">${escapeHtml(order.clientName || 'Cliente desconocido')}</div>
-          <div class="text-base sm:text-lg font-light">$${parseFloat(order.total || 0).toFixed(2)}</div>
+          <div class="text-base sm:text-lg font-light text-red-600">$${parseFloat(order.total || 0).toFixed(2)}</div>
         </div>
         <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
           <div>Fecha: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}</div>
           <div>Estado: ${escapeHtml(order.status || 'Pendiente')}</div>
           <div>Productos: ${order.items ? order.items.length : 0}</div>
         </div>
-        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
-          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs font-light view-order" data-id="${id}">Ver</button>
-          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs font-light delete-order" data-id="${id}">Eliminar</button>
-        </div>
       `;
+      item.addEventListener('click', () => viewOrder(id));
       ordersList.appendChild(item);
-    });
-
-    // Attach event listeners
-    document.querySelectorAll('.view-order').forEach(btn => {
-      btn.addEventListener('click', (e) => viewOrder(e.target.dataset.id));
-    });
-
-    document.querySelectorAll('.delete-order').forEach(btn => {
-      btn.addEventListener('click', (e) => deleteOrderHandler(e.target.dataset.id));
     });
   });
 }
@@ -403,6 +392,12 @@ async function viewOrder(orderId) {
     // Store order data for WhatsApp and print
     document.getElementById('order-detail').dataset.orderId = orderId;
     document.getElementById('order-detail').dataset.orderData = JSON.stringify(order);
+    
+    // Attach delete button handler
+    const deleteBtn = document.getElementById('delete-order-detail-btn');
+    if (deleteBtn) {
+      deleteBtn.onclick = () => deleteOrderHandler(orderId);
+    }
   } catch (error) {
     await showError('Error al cargar pedido: ' + error.message);
   }

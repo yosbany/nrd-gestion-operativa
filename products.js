@@ -45,7 +45,8 @@ function loadProducts() {
 
     Object.entries(products).forEach(([id, product]) => {
       const item = document.createElement('div');
-      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors';
+      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
+      item.dataset.productId = id;
       item.innerHTML = `
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
           <div class="text-base sm:text-lg font-light flex-1">${escapeHtml(product.name)}</div>
@@ -54,23 +55,11 @@ function loadProducts() {
           </span>
         </div>
         <div class="text-xs sm:text-sm text-gray-600">
-          Precio: $${parseFloat(product.price || 0).toFixed(2)}
-        </div>
-        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
-          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs font-light edit-product" data-id="${id}">Editar</button>
-          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs font-light delete-product" data-id="${id}">Eliminar</button>
+          Precio: <span class="text-red-600 font-medium">$${parseFloat(product.price || 0).toFixed(2)}</span>
         </div>
       `;
+      item.addEventListener('click', () => viewProduct(id));
       productsList.appendChild(item);
-    });
-
-    // Attach event listeners
-    document.querySelectorAll('.edit-product').forEach(btn => {
-      btn.addEventListener('click', (e) => editProduct(e.target.dataset.id));
-    });
-
-    document.querySelectorAll('.delete-product').forEach(btn => {
-      btn.addEventListener('click', (e) => deleteProductHandler(e.target.dataset.id));
     });
   });
 }
@@ -126,6 +115,75 @@ function saveProduct(productId, productData) {
   }
 }
 
+// View product detail
+async function viewProduct(productId) {
+  try {
+    const snapshot = await getProduct(productId);
+    const product = snapshot.val();
+    if (!product) {
+      await showError('Producto no encontrado');
+      return;
+    }
+
+    const list = document.getElementById('products-list');
+    const header = document.querySelector('#products-view .flex.flex-col');
+    const form = document.getElementById('product-form');
+    const detail = document.getElementById('product-detail');
+    
+    if (list) list.style.display = 'none';
+    if (header) header.style.display = 'none';
+    if (form) form.classList.add('hidden');
+    if (detail) detail.classList.remove('hidden');
+
+    document.getElementById('product-detail-content').innerHTML = `
+      <div class="space-y-3 sm:space-y-4">
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Nombre:</span>
+          <span class="font-light text-sm sm:text-base">${escapeHtml(product.name)}</span>
+        </div>
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Precio:</span>
+          <span class="font-light text-sm sm:text-base text-red-600 font-medium">$${parseFloat(product.price || 0).toFixed(2)}</span>
+        </div>
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Estado:</span>
+          <span class="px-2 sm:px-3 py-0.5 sm:py-1 text-xs uppercase tracking-wider border ${product.active ? 'border-red-600 text-red-600' : 'border-gray-300 text-gray-600'}">
+            ${product.active ? 'Activo' : 'Inactivo'}
+          </span>
+        </div>
+      </div>
+    `;
+
+    // Attach button handlers
+    const editBtn = document.getElementById('edit-product-detail-btn');
+    const deleteBtn = document.getElementById('delete-product-detail-btn');
+    
+    if (editBtn) {
+      editBtn.onclick = () => {
+        detail.classList.add('hidden');
+        showProductForm(productId);
+      };
+    }
+    
+    if (deleteBtn) {
+      deleteBtn.onclick = () => deleteProductHandler(productId);
+    }
+  } catch (error) {
+    await showError('Error al cargar producto: ' + error.message);
+  }
+}
+
+// Back to products list
+function backToProducts() {
+  const list = document.getElementById('products-list');
+  const header = document.querySelector('#products-view .flex.flex-col');
+  const detail = document.getElementById('product-detail');
+  
+  if (list) list.style.display = 'block';
+  if (header) header.style.display = 'flex';
+  if (detail) detail.classList.add('hidden');
+}
+
 // Edit product
 function editProduct(productId) {
   showProductForm(productId);
@@ -138,6 +196,7 @@ async function deleteProductHandler(productId) {
 
   try {
     await deleteProduct(productId);
+    backToProducts();
   } catch (error) {
     await showError('Error al eliminar producto: ' + error.message);
   }
@@ -178,6 +237,11 @@ document.getElementById('cancel-product-btn').addEventListener('click', () => {
 // Close product form button
 document.getElementById('close-product-form').addEventListener('click', () => {
   hideProductForm();
+});
+
+// Back to products button
+document.getElementById('back-to-products').addEventListener('click', () => {
+  backToProducts();
 });
 
 // Load products for order form

@@ -28,7 +28,8 @@ function loadClients() {
 
     Object.entries(clients).forEach(([id, client]) => {
       const item = document.createElement('div');
-      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors';
+      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
+      item.dataset.clientId = id;
       item.innerHTML = `
         <div class="flex justify-between items-center mb-2 sm:mb-3">
           <div class="text-base sm:text-lg font-light">${escapeHtml(client.name)}</div>
@@ -37,21 +38,9 @@ function loadClients() {
           <div>Teléfono: ${escapeHtml(client.phone || 'N/A')}</div>
           <div>Dirección: ${escapeHtml(client.address || 'N/A')}</div>
         </div>
-        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
-          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs font-light edit-client" data-id="${id}">Editar</button>
-          <button class="flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs font-light delete-client" data-id="${id}">Eliminar</button>
-        </div>
       `;
+      item.addEventListener('click', () => viewClient(id));
       clientsList.appendChild(item);
-    });
-
-    // Attach event listeners
-    document.querySelectorAll('.edit-client').forEach(btn => {
-      btn.addEventListener('click', (e) => editClient(e.target.dataset.id));
-    });
-
-    document.querySelectorAll('.delete-client').forEach(btn => {
-      btn.addEventListener('click', (e) => deleteClientHandler(e.target.dataset.id));
     });
   });
 }
@@ -106,6 +95,73 @@ function saveClient(clientId, clientData) {
   }
 }
 
+// View client detail
+async function viewClient(clientId) {
+  try {
+    const snapshot = await getClient(clientId);
+    const client = snapshot.val();
+    if (!client) {
+      await showError('Cliente no encontrado');
+      return;
+    }
+
+    const list = document.getElementById('clients-list');
+    const header = document.querySelector('#clients-view .flex.flex-col');
+    const form = document.getElementById('client-form');
+    const detail = document.getElementById('client-detail');
+    
+    if (list) list.style.display = 'none';
+    if (header) header.style.display = 'none';
+    if (form) form.classList.add('hidden');
+    if (detail) detail.classList.remove('hidden');
+
+    document.getElementById('client-detail-content').innerHTML = `
+      <div class="space-y-3 sm:space-y-4">
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Nombre:</span>
+          <span class="font-light text-sm sm:text-base">${escapeHtml(client.name)}</span>
+        </div>
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Teléfono:</span>
+          <span class="font-light text-sm sm:text-base">${escapeHtml(client.phone || 'N/A')}</span>
+        </div>
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Dirección:</span>
+          <span class="font-light text-sm sm:text-base text-right">${escapeHtml(client.address || 'N/A')}</span>
+        </div>
+      </div>
+    `;
+
+    // Attach button handlers
+    const editBtn = document.getElementById('edit-client-detail-btn');
+    const deleteBtn = document.getElementById('delete-client-detail-btn');
+    
+    if (editBtn) {
+      editBtn.onclick = () => {
+        detail.classList.add('hidden');
+        showClientForm(clientId);
+      };
+    }
+    
+    if (deleteBtn) {
+      deleteBtn.onclick = () => deleteClientHandler(clientId);
+    }
+  } catch (error) {
+    await showError('Error al cargar cliente: ' + error.message);
+  }
+}
+
+// Back to clients list
+function backToClients() {
+  const list = document.getElementById('clients-list');
+  const header = document.querySelector('#clients-view .flex.flex-col');
+  const detail = document.getElementById('client-detail');
+  
+  if (list) list.style.display = 'block';
+  if (header) header.style.display = 'flex';
+  if (detail) detail.classList.add('hidden');
+}
+
 // Edit client
 function editClient(clientId) {
   showClientForm(clientId);
@@ -118,6 +174,7 @@ async function deleteClientHandler(clientId) {
 
   try {
     await deleteClient(clientId);
+    backToClients();
   } catch (error) {
     await showError('Error al eliminar cliente: ' + error.message);
   }
@@ -158,6 +215,11 @@ document.getElementById('cancel-client-btn').addEventListener('click', () => {
 // Close client form button
 document.getElementById('close-client-form').addEventListener('click', () => {
   hideClientForm();
+});
+
+// Back to clients button
+document.getElementById('back-to-clients').addEventListener('click', () => {
+  backToClients();
 });
 
 // Load clients for order form

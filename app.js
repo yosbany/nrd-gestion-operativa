@@ -54,9 +54,13 @@ function switchView(viewName) {
   } else if (viewName === 'clients') {
     loadClients();
     hideClientForm();
+    const clientDetail = document.getElementById('client-detail');
+    if (clientDetail) clientDetail.classList.add('hidden');
   } else if (viewName === 'products') {
     loadProducts();
     hideProductForm();
+    const productDetail = document.getElementById('product-detail');
+    if (productDetail) productDetail.classList.add('hidden');
   }
 }
 
