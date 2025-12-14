@@ -188,6 +188,21 @@ async function showNewOrderForm() {
     };
     searchInput.addEventListener('input', searchInputHandler);
     
+    // Scroll to top when focusing on mobile to avoid keyboard covering the input
+    searchInput.addEventListener('focus', () => {
+      // Small delay to ensure the keyboard animation starts
+      setTimeout(() => {
+        // Scroll to the top of the form or to the input itself
+        const form = document.getElementById('new-order-form');
+        if (form) {
+          form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          // Fallback: scroll to top of page
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 100);
+    });
+    
     // Remove previous click outside handler if exists
     if (clickOutsideHandler) {
       document.removeEventListener('click', clickOutsideHandler);
