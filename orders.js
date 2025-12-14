@@ -241,9 +241,17 @@ async function showNewOrderForm() {
   await loadAvailableProducts();
   
   // If predefined order selected, load its products
+  // Empty string means create empty order, null means cancelled
+  if (selectedPredefined === null) {
+    // User cancelled, don't show form
+    hideNewOrderForm();
+    return;
+  }
+  
   if (selectedPredefined && predefinedOrders[selectedPredefined]) {
     await loadPredefinedOrder(selectedPredefined);
   } else {
+    // Empty order (selectedPredefined === '')
     updateOrderTotal();
   }
   

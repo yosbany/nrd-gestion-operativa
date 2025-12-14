@@ -40,6 +40,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip non-HTTP/HTTPS schemes (chrome-extension, data, blob, etc.)
+  const url = new URL(event.request.url);
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
   // Skip service worker file itself - always fetch from network
   if (event.request.url.includes('service-worker.js')) {
     event.respondWith(fetch(event.request));
@@ -113,10 +119,14 @@ self.addEventListener('fetch', (event) => {
           return cachedResponse;
         }
         return fetch(event.request).then((response) => {
-          if (response && response.status === 200) {
+          if (response && response.status === 200 && response.type === 'basic') {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
+              cache.put(event.request, responseToCache).catch((err) => {
+                console.warn('Failed to cache:', event.request.url, err);
+              });
+            }).catch((err) => {
+              console.warn('Failed to open cache:', err);
             });
           }
           return response;

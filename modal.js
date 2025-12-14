@@ -229,6 +229,9 @@ function showPredefinedOrdersModal() {
     titleEl.textContent = 'Seleccionar Pedido Precargado';
     messageEl.innerHTML = `
       <div class="space-y-2">
+        <button class="predefined-order-btn w-full px-4 py-3 border border-gray-300 hover:border-red-600 hover:bg-red-50 transition-colors text-left rounded" data-order-id="">
+          <div class="font-medium">Crear pedido vacío</div>
+        </button>
         <button class="predefined-order-btn w-full px-4 py-3 border border-gray-300 hover:border-red-600 hover:bg-red-50 transition-colors text-left rounded" data-order-id="oferta-5">
           <div class="font-medium">Oferta para 5 personas</div>
         </button>
