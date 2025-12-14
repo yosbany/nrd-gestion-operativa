@@ -1202,17 +1202,33 @@ async function generateProductReport() {
       return;
     }
     
-    // Parse selected date (YYYY-MM-DD)
-    const selectedDateObj = new Date(selectedDate);
-    const selectedDateStart = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 0, 0, 0, 0).getTime();
-    const selectedDateEnd = new Date(selectedDateObj.getFullYear(), selectedDateObj.getMonth(), selectedDateObj.getDate(), 23, 59, 59, 999).getTime();
+    // Parse selected date (YYYY-MM-DD) - parse manually to avoid timezone issues
+    const dateParts = selectedDate.split('-');
+    const year = parseInt(dateParts[0], 10);
+    const month = parseInt(dateParts[1], 10) - 1; // Month is 0-indexed
+    const day = parseInt(dateParts[2], 10);
+    
+    // Create date objects in local timezone
+    const selectedDateObj = new Date(year, month, day);
+    const selectedDateStart = new Date(year, month, day, 0, 0, 0, 0).getTime();
+    const selectedDateEnd = new Date(year, month, day, 23, 59, 59, 999).getTime();
+    
+    console.log('Filtering orders for date:', selectedDate, 'Range:', new Date(selectedDateStart), 'to', new Date(selectedDateEnd));
     
     // Filter orders by delivery date
     const filteredOrders = Object.values(orders).filter(order => {
-      if (!order.deliveryDate) return false;
+      if (!order.deliveryDate) {
+        console.log('Order has no deliveryDate:', order);
+        return false;
+      }
       const deliveryDate = order.deliveryDate;
-      return deliveryDate >= selectedDateStart && deliveryDate <= selectedDateEnd;
+      const deliveryDateObj = new Date(deliveryDate);
+      const isInRange = deliveryDate >= selectedDateStart && deliveryDate <= selectedDateEnd;
+      console.log('Order delivery date:', new Date(deliveryDate), 'In range?', isInRange);
+      return isInRange;
     });
+    
+    console.log('Filtered orders count:', filteredOrders.length, 'out of', Object.keys(orders).length);
     
     if (filteredOrders.length === 0) {
       hideSpinner();
