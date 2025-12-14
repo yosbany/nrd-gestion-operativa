@@ -503,6 +503,11 @@ async function viewOrder(orderId) {
     const date = new Date(order.createdAt);
     const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
     
+    // Get status and related variables
+    const status = order.status || 'Pendiente';
+    const statusColor = status === 'Completado' ? 'text-green-600' : 'text-red-600';
+    const canEdit = status === 'Pendiente';
+    
     // Format delivery date and time for display
     let deliveryDateStr = 'No especificada';
     if (deliveryDate) {
