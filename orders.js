@@ -668,7 +668,7 @@ async function sendWhatsAppMessage() {
   }
 }
 
-// Print order as PDF
+// Print order as PDF (optimized for 80mm thermal printer)
 async function printOrder() {
   const orderDetail = document.getElementById('order-detail');
   const orderData = JSON.parse(orderDetail.dataset.orderData);
@@ -689,44 +689,104 @@ async function printOrder() {
       deliveryDateStr = `${dayName} ${dateStr} ${timeStr}`;
     }
     
-    // Create PDF using jsPDF
+    // Create PDF using jsPDF - 80mm width (thermal printer size)
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    // 80mm = 226.77 points (1mm = 2.83465 points)
+    const width = 80 * 2.83465; // 226.77 points
+    const height = 297; // A4 height in points (will adjust automatically)
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: [width, height]
+    });
     
-    // Set font and margins
-    const margin = 20;
-    let yPos = margin;
-    const lineHeight = 7;
+    // Set margins for 80mm paper (narrow margins)
+    const margin = 10;
+    const maxWidth = width - (margin * 2); // Available width
+    let yPos = margin + 10;
+    const lineHeight = 10;
+    const fontSize = 9;
+    
+    // Helper function to split long text into multiple lines
+    function splitText(text, maxWidth) {
+      const words = text.split(' ');
+      const lines = [];
+      let currentLine = '';
+      
+      words.forEach(word => {
+        const testLine = currentLine + (currentLine ? ' ' : '') + word;
+        const testWidth = doc.getTextWidth(testLine);
+        
+        if (testWidth > maxWidth && currentLine) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+      });
+      
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      
+      return lines;
+    }
     
     // Title
-    doc.setFontSize(16);
+    doc.setFontSize(fontSize + 2);
     doc.setFont(undefined, 'bold');
-    doc.text('Pedido para: ' + orderData.clientName, margin, yPos);
-    yPos += lineHeight + 2;
+    const titleLines = splitText('Pedido para: ' + orderData.clientName, maxWidth);
+    titleLines.forEach(line => {
+      doc.text(line, margin, yPos);
+      yPos += lineHeight;
+    });
+    yPos += 3;
     
     // Delivery date
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'normal');
-    doc.text('Fecha entrega: ' + deliveryDateStr, margin, yPos);
-    yPos += lineHeight + 3;
+    doc.setFontSize(fontSize);
+    doc.setFont(undefined, 'bold');
+    const dateLines = splitText('Fecha entrega: ' + deliveryDateStr, maxWidth);
+    dateLines.forEach(line => {
+      doc.text(line, margin, yPos);
+      yPos += lineHeight;
+    });
+    yPos += 5;
     
     // Products
-    doc.setFontSize(12);
+    doc.setFontSize(fontSize);
+    doc.setFont(undefined, 'bold');
     orderData.items.forEach(item => {
-      doc.text('• ' + item.quantity + ' ' + item.productName, margin, yPos);
-      yPos += lineHeight;
+      const productText = '• ' + item.quantity + ' ' + item.productName;
+      const productLines = splitText(productText, maxWidth);
+      productLines.forEach(line => {
+        doc.text(line, margin, yPos);
+        yPos += lineHeight;
+      });
       
       // Check if we need a new page
-      if (yPos > 280) {
+      if (yPos > height - 30) {
         doc.addPage();
-        yPos = margin;
+        yPos = margin + 10;
+        doc.setFont(undefined, 'bold'); // Keep bold on new page
       }
     });
     
     // Observations
     if (orderData.notes && orderData.notes.trim()) {
       yPos += lineHeight;
-      doc.text(orderData.notes, margin, yPos);
+      doc.setFont(undefined, 'bold');
+      const notesLines = splitText(orderData.notes, maxWidth);
+      notesLines.forEach(line => {
+        doc.text(line, margin, yPos);
+        yPos += lineHeight;
+        
+        // Check if we need a new page
+        if (yPos > height - 30) {
+          doc.addPage();
+          yPos = margin + 10;
+          doc.setFont(undefined, 'bold'); // Keep bold on new page
+        }
+      });
     }
     
     // Generate filename
