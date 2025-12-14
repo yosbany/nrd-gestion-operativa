@@ -7,7 +7,7 @@
   <title>NRD Pedidos</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765717508429">
+  <link rel="stylesheet" href="styles.css?v=1765717657012">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
 </head>
@@ -42,10 +42,16 @@
   <div id="app-screen" class="min-h-screen flex flex-col hidden">
     <header class="bg-red-600 border-b border-red-700 px-3 sm:px-4 py-2.5 sm:py-3 flex justify-between items-center sticky top-0 z-10">
       <h1 class="text-lg sm:text-xl font-light tracking-tight text-white">NRD Pedidos</h1>
-      <button id="logout-btn" 
-        class="px-3 sm:px-4 py-1.5 sm:py-2 border border-white/30 hover:border-white text-white hover:bg-white/10 transition-colors uppercase tracking-wider text-xs font-light">
-        Salir
-      </button>
+      <div class="flex gap-2 items-center">
+        <button id="install-btn" 
+          class="px-3 sm:px-4 py-1.5 sm:py-2 border border-white/30 hover:border-white text-white hover:bg-white/10 transition-colors uppercase tracking-wider text-xs font-light hidden">
+          Instalar
+        </button>
+        <button id="logout-btn" 
+          class="px-3 sm:px-4 py-1.5 sm:py-2 border border-white/30 hover:border-white text-white hover:bg-white/10 transition-colors uppercase tracking-wider text-xs font-light">
+          Salir
+        </button>
+      </div>
     </header>
 
     <nav class="bg-white border-b border-gray-200 flex overflow-x-auto sticky top-[45px] sm:top-[53px] z-10 bg-white">
@@ -334,14 +340,14 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765717508429"></script>
-  <script src="modal.js?v=1765717508429"></script>
-  <script src="auth.js?v=1765717508429"></script>
-  <script src="db.js?v=1765717508429"></script>
-  <script src="clients.js?v=1765717508429"></script>
-  <script src="products.js?v=1765717508429"></script>
-  <script src="orders.js?v=1765717508429"></script>
-  <script src="app.js?v=1765717508429"></script>
+  <script src="firebase.js?v=1765717657012"></script>
+  <script src="modal.js?v=1765717657012"></script>
+  <script src="auth.js?v=1765717657012"></script>
+  <script src="db.js?v=1765717657012"></script>
+  <script src="clients.js?v=1765717657012"></script>
+  <script src="products.js?v=1765717657012"></script>
+  <script src="orders.js?v=1765717657012"></script>
+  <script src="app.js?v=1765717657012"></script>
 
   <script>
     // Global error handler
@@ -398,7 +404,7 @@
           });
         }).then(() => {
           // Register new service worker
-          return navigator.serviceWorker.register('service-worker.js?v=1765717508429')
+          return navigator.serviceWorker.register('service-worker.js?v=1765717657012')
             .then(reg => {
               console.log('Service Worker registered');
               // Force update
@@ -410,6 +416,57 @@
         });
       });
     }
+
+    // PWA Install prompt
+    let deferredPrompt;
+    const installBtn = document.getElementById('install-btn');
+
+    // Check if app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      // App is installed, hide install button
+      if (installBtn) installBtn.classList.add('hidden');
+    }
+
+    // Listen for beforeinstallprompt event
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later
+      deferredPrompt = e;
+      // Show install button
+      if (installBtn) installBtn.classList.remove('hidden');
+    });
+
+    // Handle install button click
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) {
+          // Show manual install instructions
+          await showInfo('Para instalar la app:\n\nChrome: Menú → "Agregar a pantalla de inicio"\nSafari: Compartir → "Agregar a pantalla de inicio"');
+          return;
+        }
+        
+        // Show the install prompt
+        deferredPrompt.prompt();
+        
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        
+        // Clear the deferredPrompt
+        deferredPrompt = null;
+        
+        // Hide install button
+        installBtn.classList.add('hidden');
+      });
+    }
+
+    // Listen for app installed event
+    window.addEventListener('appinstalled', () => {
+      console.log('PWA was installed');
+      deferredPrompt = null;
+      if (installBtn) installBtn.classList.add('hidden');
+    });
   </script>
 </body>
 </html>
