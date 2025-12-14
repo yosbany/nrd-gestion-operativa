@@ -921,11 +921,16 @@ async function generateProductReport() {
     });
     yPos += 5;
     
-    // Date
+    // Report date and delivery date
     doc.setFontSize(fontSize);
+    doc.setFont(undefined, 'bold');
     const reportDate = new Date();
-    const dateText = `Fecha: ${formatDate24h(reportDate)} ${formatTime24h(reportDate)}`;
-    doc.text(dateText, margin, yPos);
+    const reportDateText = `Reporte generado: ${formatDate24h(reportDate)} ${formatTime24h(reportDate)}`;
+    doc.text(reportDateText, margin, yPos);
+    yPos += lineHeight;
+    
+    const deliveryDateText = `Fecha entrega: ${formatDate24h(selectedDateObj)}`;
+    doc.text(deliveryDateText, margin, yPos);
     yPos += lineHeight + 5;
     
     // Products summary
@@ -956,7 +961,7 @@ async function generateProductReport() {
     doc.text(totalText, margin, yPos);
     
     // Generate filename
-    const filename = `Reporte_Productos_${formatDate24h(reportDate).replace(/\//g, '-')}.pdf`;
+    const filename = `Reporte_Productos_${formatDate24h(selectedDateObj).replace(/\//g, '-')}.pdf`;
     
     // Save PDF
     doc.save(filename);
