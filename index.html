@@ -7,7 +7,7 @@
   <title>NRD Pedidos</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765713742884">
+  <link rel="stylesheet" href="styles.css?v=1765713896789">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
 </head>
@@ -32,10 +32,10 @@
 
   <!-- Main App Screen -->
   <div id="app-screen" class="min-h-screen flex flex-col hidden">
-    <header class="bg-white border-b border-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 flex justify-between items-center sticky top-0 z-10 bg-white">
-      <h1 class="text-lg sm:text-xl font-light tracking-tight">NRD Pedidos</h1>
+    <header class="bg-red-600 border-b border-red-700 px-3 sm:px-4 py-2.5 sm:py-3 flex justify-between items-center sticky top-0 z-10">
+      <h1 class="text-lg sm:text-xl font-light tracking-tight text-white">NRD Pedidos</h1>
       <button id="logout-btn" 
-        class="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs font-light">
+        class="px-3 sm:px-4 py-1.5 sm:py-2 border border-white/30 hover:border-white text-white hover:bg-white/10 transition-colors uppercase tracking-wider text-xs font-light">
         Salir
       </button>
     </header>
@@ -226,19 +226,19 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765713742884"></script>
-  <script src="auth.js?v=1765713742884"></script>
-  <script src="db.js?v=1765713742884"></script>
-  <script src="clients.js?v=1765713742884"></script>
-  <script src="products.js?v=1765713742884"></script>
-  <script src="orders.js?v=1765713742884"></script>
-  <script src="app.js?v=1765713742884"></script>
+  <script src="firebase.js?v=1765713896789"></script>
+  <script src="auth.js?v=1765713896789"></script>
+  <script src="db.js?v=1765713896789"></script>
+  <script src="clients.js?v=1765713896789"></script>
+  <script src="products.js?v=1765713896789"></script>
+  <script src="orders.js?v=1765713896789"></script>
+  <script src="app.js?v=1765713896789"></script>
 
   <script>
     // Register service worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js?v=1765713742884')
+        navigator.serviceWorker.register('service-worker.js?v=1765713896789')
           .then(reg => console.log('Service Worker registered'))
           .catch(err => console.log('Service Worker registration failed'));
       });
