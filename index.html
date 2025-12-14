@@ -7,7 +7,7 @@
   <title>NRD Pedidos</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765722219894">
+  <link rel="stylesheet" href="styles.css?v=1765722352316">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
 </head>
@@ -65,10 +65,16 @@
       <div id="orders-view" class="view space-y-3 sm:space-y-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
           <h2 class="text-xl sm:text-2xl font-light tracking-tight">Pedidos</h2>
-          <button id="new-order-btn" 
-            class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
-            Nuevo Pedido
-          </button>
+          <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <button id="report-orders-btn" 
+              class="w-full sm:w-auto px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+              Reporte
+            </button>
+            <button id="new-order-btn" 
+              class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+              Nuevo Pedido
+            </button>
+          </div>
         </div>
         
         <div id="orders-list" class="space-y-2 sm:space-y-3"></div>
@@ -352,14 +358,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765722219894"></script>
-  <script src="modal.js?v=1765722219894"></script>
-  <script src="auth.js?v=1765722219894"></script>
-  <script src="db.js?v=1765722219894"></script>
-  <script src="clients.js?v=1765722219894"></script>
-  <script src="products.js?v=1765722219894"></script>
-  <script src="orders.js?v=1765722219894"></script>
-  <script src="app.js?v=1765722219894"></script>
+  <script src="firebase.js?v=1765722352316"></script>
+  <script src="modal.js?v=1765722352316"></script>
+  <script src="auth.js?v=1765722352316"></script>
+  <script src="db.js?v=1765722352316"></script>
+  <script src="clients.js?v=1765722352316"></script>
+  <script src="products.js?v=1765722352316"></script>
+  <script src="orders.js?v=1765722352316"></script>
+  <script src="app.js?v=1765722352316"></script>
 
   <script>
     // Global error handler
@@ -410,7 +416,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1765722219894')
+        navigator.serviceWorker.register('service-worker.js?v=1765722352316')
           .then(reg => {
             console.log('Service Worker registered');
             

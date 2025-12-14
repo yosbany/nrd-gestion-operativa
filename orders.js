@@ -801,6 +801,145 @@ async function printOrder() {
   }
 }
 
+// Generate product summary report
+async function generateProductReport() {
+  showSpinner('Generando reporte...');
+  try {
+    // Get all orders
+    const snapshot = await getOrdersRef().once('value');
+    const orders = snapshot.val() || {};
+    
+    if (Object.keys(orders).length === 0) {
+      hideSpinner();
+      await showInfo('No hay pedidos para generar el reporte');
+      return;
+    }
+    
+    // Aggregate products by name
+    const productSummary = {};
+    
+    Object.values(orders).forEach(order => {
+      if (order.items && Array.isArray(order.items)) {
+        order.items.forEach(item => {
+          const productName = item.productName;
+          if (productSummary[productName]) {
+            productSummary[productName] += item.quantity;
+          } else {
+            productSummary[productName] = item.quantity;
+          }
+        });
+      }
+    });
+    
+    // Sort products by name
+    const sortedProducts = Object.entries(productSummary)
+      .sort((a, b) => a[0].localeCompare(b[0]));
+    
+    // Calculate total items
+    const totalItems = Object.values(productSummary).reduce((sum, qty) => sum + qty, 0);
+    
+    hideSpinner();
+    
+    // Generate PDF
+    const { jsPDF } = window.jspdf;
+    // 80mm width for thermal printer
+    const width = 80 * 2.83465; // 226.77 points
+    const height = 297; // A4 height
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: [width, height]
+    });
+    
+    // Set margins
+    const margin = 10;
+    const maxWidth = width - (margin * 2);
+    let yPos = margin + 10;
+    const lineHeight = 10;
+    const fontSize = 9;
+    
+    // Helper function to split long text
+    function splitText(text, maxWidth) {
+      const words = text.split(' ');
+      const lines = [];
+      let currentLine = '';
+      
+      words.forEach(word => {
+        const testLine = currentLine + (currentLine ? ' ' : '') + word;
+        const testWidth = doc.getTextWidth(testLine);
+        
+        if (testWidth > maxWidth && currentLine) {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          currentLine = testLine;
+        }
+      });
+      
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      
+      return lines;
+    }
+    
+    // Title
+    doc.setFontSize(fontSize + 3);
+    doc.setFont(undefined, 'bold');
+    const titleLines = splitText('REPORTE DE PRODUCTOS', maxWidth);
+    titleLines.forEach(line => {
+      doc.text(line, margin, yPos);
+      yPos += lineHeight;
+    });
+    yPos += 5;
+    
+    // Date
+    doc.setFontSize(fontSize);
+    const reportDate = new Date();
+    const dateText = `Fecha: ${formatDate24h(reportDate)} ${formatTime24h(reportDate)}`;
+    doc.text(dateText, margin, yPos);
+    yPos += lineHeight + 5;
+    
+    // Products summary
+    doc.setFontSize(fontSize);
+    doc.setFont(undefined, 'bold');
+    
+    sortedProducts.forEach(([productName, quantity]) => {
+      const productText = `${quantity} x ${productName}`;
+      const productLines = splitText(productText, maxWidth);
+      productLines.forEach(line => {
+        doc.text(line, margin, yPos);
+        yPos += lineHeight;
+      });
+      
+      // Check if we need a new page
+      if (yPos > height - 30) {
+        doc.addPage();
+        yPos = margin + 10;
+        doc.setFont(undefined, 'bold');
+      }
+    });
+    
+    // Total
+    yPos += lineHeight;
+    doc.setFontSize(fontSize + 1);
+    doc.setFont(undefined, 'bold');
+    const totalText = `TOTAL: ${totalItems} productos`;
+    doc.text(totalText, margin, yPos);
+    
+    // Generate filename
+    const filename = `Reporte_Productos_${formatDate24h(reportDate).replace(/\//g, '-')}.pdf`;
+    
+    // Save PDF
+    doc.save(filename);
+    await showSuccess('Reporte generado exitosamente');
+  } catch (error) {
+    hideSpinner();
+    console.error('Error generating report:', error);
+    await showError('Error al generar reporte: ' + error.message);
+  }
+}
+
 // Event listeners
 document.getElementById('new-order-btn').addEventListener('click', showNewOrderForm);
 document.getElementById('cancel-order-btn').addEventListener('click', hideNewOrderForm);
@@ -809,6 +948,7 @@ document.getElementById('back-to-orders').addEventListener('click', backToOrders
 document.getElementById('close-order-form').addEventListener('click', hideNewOrderForm);
 document.getElementById('whatsapp-order-btn').addEventListener('click', sendWhatsAppMessage);
 document.getElementById('print-order-btn').addEventListener('click', printOrder);
+document.getElementById('report-orders-btn').addEventListener('click', generateProductReport);
 
 // Make functions available globally for inline handlers
 window.updateOrderProduct = updateOrderProduct;
