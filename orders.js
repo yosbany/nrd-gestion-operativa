@@ -75,6 +75,21 @@ async function showNewOrderForm() {
   document.getElementById('product-search-results').classList.add('hidden');
   document.getElementById('order-notes').value = '';
   
+  // Set default delivery date (tomorrow at 12:00)
+  const deliveryDateInput = document.getElementById('order-delivery-date');
+  if (deliveryDateInput) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(12, 0, 0, 0);
+    // Format for datetime-local input (YYYY-MM-DDTHH:mm)
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const day = String(tomorrow.getDate()).padStart(2, '0');
+    const hours = String(tomorrow.getHours()).padStart(2, '0');
+    const minutes = String(tomorrow.getMinutes()).padStart(2, '0');
+    deliveryDateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+  
   await loadAvailableProducts();
   updateOrderTotal();
   loadClientsForOrder();
@@ -344,6 +359,13 @@ async function saveOrder() {
 
     // Get observations
     const notes = document.getElementById('order-notes').value.trim();
+    
+    // Get delivery date
+    const deliveryDateInput = document.getElementById('order-delivery-date');
+    let deliveryDate = null;
+    if (deliveryDateInput && deliveryDateInput.value) {
+      deliveryDate = new Date(deliveryDateInput.value).getTime();
+    }
 
     // Create order
     const orderData = {
@@ -353,7 +375,8 @@ async function saveOrder() {
       status: 'Pendiente',
       items,
       total,
-      notes: notes || null
+      notes: notes || null,
+      deliveryDate: deliveryDate
     };
 
     showSpinner('Guardando pedido...');
@@ -389,6 +412,19 @@ async function viewOrder(orderId) {
     document.getElementById('order-detail').classList.remove('hidden');
 
     const date = new Date(order.createdAt);
+    const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : null;
+    
+    // Format delivery date for input
+    let deliveryDateValue = '';
+    if (deliveryDate) {
+      const year = deliveryDate.getFullYear();
+      const month = String(deliveryDate.getMonth() + 1).padStart(2, '0');
+      const day = String(deliveryDate.getDate()).padStart(2, '0');
+      const hours = String(deliveryDate.getHours()).padStart(2, '0');
+      const minutes = String(deliveryDate.getMinutes()).padStart(2, '0');
+      deliveryDateValue = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    
     const itemsHtml = order.items.map(item => `
       <div class="flex justify-between py-3 sm:py-4 border-b border-gray-200">
         <div class="flex-1">
@@ -408,8 +444,13 @@ async function viewOrder(orderId) {
           <span class="font-light">${escapeHtml(order.clientName)}</span>
         </div>
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base">
-          <span class="text-gray-600 font-light">Fecha:</span>
+          <span class="text-gray-600 font-light">Fecha de Creación:</span>
           <span class="font-light">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>
+        </div>
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base gap-2">
+          <span class="text-gray-600 font-light">Fecha y Hora de Entrega:</span>
+          <input type="datetime-local" id="order-detail-delivery-date" value="${deliveryDateValue}"
+            class="px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm rounded">
         </div>
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200 text-sm sm:text-base">
           <span class="text-gray-600 font-light">Estado:</span>
@@ -435,6 +476,26 @@ async function viewOrder(orderId) {
     // Store order data for WhatsApp and print
     document.getElementById('order-detail').dataset.orderId = orderId;
     document.getElementById('order-detail').dataset.orderData = JSON.stringify(order);
+    
+    // Attach delivery date change handler
+    const deliveryDateInput = document.getElementById('order-detail-delivery-date');
+    if (deliveryDateInput) {
+      deliveryDateInput.addEventListener('change', async () => {
+        const newDeliveryDate = deliveryDateInput.value ? new Date(deliveryDateInput.value).getTime() : null;
+        showSpinner('Actualizando fecha de entrega...');
+        try {
+          await updateOrder(orderId, { deliveryDate: newDeliveryDate });
+          hideSpinner();
+          // Update stored order data
+          order.deliveryDate = newDeliveryDate;
+          document.getElementById('order-detail').dataset.orderData = JSON.stringify(order);
+          await showSuccess('Fecha de entrega actualizada');
+        } catch (error) {
+          hideSpinner();
+          await showError('Error al actualizar fecha de entrega: ' + error.message);
+        }
+      });
+    }
     
     // Attach delete button handler
     const deleteBtn = document.getElementById('delete-order-detail-btn');
@@ -500,8 +561,12 @@ async function sendWhatsAppMessage() {
     if (orderData.notes) {
       message += `\n*Observaciones:*\n${escapeHtml(orderData.notes)}\n`;
     }
+    if (orderData.deliveryDate) {
+      const deliveryDate = new Date(orderData.deliveryDate);
+      message += `\n*Fecha de Entrega:*\n${deliveryDate.toLocaleDateString()} ${deliveryDate.toLocaleTimeString()}\n`;
+    }
     message += `\n*Total: $${parseFloat(orderData.total).toFixed(2)}*\n`;
-    message += `\nFecha: ${new Date(orderData.createdAt).toLocaleString()}`;
+    message += `\nFecha de Creación: ${new Date(orderData.createdAt).toLocaleString()}`;
 
     // Clean phone number (remove spaces, dashes, etc.)
     const phone = client.phone.replace(/\D/g, '');
