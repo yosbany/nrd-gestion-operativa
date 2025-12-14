@@ -7,7 +7,7 @@
   <title>NRD Pedidos</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765716630896">
+  <link rel="stylesheet" href="styles.css?v=1765716906495">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
 </head>
@@ -307,22 +307,80 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765716630896"></script>
-  <script src="modal.js?v=1765716630896"></script>
-  <script src="auth.js?v=1765716630896"></script>
-  <script src="db.js?v=1765716630896"></script>
-  <script src="clients.js?v=1765716630896"></script>
-  <script src="products.js?v=1765716630896"></script>
-  <script src="orders.js?v=1765716630896"></script>
-  <script src="app.js?v=1765716630896"></script>
+  <script src="firebase.js?v=1765716906495"></script>
+  <script src="modal.js?v=1765716906495"></script>
+  <script src="auth.js?v=1765716906495"></script>
+  <script src="db.js?v=1765716906495"></script>
+  <script src="clients.js?v=1765716906495"></script>
+  <script src="products.js?v=1765716906495"></script>
+  <script src="orders.js?v=1765716906495"></script>
+  <script src="app.js?v=1765716906495"></script>
 
   <script>
-    // Register service worker
+    // Global error handler
+    window.addEventListener('error', (event) => {
+      console.error('Global error:', event.error);
+      // Show error message if app screen is visible
+      const appScreen = document.getElementById('app-screen');
+      if (appScreen && !appScreen.classList.contains('hidden')) {
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'fixed top-20 left-0 right-0 bg-red-600 text-white p-4 z-50 text-center';
+        errorMsg.textContent = 'Error al cargar la aplicación. Por favor, recarga la página.';
+        document.body.appendChild(errorMsg);
+        setTimeout(() => errorMsg.remove(), 5000);
+      }
+    });
+
+    // Unhandled promise rejection handler
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('Unhandled promise rejection:', event.reason);
+    });
+
+    // Check if page is loaded after timeout
+    let pageLoaded = false;
+    setTimeout(() => {
+      if (!pageLoaded) {
+        const loginScreen = document.getElementById('login-screen');
+        const appScreen = document.getElementById('app-screen');
+        if (loginScreen && loginScreen.classList.contains('hidden') && 
+            appScreen && appScreen.classList.contains('hidden')) {
+          // Both screens are hidden, something is wrong
+          console.error('App screens not visible, forcing login screen');
+          if (loginScreen) loginScreen.classList.remove('hidden');
+          if (appScreen) appScreen.classList.add('hidden');
+        }
+      }
+    }, 3000);
+
+    // Mark as loaded when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        pageLoaded = true;
+      });
+    } else {
+      pageLoaded = true;
+    }
+
+    // Register service worker (non-blocking)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js?v=1765716630896')
-          .then(reg => console.log('Service Worker registered'))
-          .catch(err => console.log('Service Worker registration failed'));
+        // Unregister old service workers first
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          registrations.forEach((registration) => {
+            registration.unregister();
+          });
+        }).then(() => {
+          // Register new service worker
+          return navigator.serviceWorker.register('service-worker.js?v=1765716906495')
+            .then(reg => {
+              console.log('Service Worker registered');
+              // Force update
+              reg.update();
+            })
+            .catch(err => {
+              console.log('Service Worker registration failed:', err);
+            });
+        });
       });
     }
   </script>

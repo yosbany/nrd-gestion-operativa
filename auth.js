@@ -3,56 +3,92 @@ let currentUser = null;
 
 // Listen for auth state changes
 auth.onAuthStateChanged((user) => {
-  currentUser = user;
-  if (user) {
-    showAppScreen();
-  } else {
-    showLoginScreen();
+  try {
+    currentUser = user;
+    if (user) {
+      showAppScreen();
+    } else {
+      showLoginScreen();
+    }
+  } catch (error) {
+    console.error('Error in auth state change:', error);
+    // Fallback: show login screen
+    const loginScreen = document.getElementById('login-screen');
+    const appScreen = document.getElementById('app-screen');
+    if (loginScreen) loginScreen.classList.remove('hidden');
+    if (appScreen) appScreen.classList.add('hidden');
   }
 });
 
 // Show login screen
 function showLoginScreen() {
-  document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('app-screen').classList.add('hidden');
+  try {
+    const loginScreen = document.getElementById('login-screen');
+    const appScreen = document.getElementById('app-screen');
+    if (loginScreen) loginScreen.classList.remove('hidden');
+    if (appScreen) appScreen.classList.add('hidden');
+  } catch (error) {
+    console.error('Error showing login screen:', error);
+  }
 }
 
 // Show app screen
 function showAppScreen() {
-  document.getElementById('login-screen').classList.add('hidden');
-  document.getElementById('app-screen').classList.remove('hidden');
+  try {
+    const loginScreen = document.getElementById('login-screen');
+    const appScreen = document.getElementById('app-screen');
+    if (loginScreen) loginScreen.classList.add('hidden');
+    if (appScreen) appScreen.classList.remove('hidden');
+  } catch (error) {
+    console.error('Error showing app screen:', error);
+  }
 }
 
 // Login form handler
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = document.getElementById('login-email').value;
-  const password = document.getElementById('login-password').value;
-  const errorDiv = document.getElementById('login-error');
+const loginForm = document.getElementById('login-form');
+if (loginForm) {
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      const email = document.getElementById('login-email')?.value;
+      const password = document.getElementById('login-password')?.value;
+      const errorDiv = document.getElementById('login-error');
 
-  errorDiv.textContent = '';
-  showSpinner('Iniciando sesión...');
+      if (!email || !password) {
+        if (errorDiv) errorDiv.textContent = 'Por favor complete todos los campos';
+        return;
+      }
 
-  try {
-    await auth.signInWithEmailAndPassword(email, password);
-    hideSpinner();
-  } catch (error) {
-    hideSpinner();
-    errorDiv.textContent = error.message || 'Error al iniciar sesión';
-  }
-});
+      if (errorDiv) errorDiv.textContent = '';
+      showSpinner('Iniciando sesión...');
+
+      await auth.signInWithEmailAndPassword(email, password);
+      hideSpinner();
+    } catch (error) {
+      hideSpinner();
+      const errorDiv = document.getElementById('login-error');
+      if (errorDiv) {
+        errorDiv.textContent = error.message || 'Error al iniciar sesión';
+      }
+      console.error('Login error:', error);
+    }
+  });
+}
 
 // Logout handler
-document.getElementById('logout-btn').addEventListener('click', async () => {
-  showSpinner('Cerrando sesión...');
-  try {
-    await auth.signOut();
-    hideSpinner();
-  } catch (error) {
-    hideSpinner();
-    console.error('Error al cerrar sesión:', error);
-  }
-});
+const logoutBtn = document.getElementById('logout-btn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', async () => {
+    try {
+      showSpinner('Cerrando sesión...');
+      await auth.signOut();
+      hideSpinner();
+    } catch (error) {
+      hideSpinner();
+      console.error('Error al cerrar sesión:', error);
+    }
+  });
+}
 
 // Get current user
 function getCurrentUser() {
