@@ -10,38 +10,38 @@ const predefinedOrders = {
   'oferta-5': {
     name: 'Oferta para 5 personas',
     items: [
-      { productName: 'Sándwich (Blanco/Integral) Copetín de Jamon, Queso y Mayonesa', quantity: 16 },
-      { productName: 'Sándwiches (Blanco/Integral) Copetín de Atun, Tomate Mayonesa', quantity: 16 },
-      { productName: 'Sándwiches (Blanco/Integral)  Copetín Pollo, Jardinera, Mayonesa (Pollo a la Jardinera)', quantity: 16 },
-      { productName: 'Sándwiches (Blanco/Integral)  Copetín Lomito y Manteca', quantity: 16 },
-      { productName: 'Bocaditos de Pizza', quantity: 10 },
-      { productName: 'Empanaditas de Pollo', quantity: 10 },
-      { productName: 'Medialunitas de J y Q', quantity: 8 },
-      { productName: 'Alemanitas', quantity: 8 }
+      { productName: 'SANDWICH COPETIN - JAMON Y QUESO', quantity: 16 },
+      { productName: 'SANDWICH COPETIN - ATUN Y TOMATE', quantity: 16 },
+      { productName: 'SANDWICH COPETIN - POLLO Y JARDINERA', quantity: 16 },
+      { productName: 'SANDWICH COPETIN - LOMITO Y MANTECA', quantity: 16 },
+      { productName: 'BOCADITOS DE PIZZA', quantity: 10 },
+      { productName: 'EMPANADITAS - POLLO', quantity: 10 },
+      { productName: 'MEDIALUNITAS - JAMON Y QUESO', quantity: 8 },
+      { productName: 'ALEMANITAS', quantity: 8 }
     ]
   },
   'oferta-10': {
     name: 'Oferta para 10 personas',
     items: [
-      { productName: 'Sándwich Copetín (Blanco/Integral) Jamón y Choclo', quantity: 32 },
-      { productName: 'Sándwich Copetín (Blanco/Integral) Olímpicos', quantity: 32 },
-      { productName: 'Sándwich Copetín (Blanco/Integral) Bondiola y Manteca', quantity: 32 },
-      { productName: 'Sándwich Copetín (Blanco/Integral) Jamón y Palmito', quantity: 32 },
-      { productName: 'Bocaditos de Pizza', quantity: 20 },
-      { productName: 'Empanaditas de Carne', quantity: 20 },
-      { productName: 'Bocaditos de Tartas de Jamón y Queso', quantity: 20 },
+      { productName: 'SANDWICH COPETIN - JAMON Y CHOCLO', quantity: 32 },
+      { productName: 'SANDWICH COPETIN - OLIMPICO', quantity: 32 },
+      { productName: 'SANDWICH COPETIN - BONDIOLA Y MANTECA', quantity: 32 },
+      { productName: 'SANDWICH COPETIN - JAMON Y PALMITOS', quantity: 32 },
+      { productName: 'BOCADITOS DE PIZZA', quantity: 20 },
+      { productName: 'EMPANADITAS - CARNE', quantity: 20 },
+      { productName: 'BOCADITOS DE TARTA - JAMON Y QUESO', quantity: 20 },
       { productName: 'Yoyocitos', quantity: 12 }
     ]
   },
   'oferta-15': {
     name: 'Oferta para 15 personas',
     items: [
-      { productName: 'Sándwich (Blanco/Integral) Copetín de Jamon, Queso y Mayonesa', quantity: 48 },
-      { productName: 'Sándwiches (Blanco/Integral) Copetín Atun, Keptup y Mayonesa', quantity: 48 },
-      { productName: 'Sándwiches (Blanco/Integral)  Copetín Huevo, Jamon Mayonesa', quantity: 48 },
-      { productName: 'Sándwiches (Blanco/Integral)  Copetín Lomito y Manteca', quantity: 48 },
-      { productName: 'Bocaditos de Pizza', quantity: 30 },
-      { productName: 'Medialunitas de J y Q', quantity: 24 },
+      { productName: 'SANDWICH COPETIN - JAMON Y QUESO', quantity: 48 },
+      { productName: 'SANDWICH COPETIN - ATUN Y TOMATE', quantity: 48 },
+      { productName: 'SANDWICH COPETIN - JAMON Y HUEVO', quantity: 48 },
+      { productName: 'SANDWICH COPETIN - LOMITO Y MANTECA', quantity: 48 },
+      { productName: 'BOCADITOS DE PIZZA', quantity: 30 },
+      { productName: 'MEDIALUNITAS - JAMON Y QUESO', quantity: 24 },
       { productName: 'Brochetitas Pollo', quantity: 30 },
       { productName: 'Donitas', quantity: 24 }
     ]
@@ -219,11 +219,6 @@ async function showNewOrderForm() {
   document.getElementById('product-search-results').classList.add('hidden');
   document.getElementById('order-notes').value = '';
   
-  // If predefined order selected, load its products
-  if (selectedPredefined && predefinedOrders[selectedPredefined]) {
-    await loadPredefinedOrder(selectedPredefined);
-  }
-  
   // Set default delivery date (tomorrow)
   const deliveryDateInput = document.getElementById('order-delivery-date');
   const deliveryTimeInput = document.getElementById('order-delivery-time');
@@ -244,7 +239,14 @@ async function showNewOrderForm() {
   }
   
   await loadAvailableProducts();
-  updateOrderTotal();
+  
+  // If predefined order selected, load its products
+  if (selectedPredefined && predefinedOrders[selectedPredefined]) {
+    await loadPredefinedOrder(selectedPredefined);
+  } else {
+    updateOrderTotal();
+  }
+  
   loadClientsForOrder();
   
   // Setup product search input - remove old listeners first
