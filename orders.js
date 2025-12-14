@@ -680,7 +680,11 @@ async function printOrder() {
       const deliveryDate = new Date(orderData.deliveryDate);
       const daysOfWeek = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
       const dayName = daysOfWeek[deliveryDate.getDay()];
-      const dateStr = formatDate24h(deliveryDate);
+      const dateStr = deliveryDate.toLocaleDateString('es-ES', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric' 
+      });
       const timeStr = formatTime24h(deliveryDate);
       deliveryDateStr = `${dayName} ${dateStr} ${timeStr}`;
     }
