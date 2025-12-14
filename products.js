@@ -18,7 +18,21 @@ function loadProducts() {
     const products = snapshot.val() || {};
 
     if (Object.keys(products).length === 0) {
-      productsList.innerHTML = '<p class="text-center text-gray-600 py-8">No hay productos registrados</p>';
+      productsList.innerHTML = `
+        <div class="text-center py-12 border border-gray-200 p-8">
+          <p class="text-gray-600 mb-4">No hay productos registrados</p>
+          <button id="auto-init-products" class="px-6 py-2 bg-black text-white border border-black hover:bg-gray-800 transition-colors uppercase tracking-wider text-sm font-light">
+            Cargar Productos por Defecto
+          </button>
+        </div>
+      `;
+      // Attach event listener to auto-init button
+      const autoInitBtn = document.getElementById('auto-init-products');
+      if (autoInitBtn) {
+        autoInitBtn.addEventListener('click', () => {
+          initializeProducts();
+        });
+      }
       return;
     }
 
