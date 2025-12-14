@@ -112,7 +112,7 @@ function loadOrders() {
         ` : ''}
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
           <div class="text-base sm:text-lg font-light">${escapeHtml(order.clientName || 'Cliente desconocido')}</div>
-          <div class="text-base sm:text-lg font-light text-red-600">$${parseFloat(order.total || 0).toFixed(2)}</div>
+          <div class="hidden sm:block text-base sm:text-lg font-light text-red-600">$${parseFloat(order.total || 0).toFixed(2)}</div>
         </div>
         <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
           <div>Fecha entrega: ${deliveryDateStr}</div>
@@ -122,6 +122,7 @@ function loadOrders() {
             </span>
           </div>
           <div>Productos: ${order.items ? order.items.length : 0}</div>
+          <div class="sm:hidden text-base font-light text-red-600">$${parseFloat(order.total || 0).toFixed(2)}</div>
         </div>
       `;
       
