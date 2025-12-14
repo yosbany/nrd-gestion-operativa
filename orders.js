@@ -77,27 +77,15 @@ function loadOrders() {
           <div class="text-base sm:text-lg font-light">${escapeHtml(order.clientName || 'Cliente desconocido')}</div>
           <div class="text-base sm:text-lg font-light text-red-600">$${parseFloat(order.total || 0).toFixed(2)}</div>
         </div>
-        <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1 mb-2">
+        <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
           <div>Fecha: ${formatDate24h(date)} ${formatTime24h(date)}</div>
-          <div class="flex items-center gap-2">
-            <span>Estado: <span class="${statusColor} font-medium">${escapeHtml(status)}</span></span>
-            <button class="toggle-status-btn ml-2 px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors rounded" 
-                    data-order-id="${id}" 
-                    data-current-status="${status}"
-                    onclick="event.stopPropagation(); toggleOrderStatus('${id}', '${status}')">
-              ${status === 'Pendiente' ? 'Marcar Completado' : 'Marcar Pendiente'}
-            </button>
-          </div>
+          <div>Estado: <span class="${statusColor} font-medium">${escapeHtml(status)}</span></div>
           <div>Productos: ${order.items ? order.items.length : 0}</div>
         </div>
       `;
       
-      // Make the card clickable (except for the status button)
-      item.addEventListener('click', (e) => {
-        if (!e.target.closest('.toggle-status-btn')) {
-          viewOrder(id);
-        }
-      });
+      // Make the card clickable
+      item.addEventListener('click', () => viewOrder(id));
       
       ordersList.appendChild(item);
     });
@@ -614,8 +602,8 @@ async function toggleOrderStatus(orderId, currentStatus) {
     await updateOrder(orderId, { status: newStatus });
     hideSpinner();
     await showSuccess(`Estado actualizado a ${newStatus}`);
-    // Reload orders to reflect the change
-    loadOrders();
+    // Reload the order detail to reflect the change
+    await viewOrder(orderId);
   } catch (error) {
     hideSpinner();
     await showError('Error al actualizar estado: ' + error.message);

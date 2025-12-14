@@ -7,7 +7,7 @@
   <title>NRD Pedidos</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765737284448">
+  <link rel="stylesheet" href="styles.css?v=1765737452796">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
 </head>
@@ -146,7 +146,7 @@
         </div>
 
         <!-- Order Detail View -->
-        <div id="order-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
+        <div id="order-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden relative">
           <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
             <div class="flex items-center justify-between mb-2">
               <h3 class="text-lg sm:text-xl font-light tracking-tight">Detalle del Pedido</h3>
@@ -169,6 +169,11 @@
               Imprimir
             </button>
           </div>
+          <!-- Complete Order Button (floating, bottom right) -->
+          <button id="complete-order-btn" 
+            class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 px-6 py-3 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition-colors uppercase tracking-wider text-sm font-light z-50 hidden">
+            Completar
+          </button>
         </div>
       </div>
 
@@ -362,14 +367,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765737284448"></script>
-  <script src="modal.js?v=1765737284448"></script>
-  <script src="auth.js?v=1765737284448"></script>
-  <script src="db.js?v=1765737284448"></script>
-  <script src="clients.js?v=1765737284448"></script>
-  <script src="products.js?v=1765737284448"></script>
-  <script src="orders.js?v=1765737284448"></script>
-  <script src="app.js?v=1765737284448"></script>
+  <script src="firebase.js?v=1765737452796"></script>
+  <script src="modal.js?v=1765737452796"></script>
+  <script src="auth.js?v=1765737452796"></script>
+  <script src="db.js?v=1765737452796"></script>
+  <script src="clients.js?v=1765737452796"></script>
+  <script src="products.js?v=1765737452796"></script>
+  <script src="orders.js?v=1765737452796"></script>
+  <script src="app.js?v=1765737452796"></script>
 
   <script>
     // Global error handler
@@ -420,7 +425,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1765737284448')
+        navigator.serviceWorker.register('service-worker.js?v=1765737452796')
           .then(reg => {
             console.log('Service Worker registered');
             
