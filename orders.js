@@ -98,6 +98,12 @@ async function showNewOrderForm() {
   const list = document.getElementById('orders-list');
   const header = document.querySelector('#orders-view .flex.flex-col');
   
+  // Hide complete button when showing form
+  const completeBtn = document.getElementById('complete-order-btn');
+  if (completeBtn) {
+    completeBtn.classList.add('hidden');
+  }
+  
   form.classList.remove('hidden');
   if (list) list.style.display = 'none';
   if (header) header.style.display = 'none';
@@ -613,6 +619,14 @@ function backToOrders() {
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
+  
+  // Also hide when showing new order form
+  const form = document.getElementById('new-order-form');
+  if (form && !form.classList.contains('hidden')) {
+    if (completeBtn) {
+      completeBtn.classList.add('hidden');
+    }
+  }
 }
 
 // Toggle order status (Pendiente/Completado)
