@@ -92,7 +92,6 @@ function loadOrders() {
           <div class="text-base sm:text-lg font-light text-red-600">$${parseFloat(order.total || 0).toFixed(2)}</div>
         </div>
         <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
-          <div>Fecha creación: ${formatDate24h(date)} ${formatTime24h(date)}</div>
           <div>Fecha entrega: ${deliveryDateStr}</div>
           <div>
             <span class="px-2 py-0.5 ${status === 'Completado' ? 'bg-green-600' : 'bg-red-600'} text-white text-xs font-medium uppercase rounded">
@@ -211,6 +210,40 @@ async function showNewOrderForm() {
       }, 100);
     });
     
+    // Keyboard navigation for product search
+    if (keyboardHandler) {
+      searchInput.removeEventListener('keydown', keyboardHandler);
+    }
+    
+    keyboardHandler = (e) => {
+      const items = document.querySelectorAll('.product-search-item');
+      
+      if (items.length === 0) return;
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedProductIndex = (selectedProductIndex + 1) % items.length;
+        updateProductSelection(items);
+        scrollToSelectedItem(items[selectedProductIndex]);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedProductIndex = selectedProductIndex <= 0 ? items.length - 1 : selectedProductIndex - 1;
+        updateProductSelection(items);
+        scrollToSelectedItem(items[selectedProductIndex]);
+      } else if (e.key === 'Enter' && selectedProductIndex >= 0) {
+        e.preventDefault();
+        const selectedItem = items[selectedProductIndex];
+        if (selectedItem) {
+          addProductFromSearch(selectedItem);
+        }
+      } else if (e.key === 'Escape') {
+        resultsDiv.classList.add('hidden');
+        selectedProductIndex = -1;
+      }
+    };
+    
+    searchInput.addEventListener('keydown', keyboardHandler);
+    
     // Remove previous click outside handler if exists
     if (clickOutsideHandler) {
       document.removeEventListener('click', clickOutsideHandler);
@@ -220,9 +253,41 @@ async function showNewOrderForm() {
     clickOutsideHandler = (e) => {
       if (resultsDiv && !searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
         resultsDiv.classList.add('hidden');
+        selectedProductIndex = -1;
       }
     };
     document.addEventListener('click', clickOutsideHandler);
+  }
+}
+
+// Update product selection highlighting
+function updateProductSelection(items) {
+  items.forEach((item, index) => {
+    if (index === selectedProductIndex) {
+      item.classList.add('bg-red-50', 'border-red-200');
+      item.classList.remove('hover:bg-gray-50');
+    } else {
+      item.classList.remove('bg-red-50', 'border-red-200');
+      item.classList.add('hover:bg-gray-50');
+    }
+  });
+}
+
+// Scroll to selected item in dropdown
+function scrollToSelectedItem(item) {
+  if (!item) return;
+  const resultsDiv = document.getElementById('product-search-results');
+  if (!resultsDiv) return;
+  
+  const itemTop = item.offsetTop;
+  const itemBottom = itemTop + item.offsetHeight;
+  const containerTop = resultsDiv.scrollTop;
+  const containerBottom = containerTop + resultsDiv.offsetHeight;
+  
+  if (itemTop < containerTop) {
+    resultsDiv.scrollTop = itemTop;
+  } else if (itemBottom > containerBottom) {
+    resultsDiv.scrollTop = itemBottom - resultsDiv.offsetHeight;
   }
 }
 
@@ -242,6 +307,9 @@ let availableProducts = [];
 let productSearchTimeout = null;
 let searchInputHandler = null;
 let clickOutsideHandler = null;
+let keyboardHandler = null;
+let selectedProductIndex = -1;
+let filteredProducts = [];
 
 // Load available products for search
 async function loadAvailableProducts() {
@@ -284,12 +352,17 @@ function searchProducts(query) {
     return;
   }
   
+  // Store filtered products for keyboard navigation
+  filteredProducts = filtered;
+  selectedProductIndex = -1;
+  
   // Show results
-  resultsDiv.innerHTML = filtered.map(product => `
-    <div class="product-search-item px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0" 
+  resultsDiv.innerHTML = filtered.map((product, index) => `
+    <div class="product-search-item px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 ${index === selectedProductIndex ? 'bg-red-50 border-red-200' : ''}" 
          data-product-id="${product.id}" 
          data-product-name="${escapeHtml(product.name)}" 
-         data-product-price="${product.price}">
+         data-product-price="${product.price}"
+         data-index="${index}">
       <div class="font-light text-sm">${escapeHtml(product.name)}</div>
       <div class="text-xs text-gray-600">$${parseFloat(product.price || 0).toFixed(2)}</div>
     </div>
@@ -300,30 +373,38 @@ function searchProducts(query) {
   // Attach click handlers
   document.querySelectorAll('.product-search-item').forEach(item => {
     item.addEventListener('click', () => {
-      const productId = item.dataset.productId;
-      const productName = item.dataset.productName;
-      const productPrice = parseFloat(item.dataset.productPrice);
-      
-      // Check if product already added
-      if (currentOrderProducts.find(p => p.productId === productId)) {
-        showError('Este producto ya está en el pedido');
-        return;
-      }
-      
-      // Add product
-      currentOrderProducts.push({
-        productId,
-        quantity: 1
-      });
-      
-      renderOrderProducts();
-      updateOrderTotal();
-      
-      // Clear search
-      searchInput.value = '';
-      resultsDiv.classList.add('hidden');
+      addProductFromSearch(item);
     });
   });
+}
+
+// Add product from search (used by both click and keyboard)
+function addProductFromSearch(item) {
+  const productId = item.dataset.productId;
+  const productName = item.dataset.productName;
+  const productPrice = parseFloat(item.dataset.productPrice);
+  
+  // Check if product already added
+  if (currentOrderProducts.find(p => p.productId === productId)) {
+    showError('Este producto ya está en el pedido');
+    return;
+  }
+  
+  // Add product
+  currentOrderProducts.push({
+    productId,
+    quantity: 1
+  });
+  
+  renderOrderProducts();
+  updateOrderTotal();
+  
+  // Clear search
+  const searchInput = document.getElementById('product-search-input');
+  const resultsDiv = document.getElementById('product-search-results');
+  if (searchInput) searchInput.value = '';
+  if (resultsDiv) resultsDiv.classList.add('hidden');
+  selectedProductIndex = -1;
 }
 
 // Add product to order (kept for compatibility)
