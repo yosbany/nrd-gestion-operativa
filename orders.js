@@ -3,6 +3,7 @@
 let ordersListener = null;
 let currentOrderProducts = [];
 let currentOrderClient = null;
+let selectedFilterDate = null; // null = all dates, Date object = specific date
 
 // Format date in 24-hour format
 function formatDate24h(date) {
@@ -50,6 +51,19 @@ function loadOrders() {
       return dateB - dateA;
     });
 
+    // Filter orders by date if filter is active
+    let ordersToShow = sortedOrders;
+    if (selectedFilterDate) {
+      const filterDateStart = new Date(selectedFilterDate.getFullYear(), selectedFilterDate.getMonth(), selectedFilterDate.getDate(), 0, 0, 0, 0).getTime();
+      const filterDateEnd = new Date(selectedFilterDate.getFullYear(), selectedFilterDate.getMonth(), selectedFilterDate.getDate(), 23, 59, 59, 999).getTime();
+      
+      ordersToShow = sortedOrders.filter(([id, order]) => {
+        if (!order.deliveryDate) return false;
+        const deliveryDate = order.deliveryDate;
+        return deliveryDate >= filterDateStart && deliveryDate <= filterDateEnd;
+      });
+    }
+    
     sortedOrders.forEach(([id, order]) => {
       // Check if delivery date has passed and update status automatically
       const currentStatus = order.status || 'Pendiente';
@@ -64,6 +78,15 @@ function loadOrders() {
           order.status = 'Completado';
         }
       }
+    });
+    
+    // Show filtered orders
+    if (ordersToShow.length === 0) {
+      ordersList.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No hay pedidos para la fecha seleccionada</p>';
+      return;
+    }
+    
+    ordersToShow.forEach(([id, order]) => {
 
       const item = document.createElement('div');
       item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors relative';
@@ -1246,6 +1269,62 @@ document.getElementById('close-order-form').addEventListener('click', hideNewOrd
 document.getElementById('whatsapp-order-btn').addEventListener('click', sendWhatsAppMessage);
 document.getElementById('print-order-btn').addEventListener('click', printOrder);
 document.getElementById('report-orders-btn').addEventListener('click', generateProductReport);
+
+// Date filter handlers
+function updateDateFilterDisplay() {
+  const display = document.getElementById('filter-date-display');
+  if (!display) return;
+  
+  if (selectedFilterDate) {
+    display.textContent = formatDate24h(selectedFilterDate);
+  } else {
+    display.textContent = 'Todas las fechas';
+  }
+}
+
+function setFilterDate(date) {
+  selectedFilterDate = date;
+  updateDateFilterDisplay();
+  loadOrders(); // Reload orders with new filter
+}
+
+function prevDate() {
+  if (!selectedFilterDate) {
+    // If no filter, start with today
+    selectedFilterDate = new Date();
+  } else {
+    // Go to previous day
+    const prev = new Date(selectedFilterDate);
+    prev.setDate(prev.getDate() - 1);
+    selectedFilterDate = prev;
+  }
+  updateDateFilterDisplay();
+  loadOrders();
+}
+
+function nextDate() {
+  if (!selectedFilterDate) {
+    // If no filter, start with today
+    selectedFilterDate = new Date();
+  } else {
+    // Go to next day
+    const next = new Date(selectedFilterDate);
+    next.setDate(next.getDate() + 1);
+    selectedFilterDate = next;
+  }
+  updateDateFilterDisplay();
+  loadOrders();
+}
+
+function clearDateFilter() {
+  selectedFilterDate = null;
+  updateDateFilterDisplay();
+  loadOrders();
+}
+
+document.getElementById('prev-date-btn').addEventListener('click', prevDate);
+document.getElementById('next-date-btn').addEventListener('click', nextDate);
+document.getElementById('clear-date-filter-btn').addEventListener('click', clearDateFilter);
 
 // Add new client from order form
 const addNewClientFromOrderBtn = document.getElementById('add-new-client-from-order-btn');
