@@ -7,15 +7,19 @@ let currentOrderClient = null;
 // Load orders
 function loadOrders() {
   const ordersList = document.getElementById('orders-list');
+  if (!ordersList) return;
+  
   ordersList.innerHTML = '';
 
   // Remove previous listener
   if (ordersListener) {
     getOrdersRef().off('value', ordersListener);
+    ordersListener = null;
   }
 
   // Listen for orders
   ordersListener = getOrdersRef().on('value', (snapshot) => {
+    if (!ordersList) return;
     ordersList.innerHTML = '';
     const orders = snapshot.val() || {};
 

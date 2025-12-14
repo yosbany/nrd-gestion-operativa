@@ -5,15 +5,19 @@ let productsListener = null;
 // Load products
 function loadProducts() {
   const productsList = document.getElementById('products-list');
+  if (!productsList) return;
+  
   productsList.innerHTML = '';
 
   // Remove previous listener
   if (productsListener) {
     getProductsRef().off('value', productsListener);
+    productsListener = null;
   }
 
   // Listen for products
   productsListener = getProductsRef().on('value', (snapshot) => {
+    if (!productsList) return;
     productsList.innerHTML = '';
     const products = snapshot.val() || {};
 

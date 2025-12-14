@@ -1,14 +1,29 @@
 // Main app controller
 
 // Navigation
+let currentView = null;
+
 function switchView(viewName) {
+  // Prevent duplicate loading
+  if (currentView === viewName) {
+    return;
+  }
+  currentView = viewName;
+
   // Hide all views
-  document.querySelectorAll('.view').forEach(view => {
-    view.classList.add('hidden');
+  const views = ['orders', 'clients', 'products'];
+  views.forEach(view => {
+    const viewElement = document.getElementById(`${view}-view`);
+    if (viewElement) {
+      viewElement.classList.add('hidden');
+    }
   });
 
   // Show selected view
-  document.getElementById(`${viewName}-view`).classList.remove('hidden');
+  const selectedView = document.getElementById(`${viewName}-view`);
+  if (selectedView) {
+    selectedView.classList.remove('hidden');
+  }
 
   // Update nav buttons
   document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -16,15 +31,26 @@ function switchView(viewName) {
     btn.classList.add('border-transparent', 'text-gray-600');
   });
   const activeBtn = document.querySelector(`[data-view="${viewName}"]`);
-  activeBtn.classList.remove('border-transparent', 'text-gray-600');
-  activeBtn.classList.add('border-black', 'text-black');
+  if (activeBtn) {
+    activeBtn.classList.remove('border-transparent', 'text-gray-600');
+    activeBtn.classList.add('border-black', 'text-black');
+  }
 
   // Load data for the view
   if (viewName === 'orders') {
     loadOrders();
-    document.getElementById('orders-list').style.display = 'block';
-    document.getElementById('order-detail').classList.add('hidden');
-    document.getElementById('new-order-form').classList.add('hidden');
+    const ordersList = document.getElementById('orders-list');
+    if (ordersList) {
+      ordersList.style.display = 'block';
+    }
+    const orderDetail = document.getElementById('order-detail');
+    if (orderDetail) {
+      orderDetail.classList.add('hidden');
+    }
+    const newOrderForm = document.getElementById('new-order-form');
+    if (newOrderForm) {
+      newOrderForm.classList.add('hidden');
+    }
   } else if (viewName === 'clients') {
     loadClients();
     hideClientForm();

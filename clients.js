@@ -5,15 +5,19 @@ let clientsListener = null;
 // Load clients
 function loadClients() {
   const clientsList = document.getElementById('clients-list');
+  if (!clientsList) return;
+  
   clientsList.innerHTML = '';
 
   // Remove previous listener
   if (clientsListener) {
     getClientsRef().off('value', clientsListener);
+    clientsListener = null;
   }
 
   // Listen for clients
   clientsListener = getClientsRef().on('value', (snapshot) => {
+    if (!clientsList) return;
     clientsList.innerHTML = '';
     const clients = snapshot.val() || {};
 
