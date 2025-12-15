@@ -1,12 +1,12 @@
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDnr6JoPRK_-TwSEv1IVFYmpYevZaAnY2A",
-  authDomain: "nrd-pedidos-afbc2.firebaseapp.com",
-  databaseURL: "https://nrd-pedidos-afbc2-default-rtdb.firebaseio.com",
-  projectId: "nrd-pedidos-afbc2",
-  storageBucket: "nrd-pedidos-afbc2.firebasestorage.app",
-  messagingSenderId: "36380125630",
-  appId: "1:36380125630:web:970001f135ee515b1c31ef"
+  apiKey: "AIzaSyD02egBPI7FnsliANDKa8noTkVmGMW0POg",
+  authDomain: "nrd-db.firebaseapp.com",
+  databaseURL: "https://nrd-db-default-rtdb.firebaseio.com",
+  projectId: "nrd-db",
+  storageBucket: "nrd-db.firebasestorage.app",
+  messagingSenderId: "544444461682",
+  appId: "1:544444461682:web:110c97ffffc984ddd208eb"
 };
 
 // Initialize Firebase
