@@ -153,7 +153,7 @@ function showInspectionForm(inspectionId = null) {
                 <h4 class="text-xs uppercase tracking-wider text-gray-600 mb-2 font-medium">Última Inspección:</h4>
                 <div class="flex items-center justify-between">
                   <span class="text-sm sm:text-base font-light text-gray-800">${lastDateStr}</span>
-                  <button type="button" onclick="(function(e) { e.preventDefault(); e.stopPropagation(); showInspectionDetailModal('${lastInspection.id}'); return false; })(event)" class="text-xs sm:text-sm text-red-600 hover:text-red-700 underline font-light cursor-pointer">
+                  <button type="button" data-inspection-id="${lastInspection.id}" class="view-inspection-detail-btn text-xs sm:text-sm text-red-600 hover:text-red-700 underline font-light cursor-pointer">
                     Ver detalles
                   </button>
                 </div>
@@ -191,6 +191,20 @@ function showInspectionForm(inspectionId = null) {
           if (helpHTML) {
             helpContent.innerHTML = helpHTML;
             helpContainer.classList.remove('hidden');
+            
+            // Add event listeners to view inspection detail buttons
+            const viewDetailBtns = helpContent.querySelectorAll('.view-inspection-detail-btn');
+            viewDetailBtns.forEach(btn => {
+              btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const inspectionId = btn.getAttribute('data-inspection-id');
+                if (inspectionId) {
+                  showInspectionDetailModal(inspectionId);
+                }
+                return false;
+              });
+            });
           } else {
             helpContainer.classList.add('hidden');
           }
@@ -484,18 +498,11 @@ function formatTime24h(date) {
 
 // Show inspection detail in modal (without closing form)
 async function showInspectionDetailModal(inspectionId) {
-  // Prevent any form submission
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-  
   const modal = document.getElementById('inspection-detail-modal');
   const title = document.getElementById('inspection-detail-modal-title');
   const content = document.getElementById('inspection-detail-modal-content');
   
   if (!modal || !title || !content) {
-    if (event) event.preventDefault();
     return false;
   }
   
