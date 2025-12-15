@@ -86,25 +86,28 @@ function showProcessForm(processId = null) {
         option.textContent = area.name;
         areaSelect.appendChild(option);
       });
+      
+      // After loading areas, load process data if editing
+      if (processId) {
+        if (title) title.textContent = 'Editar Proceso';
+        getProcess(processId).then(snapshot => {
+          const process = snapshot.val();
+          if (process) {
+            const nameInput = document.getElementById('process-name');
+            const objectiveInput = document.getElementById('process-objective');
+            if (nameInput) nameInput.value = process.name || '';
+            if (objectiveInput) objectiveInput.value = process.objective || '';
+            // Set area after options are loaded
+            if (areaSelect) {
+              areaSelect.value = process.areaId || '';
+            }
+          }
+        });
+      } else {
+        if (title) title.textContent = 'Nuevo Proceso';
+      }
     }
   });
-
-  if (processId) {
-    if (title) title.textContent = 'Editar Proceso';
-    getProcess(processId).then(snapshot => {
-      const process = snapshot.val();
-      if (process) {
-        const nameInput = document.getElementById('process-name');
-        const objectiveInput = document.getElementById('process-objective');
-        const areaSelect = document.getElementById('process-area-select');
-        if (nameInput) nameInput.value = process.name || '';
-        if (objectiveInput) objectiveInput.value = process.objective || '';
-        if (areaSelect) areaSelect.value = process.areaId || '';
-      }
-    });
-  } else {
-    if (title) title.textContent = 'Nuevo Proceso';
-  }
 }
 
 // Hide process form
