@@ -153,7 +153,7 @@ function showInspectionForm(inspectionId = null) {
                 <h4 class="text-xs uppercase tracking-wider text-gray-600 mb-2 font-medium">Última Inspección:</h4>
                 <div class="flex items-center justify-between">
                   <span class="text-sm sm:text-base font-light text-gray-800">${lastDateStr}</span>
-                  <button onclick="showInspectionDetailModal('${lastInspection.id}')" class="text-xs sm:text-sm text-red-600 hover:text-red-700 underline font-light">
+                  <button type="button" onclick="event.preventDefault(); event.stopPropagation(); showInspectionDetailModal('${lastInspection.id}'); return false;" class="text-xs sm:text-sm text-red-600 hover:text-red-700 underline font-light">
                     Ver detalles
                   </button>
                 </div>
@@ -553,9 +553,13 @@ async function showInspectionDetailModal(inspectionId) {
     `;
     
     modal.classList.remove('hidden');
+    
+    // Prevent form submission if button is inside a form
+    return false;
   } catch (error) {
     hideSpinner();
     await showError('Error al cargar inspección: ' + error.message);
+    return false;
   }
 }
 
