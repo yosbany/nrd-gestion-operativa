@@ -107,6 +107,60 @@ function showInspectionForm(inspectionId = null) {
         option.textContent = task.name;
         taskSelect.appendChild(option);
       });
+      
+      // Add change listener to load task help info
+      taskSelect.addEventListener('change', async (e) => {
+        const taskId = e.target.value;
+        const helpContainer = document.getElementById('inspection-task-help');
+        const helpContent = document.getElementById('inspection-task-help-content');
+        
+        if (!taskId || !helpContainer || !helpContent) {
+          if (helpContainer) helpContainer.classList.add('hidden');
+          return;
+        }
+        
+        try {
+          const taskSnapshot = await getTask(taskId);
+          const task = taskSnapshot.val();
+          
+          if (!task) {
+            helpContainer.classList.add('hidden');
+            return;
+          }
+          
+          let helpHTML = '';
+          
+          if (task.successCriteria) {
+            helpHTML += `
+              <div class="mb-3 sm:mb-4">
+                <h4 class="text-xs uppercase tracking-wider text-gray-600 mb-2 font-medium">Criterios de Ejecución Correcta:</h4>
+                <p class="text-sm sm:text-base font-light text-gray-800">${escapeHtml(task.successCriteria)}</p>
+              </div>
+            `;
+          }
+          
+          if (task.commonErrors && task.commonErrors.length > 0) {
+            helpHTML += `
+              <div>
+                <h4 class="text-xs uppercase tracking-wider text-gray-600 mb-2 font-medium">Errores Comunes:</h4>
+                <ul class="list-disc list-inside space-y-1">
+                  ${task.commonErrors.map(error => `<li class="text-sm sm:text-base font-light text-gray-800">${escapeHtml(error)}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+          
+          if (helpHTML) {
+            helpContent.innerHTML = helpHTML;
+            helpContainer.classList.remove('hidden');
+          } else {
+            helpContainer.classList.add('hidden');
+          }
+        } catch (error) {
+          console.error('Error loading task help:', error);
+          helpContainer.classList.add('hidden');
+        }
+      });
     }
   });
 
@@ -126,10 +180,11 @@ function showInspectionForm(inspectionId = null) {
 
   if (inspectionId) {
     if (title) title.textContent = 'Editar Inspección';
-    getInspection(inspectionId).then(snapshot => {
+    getInspection(inspectionId).then(async snapshot => {
       const inspection = snapshot.val();
       if (inspection) {
-        document.getElementById('inspection-task-select').value = inspection.taskId || '';
+        const taskSelect = document.getElementById('inspection-task-select');
+        taskSelect.value = inspection.taskId || '';
         document.getElementById('inspection-severity').value = inspection.severity || 'leve';
         document.getElementById('inspection-observations').value = inspection.observations || '';
         
@@ -143,11 +198,19 @@ function showInspectionForm(inspectionId = null) {
           document.getElementById('inspection-date').value = `${year}-${month}-${day}`;
           document.getElementById('inspection-time').value = `${hours}:${minutes}`;
         }
+        
+        // Trigger change event to load task help if task is selected
+        if (inspection.taskId && taskSelect) {
+          taskSelect.dispatchEvent(new Event('change'));
+        }
       }
     });
   } else {
     if (title) title.textContent = 'Nueva Inspección';
     document.getElementById('inspection-severity').value = 'leve';
+    // Hide help when creating new inspection
+    const helpContainer = document.getElementById('inspection-task-help');
+    if (helpContainer) helpContainer.classList.add('hidden');
   }
 }
 
@@ -157,11 +220,13 @@ function hideInspectionForm() {
   const list = document.getElementById('inspections-list');
   const header = document.querySelector('#inspections-view .flex.flex-col');
   const detail = document.getElementById('inspection-detail');
+  const helpContainer = document.getElementById('inspection-task-help');
   
   if (form) form.classList.add('hidden');
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
+  if (helpContainer) helpContainer.classList.add('hidden');
 }
 
 // Save inspection
