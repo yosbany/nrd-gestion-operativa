@@ -260,6 +260,7 @@ async function viewProcess(processId) {
     const editBtn = document.getElementById('edit-process-detail-btn');
     const deleteBtn = document.getElementById('delete-process-detail-btn');
     const diagramBtn = document.getElementById('view-process-diagram-btn');
+    const flowEditBtn = document.getElementById('edit-process-flow-btn');
     
     if (editBtn) {
       editBtn.onclick = () => {
@@ -275,6 +276,12 @@ async function viewProcess(processId) {
     if (diagramBtn) {
       diagramBtn.onclick = () => {
         showProcessDiagram(processId, process.name, processTasks, roleMap);
+      };
+    }
+    
+    if (flowEditBtn) {
+      flowEditBtn.onclick = () => {
+        showProcessFlowEdit(processId, process.name, processTasks, roleMap);
       };
     }
   } catch (error) {
@@ -395,6 +402,29 @@ if (closeProcessDiagramBtn) {
   });
 }
 
+// Process flow edit buttons
+const saveProcessFlowBtn = document.getElementById('save-process-flow-btn');
+const cancelProcessFlowEditBtn = document.getElementById('cancel-process-flow-edit-btn');
+const closeProcessFlowEditBtn = document.getElementById('close-process-flow-edit');
+
+if (saveProcessFlowBtn) {
+  saveProcessFlowBtn.addEventListener('click', () => {
+    saveProcessFlow();
+  });
+}
+
+if (cancelProcessFlowEditBtn) {
+  cancelProcessFlowEditBtn.addEventListener('click', () => {
+    closeProcessFlowEdit();
+  });
+}
+
+if (closeProcessFlowEditBtn) {
+  closeProcessFlowEditBtn.addEventListener('click', () => {
+    closeProcessFlowEdit();
+  });
+}
+
 // Show process diagram
 function showProcessDiagram(processId, processName, processTasks, roleMap) {
   const modal = document.getElementById('process-diagram-modal');
@@ -483,6 +513,280 @@ function closeProcessDiagram() {
     modal.classList.add('hidden');
   }
 }
+
+// Show process flow edit modal
+async function showProcessFlowEdit(processId, processName, processTasks, roleMap) {
+  const modal = document.getElementById('process-flow-edit-modal');
+  const title = document.getElementById('process-flow-edit-title');
+  const content = document.getElementById('process-flow-edit-content');
+  
+  if (!modal || !title || !content) return;
+  
+  title.textContent = `Editar Flujo: ${escapeHtml(processName)}`;
+  
+  // Load all tasks to show available tasks
+  showSpinner('Cargando tareas...');
+  try {
+    const allTasksSnapshot = await getTasksRef().once('value');
+    const allTasks = allTasksSnapshot.val() || {};
+    
+    // Get task IDs already in process
+    const processTaskIds = new Set(processTasks.map(t => t.id));
+    
+    // Separate tasks: in process and available
+    const tasksInProcess = [...processTasks].sort((a, b) => (a.order || 0) - (b.order || 0));
+    const availableTasks = Object.entries(allTasks)
+      .filter(([id, task]) => !processTaskIds.has(id))
+      .map(([id, task]) => ({ id, ...task }));
+    
+    hideSpinner();
+    
+    // Build HTML for flow edit
+    let flowEditHTML = `
+      <div class="space-y-6">
+        <div>
+          <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas en el Proceso (Ordenadas)</h4>
+          <div id="process-tasks-list" class="space-y-2">
+            ${tasksInProcess.map((task, index) => {
+              const roleName = task.roleId && roleMap[task.roleId] ? roleMap[task.roleId] : null;
+              return `
+                <div class="border border-gray-200 p-3 flex items-center gap-3 bg-gray-50" data-task-id="${task.id}">
+                  <div class="flex items-center gap-2 flex-1">
+                    <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
+                    <div class="flex-1">
+                      <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
+                      ${roleName ? `<div class="text-xs text-gray-600">Rol: ${escapeHtml(roleName)}</div>` : ''}
+                    </div>
+                  </div>
+                  <div class="flex gap-1">
+                    <button onclick="moveTaskUp('${task.id}')" ${index === 0 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
+                    <button onclick="moveTaskDown('${task.id}')" ${index === tasksInProcess.length - 1 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
+                    <button onclick="removeTaskFromProcess('${task.id}')" class="px-2 py-1 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+            ${tasksInProcess.length === 0 ? '<p class="text-sm text-gray-600 text-center py-4">No hay tareas en el proceso</p>' : ''}
+          </div>
+        </div>
+        
+        <div>
+          <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas Disponibles (Agregar al Proceso)</h4>
+          <div id="available-tasks-list" class="space-y-2">
+            ${availableTasks.map(task => {
+              const roleName = task.roleId && roleMap[task.roleId] ? roleMap[task.roleId] : null;
+              return `
+                <div class="border border-gray-200 p-3 flex items-center gap-3">
+                  <div class="flex-1">
+                    <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
+                    ${roleName ? `<div class="text-xs text-gray-600">Rol: ${escapeHtml(roleName)}</div>` : ''}
+                  </div>
+                  <button onclick="addTaskToProcess('${task.id}')" class="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors" title="Agregar al proceso">+ Agregar</button>
+                </div>
+              `;
+            }).join('')}
+            ${availableTasks.length === 0 ? '<p class="text-sm text-gray-600 text-center py-4">No hay tareas disponibles</p>' : ''}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    content.innerHTML = flowEditHTML;
+    
+    // Store current state
+    window.currentProcessFlowEdit = {
+      processId,
+      tasks: tasksInProcess.map(t => ({ id: t.id, order: t.order || 0 }))
+    };
+    
+    modal.classList.remove('hidden');
+  } catch (error) {
+    hideSpinner();
+    await showError('Error al cargar tareas: ' + error.message);
+  }
+}
+
+// Move task up in process flow
+function moveTaskUp(taskId) {
+  const tasks = window.currentProcessFlowEdit.tasks;
+  const index = tasks.findIndex(t => t.id === taskId);
+  if (index > 0) {
+    [tasks[index], tasks[index - 1]] = [tasks[index - 1], tasks[index]];
+    updateProcessFlowDisplay();
+  }
+}
+
+// Move task down in process flow
+function moveTaskDown(taskId) {
+  const tasks = window.currentProcessFlowEdit.tasks;
+  const index = tasks.findIndex(t => t.id === taskId);
+  if (index < tasks.length - 1) {
+    [tasks[index], tasks[index + 1]] = [tasks[index + 1], tasks[index]];
+    updateProcessFlowDisplay();
+  }
+}
+
+// Remove task from process
+function removeTaskFromProcess(taskId) {
+  window.currentProcessFlowEdit.tasks = window.currentProcessFlowEdit.tasks.filter(t => t.id !== taskId);
+  updateProcessFlowDisplay();
+}
+
+// Add task to process
+function addTaskToProcess(taskId) {
+  const maxOrder = window.currentProcessFlowEdit.tasks.length > 0 
+    ? Math.max(...window.currentProcessFlowEdit.tasks.map(t => t.order || 0))
+    : -1;
+  window.currentProcessFlowEdit.tasks.push({ id: taskId, order: maxOrder + 1 });
+  updateProcessFlowDisplay();
+}
+
+// Update process flow display
+async function updateProcessFlowDisplay() {
+  const content = document.getElementById('process-flow-edit-content');
+  if (!content || !window.currentProcessFlowEdit) return;
+  
+  const { tasks } = window.currentProcessFlowEdit;
+  
+  // Load all tasks and roles
+  const [allTasksSnapshot, rolesSnapshot] = await Promise.all([
+    getTasksRef().once('value'),
+    getRolesRef().once('value')
+  ]);
+  
+  const allTasks = allTasksSnapshot.val() || {};
+  const allRoles = rolesSnapshot.val() || {};
+  const roleMap = {};
+  Object.entries(allRoles).forEach(([id, role]) => {
+    roleMap[id] = role.name;
+  });
+  
+  // Get task IDs in process
+  const processTaskIds = new Set(tasks.map(t => t.id));
+  
+  // Separate tasks
+  const tasksInProcess = tasks.map(({ id, order }) => {
+    const task = allTasks[id];
+    return task ? { id, order, ...task } : null;
+  }).filter(t => t !== null);
+  
+  const availableTasks = Object.entries(allTasks)
+    .filter(([id, task]) => !processTaskIds.has(id))
+    .map(([id, task]) => ({ id, ...task }));
+  
+  // Rebuild HTML
+  let flowEditHTML = `
+    <div class="space-y-6">
+      <div>
+        <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas en el Proceso (Ordenadas)</h4>
+        <div id="process-tasks-list" class="space-y-2">
+          ${tasksInProcess.map((task, index) => {
+            const roleName = task.roleId && roleMap[task.roleId] ? roleMap[task.roleId] : null;
+            return `
+              <div class="border border-gray-200 p-3 flex items-center gap-3 bg-gray-50" data-task-id="${task.id}">
+                <div class="flex items-center gap-2 flex-1">
+                  <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
+                  <div class="flex-1">
+                    <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
+                    ${roleName ? `<div class="text-xs text-gray-600">Rol: ${escapeHtml(roleName)}</div>` : ''}
+                  </div>
+                </div>
+                <div class="flex gap-1">
+                  <button onclick="moveTaskUp('${task.id}')" ${index === 0 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
+                  <button onclick="moveTaskDown('${task.id}')" ${index === tasksInProcess.length - 1 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
+                  <button onclick="removeTaskFromProcess('${task.id}')" class="px-2 py-1 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+          ${tasksInProcess.length === 0 ? '<p class="text-sm text-gray-600 text-center py-4">No hay tareas en el proceso</p>' : ''}
+        </div>
+      </div>
+      
+      <div>
+        <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas Disponibles (Agregar al Proceso)</h4>
+        <div id="available-tasks-list" class="space-y-2">
+          ${availableTasks.map(task => {
+            const roleName = task.roleId && roleMap[task.roleId] ? roleMap[task.roleId] : null;
+            return `
+              <div class="border border-gray-200 p-3 flex items-center gap-3">
+                <div class="flex-1">
+                  <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
+                  ${roleName ? `<div class="text-xs text-gray-600">Rol: ${escapeHtml(roleName)}</div>` : ''}
+                </div>
+                <button onclick="addTaskToProcess('${task.id}')" class="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors" title="Agregar al proceso">+ Agregar</button>
+              </div>
+            `;
+          }).join('')}
+          ${availableTasks.length === 0 ? '<p class="text-sm text-gray-600 text-center py-4">No hay tareas disponibles</p>' : ''}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  content.innerHTML = flowEditHTML;
+}
+
+// Save process flow changes
+async function saveProcessFlow() {
+  if (!window.currentProcessFlowEdit) return;
+  
+  const { processId, tasks } = window.currentProcessFlowEdit;
+  
+  showSpinner('Guardando cambios...');
+  try {
+    // Update each task's processId and order
+    const updatePromises = tasks.map((task, index) => {
+      return updateTask(task.id, {
+        processId: processId,
+        order: index
+      });
+    });
+    
+    // Remove processId from tasks that were removed
+    const allTasksSnapshot = await getTasksRef().once('value');
+    const allTasks = allTasksSnapshot.val() || {};
+    const currentTaskIds = new Set(tasks.map(t => t.id));
+    
+    const removePromises = [];
+    Object.entries(allTasks).forEach(([id, task]) => {
+      if (task.processId === processId && !currentTaskIds.has(id)) {
+        removePromises.push(updateTask(id, {
+          processId: null,
+          order: null
+        }));
+      }
+    });
+    
+    // Apply all updates
+    await Promise.all([...updatePromises, ...removePromises]);
+    
+    hideSpinner();
+    closeProcessFlowEdit();
+    await showSuccess('Flujo del proceso guardado exitosamente');
+    
+    // Reload process detail
+    viewProcess(processId);
+  } catch (error) {
+    hideSpinner();
+    await showError('Error al guardar flujo: ' + error.message);
+  }
+}
+
+// Close process flow edit modal
+function closeProcessFlowEdit() {
+  const modal = document.getElementById('process-flow-edit-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+  window.currentProcessFlowEdit = null;
+}
+
+// Make functions available globally
+window.moveTaskUp = moveTaskUp;
+window.moveTaskDown = moveTaskDown;
+window.removeTaskFromProcess = removeTaskFromProcess;
+window.addTaskToProcess = addTaskToProcess;
 
 // Make functions available globally
 window.viewProcess = viewProcess;
