@@ -173,6 +173,342 @@ async function calculateWorkloadByArea() {
   }
 }
 
+// Calculate incidents by employee (based on inspections with moderate/critical severity)
+async function calculateIncidentsByEmployee() {
+  try {
+    const [inspectionsSnapshot, tasksSnapshot, employeesSnapshot, rolesSnapshot] = await Promise.all([
+      getInspectionsRef().once('value'),
+      getTasksRef().once('value'),
+      getEmployeesRef().once('value'),
+      getRolesRef().once('value')
+    ]);
+
+    const inspections = inspectionsSnapshot.val() || {};
+    const tasks = tasksSnapshot.val() || {};
+    const employees = employeesSnapshot.val() || {};
+    const roles = rolesSnapshot.val() || {};
+
+    // Filter inspections with moderate or critical severity
+    const incidents = Object.entries(inspections)
+      .filter(([id, inspection]) => inspection.severity === 'moderada' || inspection.severity === 'critica')
+      .map(([id, inspection]) => ({ id, ...inspection }));
+
+    // Build incidents map by employee
+    const incidentsMap = {};
+
+    Object.entries(employees).forEach(([employeeId, employee]) => {
+      incidentsMap[employeeId] = {
+        employeeName: employee.name,
+        roleId: employee.roleId,
+        totalIncidents: 0,
+        moderate: 0,
+        critical: 0,
+        tasks: {}
+      };
+    });
+
+    // Count incidents per employee through their role
+    incidents.forEach(inspection => {
+      if (inspection.taskId && tasks[inspection.taskId]) {
+        const task = tasks[inspection.taskId];
+        if (task.roleId) {
+          Object.entries(employees).forEach(([employeeId, employee]) => {
+            if (employee.roleId === task.roleId) {
+              if (!incidentsMap[employeeId]) {
+                incidentsMap[employeeId] = {
+                  employeeName: employee.name,
+                  roleId: employee.roleId,
+                  totalIncidents: 0,
+                  moderate: 0,
+                  critical: 0,
+                  tasks: {}
+                };
+              }
+              incidentsMap[employeeId].totalIncidents++;
+              if (inspection.severity === 'moderada') {
+                incidentsMap[employeeId].moderate++;
+              } else if (inspection.severity === 'critica') {
+                incidentsMap[employeeId].critical++;
+              }
+              // Track incidents by task
+              if (!incidentsMap[employeeId].tasks[inspection.taskId]) {
+                incidentsMap[employeeId].tasks[inspection.taskId] = {
+                  taskName: task.name,
+                  count: 0
+                };
+              }
+              incidentsMap[employeeId].tasks[inspection.taskId].count++;
+            }
+          });
+        }
+      }
+    });
+
+    return Object.entries(incidentsMap)
+      .filter(([id, data]) => data.totalIncidents > 0)
+      .map(([employeeId, data]) => ({
+        employeeId,
+        ...data
+      }));
+  } catch (error) {
+    console.error('Error calculating incidents by employee:', error);
+    throw error;
+  }
+}
+
+// Calculate incidents by task
+async function calculateIncidentsByTask() {
+  try {
+    const [inspectionsSnapshot, tasksSnapshot] = await Promise.all([
+      getInspectionsRef().once('value'),
+      getTasksRef().once('value')
+    ]);
+
+    const inspections = inspectionsSnapshot.val() || {};
+    const tasks = tasksSnapshot.val() || {};
+
+    // Filter inspections with moderate or critical severity
+    const incidents = Object.entries(inspections)
+      .filter(([id, inspection]) => inspection.severity === 'moderada' || inspection.severity === 'critica')
+      .map(([id, inspection]) => ({ id, ...inspection }));
+
+    // Build incidents map by task
+    const incidentsMap = {};
+
+    incidents.forEach(inspection => {
+      if (inspection.taskId && tasks[inspection.taskId]) {
+        const task = tasks[inspection.taskId];
+        if (!incidentsMap[inspection.taskId]) {
+          incidentsMap[inspection.taskId] = {
+            taskId: inspection.taskId,
+            taskName: task.name,
+            totalIncidents: 0,
+            moderate: 0,
+            critical: 0
+          };
+        }
+        incidentsMap[inspection.taskId].totalIncidents++;
+        if (inspection.severity === 'moderada') {
+          incidentsMap[inspection.taskId].moderate++;
+        } else if (inspection.severity === 'critica') {
+          incidentsMap[inspection.taskId].critical++;
+        }
+      }
+    });
+
+    return Object.entries(incidentsMap).map(([taskId, data]) => ({
+      taskId,
+      ...data
+    }));
+  } catch (error) {
+    console.error('Error calculating incidents by task:', error);
+    throw error;
+  }
+}
+
+// Calculate incidents by process
+async function calculateIncidentsByProcess() {
+  try {
+    const [inspectionsSnapshot, tasksSnapshot, processesSnapshot] = await Promise.all([
+      getInspectionsRef().once('value'),
+      getTasksRef().once('value'),
+      getProcessesRef().once('value')
+    ]);
+
+    const inspections = inspectionsSnapshot.val() || {};
+    const tasks = tasksSnapshot.val() || {};
+    const processes = processesSnapshot.val() || {};
+
+    // Filter inspections with moderate or critical severity
+    const incidents = Object.entries(inspections)
+      .filter(([id, inspection]) => inspection.severity === 'moderada' || inspection.severity === 'critica')
+      .map(([id, inspection]) => ({ id, ...inspection }));
+
+    // Build incidents map by process
+    const incidentsMap = {};
+
+    Object.entries(processes).forEach(([processId, process]) => {
+      incidentsMap[processId] = {
+        processId,
+        processName: process.name,
+        totalIncidents: 0,
+        moderate: 0,
+        critical: 0,
+        tasks: {}
+      };
+    });
+
+    incidents.forEach(inspection => {
+      if (inspection.taskId && tasks[inspection.taskId]) {
+        const task = tasks[inspection.taskId];
+        if (task.processId && incidentsMap[task.processId]) {
+          incidentsMap[task.processId].totalIncidents++;
+          if (inspection.severity === 'moderada') {
+            incidentsMap[task.processId].moderate++;
+          } else if (inspection.severity === 'critica') {
+            incidentsMap[task.processId].critical++;
+          }
+          // Track incidents by task
+          if (!incidentsMap[task.processId].tasks[inspection.taskId]) {
+            incidentsMap[task.processId].tasks[inspection.taskId] = {
+              taskName: task.name,
+              count: 0
+            };
+          }
+          incidentsMap[task.processId].tasks[inspection.taskId].count++;
+        }
+      }
+    });
+
+    return Object.entries(incidentsMap)
+      .filter(([id, data]) => data.totalIncidents > 0)
+      .map(([processId, data]) => ({
+        processId,
+        ...data
+      }));
+  } catch (error) {
+    console.error('Error calculating incidents by process:', error);
+    throw error;
+  }
+}
+
+// Calculate incidents by area
+async function calculateIncidentsByArea() {
+  try {
+    const [inspectionsSnapshot, tasksSnapshot, processesSnapshot, areasSnapshot] = await Promise.all([
+      getInspectionsRef().once('value'),
+      getTasksRef().once('value'),
+      getProcessesRef().once('value'),
+      getAreasRef().once('value')
+    ]);
+
+    const inspections = inspectionsSnapshot.val() || {};
+    const tasks = tasksSnapshot.val() || {};
+    const processes = processesSnapshot.val() || {};
+    const areas = areasSnapshot.val() || {};
+
+    // Filter inspections with moderate or critical severity
+    const incidents = Object.entries(inspections)
+      .filter(([id, inspection]) => inspection.severity === 'moderada' || inspection.severity === 'critica')
+      .map(([id, inspection]) => ({ id, ...inspection }));
+
+    // Build incidents map by area
+    const incidentsMap = {};
+
+    Object.entries(areas).forEach(([areaId, area]) => {
+      incidentsMap[areaId] = {
+        areaId,
+        areaName: area.name,
+        totalIncidents: 0,
+        moderate: 0,
+        critical: 0,
+        processes: {}
+      };
+    });
+
+    incidents.forEach(inspection => {
+      if (inspection.taskId && tasks[inspection.taskId]) {
+        const task = tasks[inspection.taskId];
+        if (task.processId && processes[task.processId]) {
+          const process = processes[task.processId];
+          if (process.areaId && incidentsMap[process.areaId]) {
+            incidentsMap[process.areaId].totalIncidents++;
+            if (inspection.severity === 'moderada') {
+              incidentsMap[process.areaId].moderate++;
+            } else if (inspection.severity === 'critica') {
+              incidentsMap[process.areaId].critical++;
+            }
+            // Track incidents by process
+            if (!incidentsMap[process.areaId].processes[task.processId]) {
+              incidentsMap[process.areaId].processes[task.processId] = {
+                processName: process.name,
+                count: 0
+              };
+            }
+            incidentsMap[process.areaId].processes[task.processId].count++;
+          }
+        }
+      }
+    });
+
+    return Object.entries(incidentsMap)
+      .filter(([id, data]) => data.totalIncidents > 0)
+      .map(([areaId, data]) => ({
+        areaId,
+        ...data
+      }));
+  } catch (error) {
+    console.error('Error calculating incidents by area:', error);
+    throw error;
+  }
+}
+
+// Calculate incidents by role
+async function calculateIncidentsByRole() {
+  try {
+    const [inspectionsSnapshot, tasksSnapshot, rolesSnapshot] = await Promise.all([
+      getInspectionsRef().once('value'),
+      getTasksRef().once('value'),
+      getRolesRef().once('value')
+    ]);
+
+    const inspections = inspectionsSnapshot.val() || {};
+    const tasks = tasksSnapshot.val() || {};
+    const roles = rolesSnapshot.val() || {};
+
+    // Filter inspections with moderate or critical severity
+    const incidents = Object.entries(inspections)
+      .filter(([id, inspection]) => inspection.severity === 'moderada' || inspection.severity === 'critica')
+      .map(([id, inspection]) => ({ id, ...inspection }));
+
+    // Build incidents map by role
+    const incidentsMap = {};
+
+    Object.entries(roles).forEach(([roleId, role]) => {
+      incidentsMap[roleId] = {
+        roleId,
+        roleName: role.name,
+        totalIncidents: 0,
+        moderate: 0,
+        critical: 0,
+        tasks: {}
+      };
+    });
+
+    incidents.forEach(inspection => {
+      if (inspection.taskId && tasks[inspection.taskId]) {
+        const task = tasks[inspection.taskId];
+        if (task.roleId && incidentsMap[task.roleId]) {
+          incidentsMap[task.roleId].totalIncidents++;
+          if (inspection.severity === 'moderada') {
+            incidentsMap[task.roleId].moderate++;
+          } else if (inspection.severity === 'critica') {
+            incidentsMap[task.roleId].critical++;
+          }
+          // Track incidents by task
+          if (!incidentsMap[task.roleId].tasks[inspection.taskId]) {
+            incidentsMap[task.roleId].tasks[inspection.taskId] = {
+              taskName: task.name,
+              count: 0
+            };
+          }
+          incidentsMap[task.roleId].tasks[inspection.taskId].count++;
+        }
+      }
+    });
+
+    return Object.entries(incidentsMap)
+      .filter(([id, data]) => data.totalIncidents > 0)
+      .map(([roleId, data]) => ({
+        roleId,
+        ...data
+      }));
+  } catch (error) {
+    console.error('Error calculating incidents by role:', error);
+    throw error;
+  }
+}
+
 // Load analytics view
 async function loadAnalytics() {
   const analyticsContent = document.getElementById('analytics-content');
@@ -180,10 +516,15 @@ async function loadAnalytics() {
 
   showSpinner('Calculando análisis...');
   try {
-    const [employeeWorkload, roleWorkload, areaWorkload] = await Promise.all([
+    const [employeeWorkload, roleWorkload, areaWorkload, employeeIncidents, taskIncidents, processIncidents, areaIncidents, roleIncidents] = await Promise.all([
       calculateWorkloadByEmployee(),
       calculateWorkloadByRole(),
-      calculateWorkloadByArea()
+      calculateWorkloadByArea(),
+      calculateIncidentsByEmployee(),
+      calculateIncidentsByTask(),
+      calculateIncidentsByProcess(),
+      calculateIncidentsByArea(),
+      calculateIncidentsByRole()
     ]);
 
     hideSpinner();
@@ -193,66 +534,225 @@ async function loadAnalytics() {
     roleWorkload.sort((a, b) => b.totalEstimatedTime - a.totalEstimatedTime);
     areaWorkload.sort((a, b) => b.totalEstimatedTime - a.totalEstimatedTime);
 
+    // Sort incidents by total (descending)
+    employeeIncidents.sort((a, b) => b.totalIncidents - a.totalIncidents);
+    taskIncidents.sort((a, b) => b.totalIncidents - a.totalIncidents);
+    processIncidents.sort((a, b) => b.totalIncidents - a.totalIncidents);
+    areaIncidents.sort((a, b) => b.totalIncidents - a.totalIncidents);
+    roleIncidents.sort((a, b) => b.totalIncidents - a.totalIncidents);
+
     analyticsContent.innerHTML = `
       <div class="space-y-6">
-        <!-- Employee Workload -->
-        <div class="border border-gray-200 p-4 sm:p-6">
-          <h3 class="text-lg sm:text-xl font-light mb-4">Carga de Trabajo por Empleado</h3>
-          ${employeeWorkload.length === 0 ? '<p class="text-gray-600 text-sm">No hay datos disponibles</p>' : `
-          <div class="space-y-3">
-            ${employeeWorkload.map(workload => `
-              <div class="border border-gray-200 p-3">
-                <div class="flex justify-between items-center mb-2">
-                  <span class="font-light text-sm sm:text-base">${escapeHtml(workload.employeeName)}</span>
-                  <span class="text-xs sm:text-sm text-gray-600">${workload.totalEstimatedTime} min estimados</span>
+        <!-- INCIDENCIAS SECTION -->
+        <div class="border-t-2 border-red-600 pt-6">
+          <h2 class="text-xl sm:text-2xl font-light mb-6 text-red-600 uppercase tracking-wider">Indicadores de Incidencias</h2>
+          
+          <!-- Incidents by Employee -->
+          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Incidencias por Empleado</h3>
+            ${employeeIncidents.length === 0 ? '<p class="text-gray-600 text-sm">No hay incidencias registradas</p>' : `
+            <div class="space-y-3">
+              ${employeeIncidents.map(incident => `
+                <div class="border border-gray-200 p-3 ${incident.critical > 0 ? 'border-red-300 bg-red-50' : incident.moderate > 0 ? 'border-orange-300 bg-orange-50' : ''}">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(incident.employeeName)}</span>
+                    <span class="text-xs sm:text-sm font-medium ${incident.critical > 0 ? 'text-red-600' : 'text-orange-600'}">
+                      ${incident.totalIncidents} incidencia${incident.totalIncidents !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div class="text-xs text-gray-600 space-y-1">
+                    <div>Moderadas: ${incident.moderate} | Críticas: <span class="${incident.critical > 0 ? 'text-red-600 font-medium' : ''}">${incident.critical}</span></div>
+                    ${Object.keys(incident.tasks).length > 0 ? `
+                    <div class="mt-2 pt-2 border-t border-gray-300">
+                      <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Tareas con incidencias:</div>
+                      ${Object.entries(incident.tasks).map(([taskId, taskData]) => `
+                        <div class="text-xs">• ${escapeHtml(taskData.taskName)}: ${taskData.count} vez${taskData.count !== 1 ? 'es' : ''}</div>
+                      `).join('')}
+                    </div>
+                    ` : ''}
+                  </div>
                 </div>
-                <div class="text-xs text-gray-600">
-                  Tareas asignadas: ${workload.totalTasks}
-                </div>
-              </div>
-            `).join('')}
+              `).join('')}
+            </div>
+            `}
           </div>
-          `}
+
+          <!-- Incidents by Task -->
+          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Incidencias por Tarea (Tareas con más problemas)</h3>
+            ${taskIncidents.length === 0 ? '<p class="text-gray-600 text-sm">No hay incidencias registradas</p>' : `
+            <div class="space-y-3">
+              ${taskIncidents.map(incident => `
+                <div class="border border-gray-200 p-3 ${incident.critical > 0 ? 'border-red-300 bg-red-50' : incident.moderate > 0 ? 'border-orange-300 bg-orange-50' : ''}">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(incident.taskName)}</span>
+                    <span class="text-xs sm:text-sm font-medium ${incident.critical > 0 ? 'text-red-600' : 'text-orange-600'}">
+                      ${incident.totalIncidents} incidencia${incident.totalIncidents !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div class="text-xs text-gray-600">
+                    Moderadas: ${incident.moderate} | Críticas: <span class="${incident.critical > 0 ? 'text-red-600 font-medium' : ''}">${incident.critical}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            `}
+          </div>
+
+          <!-- Incidents by Process -->
+          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Incidencias por Proceso</h3>
+            ${processIncidents.length === 0 ? '<p class="text-gray-600 text-sm">No hay incidencias registradas</p>' : `
+            <div class="space-y-3">
+              ${processIncidents.map(incident => `
+                <div class="border border-gray-200 p-3 ${incident.critical > 0 ? 'border-red-300 bg-red-50' : incident.moderate > 0 ? 'border-orange-300 bg-orange-50' : ''}">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(incident.processName)}</span>
+                    <span class="text-xs sm:text-sm font-medium ${incident.critical > 0 ? 'text-red-600' : 'text-orange-600'}">
+                      ${incident.totalIncidents} incidencia${incident.totalIncidents !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div class="text-xs text-gray-600 space-y-1">
+                    <div>Moderadas: ${incident.moderate} | Críticas: <span class="${incident.critical > 0 ? 'text-red-600 font-medium' : ''}">${incident.critical}</span></div>
+                    ${Object.keys(incident.tasks).length > 0 ? `
+                    <div class="mt-2 pt-2 border-t border-gray-300">
+                      <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Tareas con incidencias:</div>
+                      ${Object.entries(incident.tasks).map(([taskId, taskData]) => `
+                        <div class="text-xs">• ${escapeHtml(taskData.taskName)}: ${taskData.count} vez${taskData.count !== 1 ? 'es' : ''}</div>
+                      `).join('')}
+                    </div>
+                    ` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            `}
+          </div>
+
+          <!-- Incidents by Area -->
+          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Incidencias por Área</h3>
+            ${areaIncidents.length === 0 ? '<p class="text-gray-600 text-sm">No hay incidencias registradas</p>' : `
+            <div class="space-y-3">
+              ${areaIncidents.map(incident => `
+                <div class="border border-gray-200 p-3 ${incident.critical > 0 ? 'border-red-300 bg-red-50' : incident.moderate > 0 ? 'border-orange-300 bg-orange-50' : ''}">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(incident.areaName)}</span>
+                    <span class="text-xs sm:text-sm font-medium ${incident.critical > 0 ? 'text-red-600' : 'text-orange-600'}">
+                      ${incident.totalIncidents} incidencia${incident.totalIncidents !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div class="text-xs text-gray-600 space-y-1">
+                    <div>Moderadas: ${incident.moderate} | Críticas: <span class="${incident.critical > 0 ? 'text-red-600 font-medium' : ''}">${incident.critical}</span></div>
+                    ${Object.keys(incident.processes).length > 0 ? `
+                    <div class="mt-2 pt-2 border-t border-gray-300">
+                      <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Procesos con incidencias:</div>
+                      ${Object.entries(incident.processes).map(([processId, processData]) => `
+                        <div class="text-xs">• ${escapeHtml(processData.processName)}: ${processData.count} vez${processData.count !== 1 ? 'es' : ''}</div>
+                      `).join('')}
+                    </div>
+                    ` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            `}
+          </div>
+
+          <!-- Incidents by Role -->
+          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Incidencias por Rol</h3>
+            ${roleIncidents.length === 0 ? '<p class="text-gray-600 text-sm">No hay incidencias registradas</p>' : `
+            <div class="space-y-3">
+              ${roleIncidents.map(incident => `
+                <div class="border border-gray-200 p-3 ${incident.critical > 0 ? 'border-red-300 bg-red-50' : incident.moderate > 0 ? 'border-orange-300 bg-orange-50' : ''}">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(incident.roleName)}</span>
+                    <span class="text-xs sm:text-sm font-medium ${incident.critical > 0 ? 'text-red-600' : 'text-orange-600'}">
+                      ${incident.totalIncidents} incidencia${incident.totalIncidents !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div class="text-xs text-gray-600 space-y-1">
+                    <div>Moderadas: ${incident.moderate} | Críticas: <span class="${incident.critical > 0 ? 'text-red-600 font-medium' : ''}">${incident.critical}</span></div>
+                    ${Object.keys(incident.tasks).length > 0 ? `
+                    <div class="mt-2 pt-2 border-t border-gray-300">
+                      <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Tareas con incidencias:</div>
+                      ${Object.entries(incident.tasks).map(([taskId, taskData]) => `
+                        <div class="text-xs">• ${escapeHtml(taskData.taskName)}: ${taskData.count} vez${taskData.count !== 1 ? 'es' : ''}</div>
+                      `).join('')}
+                    </div>
+                    ` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            `}
+          </div>
         </div>
 
-        <!-- Role Workload -->
-        <div class="border border-gray-200 p-4 sm:p-6">
-          <h3 class="text-lg sm:text-xl font-light mb-4">Carga de Trabajo por Rol</h3>
-          ${roleWorkload.length === 0 ? '<p class="text-gray-600 text-sm">No hay datos disponibles</p>' : `
-          <div class="space-y-3">
-            ${roleWorkload.map(workload => `
-              <div class="border border-gray-200 p-3">
-                <div class="flex justify-between items-center mb-2">
-                  <span class="font-light text-sm sm:text-base">${escapeHtml(workload.roleName)}</span>
-                  <span class="text-xs sm:text-sm text-gray-600">${workload.totalEstimatedTime} min estimados</span>
+        <!-- CARGA DE TRABAJO SECTION -->
+        <div class="border-t-2 border-gray-300 pt-6">
+          <h2 class="text-xl sm:text-2xl font-light mb-6 text-gray-700 uppercase tracking-wider">Carga de Trabajo</h2>
+          
+          <!-- Employee Workload -->
+          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Carga de Trabajo por Empleado</h3>
+            ${employeeWorkload.length === 0 ? '<p class="text-gray-600 text-sm">No hay datos disponibles</p>' : `
+            <div class="space-y-3">
+              ${employeeWorkload.map(workload => `
+                <div class="border border-gray-200 p-3">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(workload.employeeName)}</span>
+                    <span class="text-xs sm:text-sm text-gray-600">${workload.totalEstimatedTime} min estimados</span>
+                  </div>
+                  <div class="text-xs text-gray-600">
+                    Tareas asignadas: ${workload.totalTasks}
+                  </div>
                 </div>
-                <div class="text-xs text-gray-600">
-                  Tareas: ${workload.totalTasks} | Empleados: ${workload.employeesCount}
-                </div>
-              </div>
-            `).join('')}
+              `).join('')}
+            </div>
+            `}
           </div>
-          `}
-        </div>
 
-        <!-- Area Workload -->
-        <div class="border border-gray-200 p-4 sm:p-6">
-          <h3 class="text-lg sm:text-xl font-light mb-4">Carga de Trabajo por Área</h3>
-          ${areaWorkload.length === 0 ? '<p class="text-gray-600 text-sm">No hay datos disponibles</p>' : `
-          <div class="space-y-3">
-            ${areaWorkload.map(workload => `
-              <div class="border border-gray-200 p-3">
-                <div class="flex justify-between items-center mb-2">
-                  <span class="font-light text-sm sm:text-base">${escapeHtml(workload.areaName)}</span>
-                  <span class="text-xs sm:text-sm text-gray-600">${workload.totalEstimatedTime} min estimados</span>
+          <!-- Role Workload -->
+          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Carga de Trabajo por Rol</h3>
+            ${roleWorkload.length === 0 ? '<p class="text-gray-600 text-sm">No hay datos disponibles</p>' : `
+            <div class="space-y-3">
+              ${roleWorkload.map(workload => `
+                <div class="border border-gray-200 p-3">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(workload.roleName)}</span>
+                    <span class="text-xs sm:text-sm text-gray-600">${workload.totalEstimatedTime} min estimados</span>
+                  </div>
+                  <div class="text-xs text-gray-600">
+                    Tareas: ${workload.totalTasks} | Empleados: ${workload.employeesCount}
+                  </div>
                 </div>
-                <div class="text-xs text-gray-600">
-                  Procesos: ${workload.processesCount} | Tareas: ${workload.tasksCount}
-                </div>
-              </div>
-            `).join('')}
+              `).join('')}
+            </div>
+            `}
           </div>
-          `}
+
+          <!-- Area Workload -->
+          <div class="border border-gray-200 p-4 sm:p-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Carga de Trabajo por Área</h3>
+            ${areaWorkload.length === 0 ? '<p class="text-gray-600 text-sm">No hay datos disponibles</p>' : `
+            <div class="space-y-3">
+              ${areaWorkload.map(workload => `
+                <div class="border border-gray-200 p-3">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(workload.areaName)}</span>
+                    <span class="text-xs sm:text-sm text-gray-600">${workload.totalEstimatedTime} min estimados</span>
+                  </div>
+                  <div class="text-xs text-gray-600">
+                    Procesos: ${workload.processesCount} | Tareas: ${workload.tasksCount}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            `}
+          </div>
         </div>
       </div>
     `;
