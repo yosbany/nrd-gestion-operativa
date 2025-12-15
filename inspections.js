@@ -153,7 +153,7 @@ function showInspectionForm(inspectionId = null) {
                 <h4 class="text-xs uppercase tracking-wider text-gray-600 mb-2 font-medium">Última Inspección:</h4>
                 <div class="flex items-center justify-between">
                   <span class="text-sm sm:text-base font-light text-gray-800">${lastDateStr}</span>
-                  <button onclick="viewInspection('${lastInspection.id}'); hideInspectionForm();" class="text-xs sm:text-sm text-red-600 hover:text-red-700 underline font-light">
+                  <button onclick="showInspectionDetailModal('${lastInspection.id}')" class="text-xs sm:text-sm text-red-600 hover:text-red-700 underline font-light">
                     Ver detalles
                   </button>
                 </div>
@@ -451,6 +451,22 @@ if (backToInspectionsBtn) {
   });
 }
 
+// Inspection detail modal buttons
+const closeInspectionDetailModalBtn = document.getElementById('close-inspection-detail-modal');
+const closeInspectionDetailModalBtn2 = document.getElementById('close-inspection-detail-modal-btn');
+
+if (closeInspectionDetailModalBtn) {
+  closeInspectionDetailModalBtn.addEventListener('click', () => {
+    closeInspectionDetailModal();
+  });
+}
+
+if (closeInspectionDetailModalBtn2) {
+  closeInspectionDetailModalBtn2.addEventListener('click', () => {
+    closeInspectionDetailModal();
+  });
+}
+
 // Format date in 24-hour format
 function formatDate24h(date) {
   const day = String(date.getDate()).padStart(2, '0');
@@ -466,5 +482,91 @@ function formatTime24h(date) {
   return `${hours}:${minutes}`;
 }
 
+// Show inspection detail in modal (without closing form)
+async function showInspectionDetailModal(inspectionId) {
+  const modal = document.getElementById('inspection-detail-modal');
+  const title = document.getElementById('inspection-detail-modal-title');
+  const content = document.getElementById('inspection-detail-modal-content');
+  
+  if (!modal || !title || !content) return;
+  
+  showSpinner('Cargando inspección...');
+  try {
+    const snapshot = await getInspection(inspectionId);
+    const inspection = snapshot.val();
+    hideSpinner();
+    
+    if (!inspection) {
+      await showError('Inspección no encontrada');
+      return;
+    }
+
+    // Get task name
+    let taskName = 'Sin tarea';
+    if (inspection.taskId) {
+      const taskSnapshot = await getTask(inspection.taskId);
+      const task = taskSnapshot.val();
+      if (task) taskName = task.name;
+    }
+
+    const severityLabels = {
+      'leve': 'Leve',
+      'moderada': 'Moderada',
+      'critica': 'Crítica'
+    };
+    
+    const severityColors = {
+      'leve': 'text-yellow-600',
+      'moderada': 'text-orange-600',
+      'critica': 'text-red-600'
+    };
+    
+    const inspectionDate = inspection.inspectionDate ? new Date(inspection.inspectionDate) : null;
+    const dateStr = inspectionDate ? formatDate24h(inspectionDate) + ' ' + formatTime24h(inspectionDate) : 'Sin fecha';
+
+    title.textContent = `Detalle de la Inspección`;
+    content.innerHTML = `
+      <div class="space-y-3 sm:space-y-4">
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Tarea:</span>
+          <span class="font-light text-sm sm:text-base">${escapeHtml(taskName)}</span>
+        </div>
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Fecha y Hora:</span>
+          <span class="font-light text-sm sm:text-base">${dateStr}</span>
+        </div>
+        ${inspection.severity ? `
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Severidad:</span>
+          <span class="font-light text-sm sm:text-base ${severityColors[inspection.severity] || ''} font-medium">
+            ${severityLabels[inspection.severity] || inspection.severity}
+          </span>
+        </div>
+        ` : ''}
+        ${inspection.observations ? `
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Observaciones:</span>
+          <span class="font-light text-sm sm:text-base text-right">${escapeHtml(inspection.observations)}</span>
+        </div>
+        ` : ''}
+      </div>
+    `;
+    
+    modal.classList.remove('hidden');
+  } catch (error) {
+    hideSpinner();
+    await showError('Error al cargar inspección: ' + error.message);
+  }
+}
+
+// Close inspection detail modal
+function closeInspectionDetailModal() {
+  const modal = document.getElementById('inspection-detail-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
 // Make functions available globally
 window.viewInspection = viewInspection;
+window.showInspectionDetailModal = showInspectionDetailModal;

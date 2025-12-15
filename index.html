@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765803721271">
+  <link rel="stylesheet" href="styles.css?v=1765803738911">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
   
@@ -488,6 +488,22 @@
     </div>
   </div>
 
+  <!-- Inspection Detail Modal -->
+  <div id="inspection-detail-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] border border-gray-200 shadow-lg flex flex-col">
+      <div class="p-4 sm:p-6 border-b border-gray-200 flex items-center justify-between">
+        <h3 id="inspection-detail-modal-title" class="text-lg sm:text-xl font-light text-black">Detalle de la Inspección</h3>
+        <button id="close-inspection-detail-modal" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+      </div>
+      <div id="inspection-detail-modal-content" class="p-4 sm:p-6 overflow-y-auto flex-1">
+        <!-- Inspection detail content will be inserted here -->
+      </div>
+      <div class="p-4 sm:p-6 border-t border-gray-200 flex justify-end">
+        <button id="close-inspection-detail-modal-btn" class="px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -497,10 +513,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765803721271"></script>
-  <script src="modal.js?v=1765803721271"></script>
-  <script src="auth.js?v=1765803721271"></script>
-  <script src="db.js?v=1765803721271"></script>
+  <script src="firebase.js?v=1765803738911"></script>
+  <script src="modal.js?v=1765803738911"></script>
+  <script src="auth.js?v=1765803738911"></script>
+  <script src="db.js?v=1765803738911"></script>
   <script src="areas.js"></script>
   <script src="processes.js"></script>
   <script src="tasks.js"></script>
@@ -508,7 +524,7 @@
   <script src="employees.js"></script>
   <script src="inspections.js"></script>
   <script src="analytics.js"></script>
-  <script src="app.js?v=1765803721271"></script>
+  <script src="app.js?v=1765803738911"></script>
 
   <script>
     // Global error handler
@@ -559,7 +575,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1765803721271')
+        navigator.serviceWorker.register('service-worker.js?v=1765803738911')
           .then(reg => {
             console.log('Service Worker registered');
             
