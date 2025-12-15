@@ -46,6 +46,7 @@ function loadEmployees() {
       item.innerHTML = `
         <div class="flex justify-between items-center mb-2 sm:mb-3">
           <div class="text-base sm:text-lg font-light">${escapeHtml(employee.name)}</div>
+          ${employee.salary ? `<span class="text-xs sm:text-sm text-gray-600">$${parseFloat(employee.salary).toFixed(2)}</span>` : ''}
         </div>
         <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
           <div>Rol: <span class="role-name">${roleName}</span></div>
@@ -102,10 +103,12 @@ function showEmployeeForm(employeeId = null) {
         const emailInput = document.getElementById('employee-email');
         const phoneInput = document.getElementById('employee-phone');
         const roleSelect = document.getElementById('employee-role-select');
+        const salaryInput = document.getElementById('employee-salary');
         if (nameInput) nameInput.value = employee.name || '';
         if (emailInput) emailInput.value = employee.email || '';
         if (phoneInput) phoneInput.value = employee.phone || '';
         if (roleSelect) roleSelect.value = employee.roleId || '';
+        if (salaryInput) salaryInput.value = employee.salary || '';
       }
     });
   } else {
@@ -166,13 +169,6 @@ async function viewEmployee(employeeId) {
       if (role) roleName = role.name;
     }
 
-    // Load task executions for this employee
-    const executionsSnapshot = await getTaskExecutionsRef().once('value');
-    const allExecutions = executionsSnapshot.val() || {};
-    const employeeExecutions = Object.entries(allExecutions)
-      .filter(([id, execution]) => execution.employeeId === employeeId)
-      .map(([id, execution]) => ({ id, ...execution }));
-
     detailContent.innerHTML = `
       <div class="space-y-3 sm:space-y-4">
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
@@ -195,10 +191,12 @@ async function viewEmployee(employeeId) {
           <span class="text-gray-600 font-light text-sm sm:text-base">Rol:</span>
           <span class="font-light text-sm sm:text-base">${escapeHtml(roleName)}</span>
         </div>
+        ${employee.salary ? `
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
-          <span class="text-gray-600 font-light text-sm sm:text-base">Ejecuciones registradas:</span>
-          <span class="font-light text-sm sm:text-base">${employeeExecutions.length}</span>
+          <span class="text-gray-600 font-light text-sm sm:text-base">Costo Salarial:</span>
+          <span class="font-light text-sm sm:text-base">$${parseFloat(employee.salary).toFixed(2)}</span>
         </div>
+        ` : ''}
       </div>
     `;
 
@@ -237,16 +235,6 @@ function backToEmployees() {
 
 // Delete employee handler
 async function deleteEmployeeHandler(employeeId) {
-  // Check if employee has task executions
-  const executionsSnapshot = await getTaskExecutionsRef().once('value');
-  const executions = executionsSnapshot.val() || {};
-  const hasExecutions = Object.values(executions).some(e => e.employeeId === employeeId);
-  
-  if (hasExecutions) {
-    await showError('No se puede eliminar un empleado que tiene ejecuciones de tareas registradas');
-    return;
-  }
-
   const confirmed = await showConfirm('Eliminar Empleado', '¿Está seguro de eliminar este empleado?');
   if (!confirmed) return;
 
@@ -272,6 +260,7 @@ if (employeeFormElement) {
     const email = document.getElementById('employee-email').value.trim();
     const phone = document.getElementById('employee-phone').value.trim();
     const roleId = document.getElementById('employee-role-select').value || null;
+    const salary = parseFloat(document.getElementById('employee-salary').value) || null;
 
     if (!name) {
       await showError('Por favor complete el nombre del empleado');
@@ -284,7 +273,8 @@ if (employeeFormElement) {
         name, 
         email: email || null, 
         phone: phone || null,
-        roleId: roleId || null
+        roleId: roleId || null,
+        salary: salary || null
       });
       hideSpinner();
       hideEmployeeForm();

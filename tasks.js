@@ -59,7 +59,10 @@ function loadTasks() {
       item.innerHTML = `
         <div class="flex justify-between items-center mb-2 sm:mb-3">
           <div class="text-base sm:text-lg font-light">${escapeHtml(task.name)}</div>
-          <span class="text-xs px-2 py-0.5 bg-gray-100 rounded">${taskTypeLabels[task.type] || task.type || 'Sin tipo'}</span>
+          <div class="flex items-center gap-2">
+            ${task.cost ? `<span class="text-xs sm:text-sm text-gray-600">$${parseFloat(task.cost).toFixed(2)}</span>` : ''}
+            <span class="text-xs px-2 py-0.5 bg-gray-100 rounded">${taskTypeLabels[task.type] || task.type || 'Sin tipo'}</span>
+          </div>
         </div>
         <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
           <div>Proceso: ${escapeHtml(processName)}</div>
@@ -139,6 +142,7 @@ function showTaskForm(taskId = null) {
         document.getElementById('task-role-select').value = task.roleId || '';
         document.getElementById('task-frequency').value = task.frequency || '';
         document.getElementById('task-estimated-time').value = task.estimatedTime || '';
+        document.getElementById('task-cost').value = task.cost || '';
         document.getElementById('task-order').value = task.order || '';
         document.getElementById('task-execution-steps').value = task.executionSteps ? task.executionSteps.join('\n') : '';
         document.getElementById('task-success-criteria').value = task.successCriteria || '';
@@ -286,6 +290,12 @@ async function viewTask(taskId) {
           <span class="font-light text-sm sm:text-base">${task.estimatedTime} minutos</span>
         </div>
         ` : ''}
+        ${task.cost ? `
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Costo/Pago:</span>
+          <span class="font-light text-sm sm:text-base">$${parseFloat(task.cost).toFixed(2)}</span>
+        </div>
+        ` : ''}
         ${task.order ? `
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
           <span class="text-gray-600 font-light text-sm sm:text-base">Orden:</span>
@@ -390,6 +400,7 @@ if (taskFormElement) {
     const roleId = document.getElementById('task-role-select').value || null;
     const frequency = document.getElementById('task-frequency').value.trim() || null;
     const estimatedTime = parseInt(document.getElementById('task-estimated-time').value) || null;
+    const cost = parseFloat(document.getElementById('task-cost').value) || null;
     const order = parseInt(document.getElementById('task-order').value) || null;
     
     // Parse execution steps (one per line)
@@ -422,6 +433,7 @@ if (taskFormElement) {
         roleId: (type === 'with_role' && roleId) ? roleId : null,
         frequency,
         estimatedTime,
+        cost: cost || null,
         order,
         executionSteps,
         successCriteria,
