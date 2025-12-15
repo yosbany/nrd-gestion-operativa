@@ -4,15 +4,13 @@
 async function calculateWorkloadByEmployee() {
   try {
     // Load all data
-    const [tasksSnapshot, employeesSnapshot, executionsSnapshot] = await Promise.all([
+    const [tasksSnapshot, employeesSnapshot] = await Promise.all([
       getTasksRef().once('value'),
-      getEmployeesRef().once('value'),
-      getTaskExecutionsRef().once('value')
+      getEmployeesRef().once('value')
     ]);
 
     const tasks = tasksSnapshot.val() || {};
     const employees = employeesSnapshot.val() || {};
-    const executions = executionsSnapshot.val() || {};
 
     // Build workload map
     const workloadMap = {};
@@ -23,7 +21,6 @@ async function calculateWorkloadByEmployee() {
         roleId: employee.roleId,
         totalTasks: 0,
         totalEstimatedTime: 0,
-        executions: 0,
         tasks: []
       };
     });
@@ -39,7 +36,6 @@ async function calculateWorkloadByEmployee() {
                 roleId: employee.roleId,
                 totalTasks: 0,
                 totalEstimatedTime: 0,
-                executions: 0,
                 tasks: []
               };
             }
@@ -52,13 +48,6 @@ async function calculateWorkloadByEmployee() {
             });
           }
         });
-      }
-    });
-
-    // Count executions per employee
-    Object.entries(executions).forEach(([executionId, execution]) => {
-      if (execution.employeeId && workloadMap[execution.employeeId]) {
-        workloadMap[execution.employeeId].executions++;
       }
     });
 
@@ -218,7 +207,7 @@ async function loadAnalytics() {
                   <span class="text-xs sm:text-sm text-gray-600">${workload.totalEstimatedTime} min estimados</span>
                 </div>
                 <div class="text-xs text-gray-600">
-                  Tareas asignadas: ${workload.totalTasks} | Ejecuciones registradas: ${workload.executions}
+                  Tareas asignadas: ${workload.totalTasks}
                 </div>
               </div>
             `).join('')}

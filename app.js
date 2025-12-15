@@ -11,7 +11,7 @@ function switchView(viewName) {
   currentView = viewName;
 
   // Hide all views
-  const views = ['areas', 'processes', 'tasks', 'roles', 'employees', 'task-executions', 'inspections', 'incidents', 'analytics'];
+  const views = ['areas', 'processes', 'tasks', 'roles', 'employees', 'inspections', 'analytics'];
   views.forEach(view => {
     const viewElement = document.getElementById(`${view}-view`);
     if (viewElement) {
@@ -47,12 +47,8 @@ function switchView(viewName) {
     loadRoles();
   } else if (viewName === 'employees') {
     loadEmployees();
-  } else if (viewName === 'task-executions') {
-    loadTaskExecutions();
   } else if (viewName === 'inspections') {
     loadInspections();
-  } else if (viewName === 'incidents') {
-    loadIncidents();
   } else if (viewName === 'analytics') {
     loadAnalytics();
   }

@@ -219,13 +219,6 @@ async function viewInspection(inspectionId) {
     const inspectionDate = inspection.inspectionDate ? new Date(inspection.inspectionDate) : null;
     const dateStr = inspectionDate ? formatDate24h(inspectionDate) + ' ' + formatTime24h(inspectionDate) : 'Sin fecha';
 
-    // Load incidents for this inspection
-    const incidentsSnapshot = await getIncidentsRef().once('value');
-    const allIncidents = incidentsSnapshot.val() || {};
-    const inspectionIncidents = Object.entries(allIncidents)
-      .filter(([id, incident]) => incident.inspectionId === inspectionId)
-      .map(([id, incident]) => ({ id, ...incident }));
-
     detailContent.innerHTML = `
       <div class="space-y-3 sm:space-y-4">
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
@@ -250,26 +243,7 @@ async function viewInspection(inspectionId) {
           <span class="font-light text-sm sm:text-base text-right">${escapeHtml(inspection.observations)}</span>
         </div>
         ` : ''}
-        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
-          <span class="text-gray-600 font-light text-sm sm:text-base">Incidencias:</span>
-          <span class="font-light text-sm sm:text-base">${inspectionIncidents.length}</span>
-        </div>
       </div>
-      ${inspectionIncidents.length > 0 ? `
-      <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-        <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Incidencias:</h4>
-        <div class="space-y-2">
-          ${inspectionIncidents.map(incident => `
-            <div class="border border-gray-200 p-2 sm:p-3 hover:border-red-600 transition-colors cursor-pointer" onclick="viewIncident('${incident.id}')">
-              <div class="font-light text-sm sm:text-base">${escapeHtml(incident.description || 'Sin descripción')}</div>
-              <div class="text-xs text-gray-600 mt-1">
-                Estado: ${incident.status === 'corrected' ? 'Corregida' : 'Pendiente'}
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-      ` : ''}
     `;
 
     // Attach button handlers
@@ -307,16 +281,6 @@ function backToInspections() {
 
 // Delete inspection handler
 async function deleteInspectionHandler(inspectionId) {
-  // Check if inspection has incidents
-  const incidentsSnapshot = await getIncidentsRef().once('value');
-  const incidents = incidentsSnapshot.val() || {};
-  const hasIncidents = Object.values(incidents).some(i => i.inspectionId === inspectionId);
-  
-  if (hasIncidents) {
-    await showError('No se puede eliminar una inspección que tiene incidencias asociadas');
-    return;
-  }
-
   const confirmed = await showConfirm('Eliminar Inspección', '¿Está seguro de eliminar esta inspección?');
   if (!confirmed) return;
 

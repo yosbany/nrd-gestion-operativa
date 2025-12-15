@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765799167102">
+  <link rel="stylesheet" href="styles.css?v=1765799182616">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
   
@@ -81,9 +81,7 @@
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="tasks">Tareas</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="roles">Roles</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="employees">Empleados</button>
-      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="task-executions">Ejecuciones</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="inspections">Inspecciones</button>
-      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="incidents">Incidencias</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="analytics">Análisis</button>
     </nav>
 
@@ -363,80 +361,6 @@
         </div>
       </div>
 
-      <!-- Task Executions View -->
-      <div id="task-executions-view" class="view space-y-3 sm:space-y-4 hidden">
-        <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
-          <button id="new-task-execution-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nueva Ejecución</button>
-        </div>
-        <div id="task-executions-list" class="space-y-2 sm:space-y-3"></div>
-        <div id="task-execution-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
-          <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-lg sm:text-xl font-light tracking-tight">Detalle de la Ejecución</h3>
-              <button id="back-to-task-executions" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
-            </div>
-          </div>
-          <div id="task-execution-detail-content"></div>
-          <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-            <button id="edit-task-execution-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
-            <button id="delete-task-execution-detail-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
-          </div>
-        </div>
-        <div id="task-execution-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
-          <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 id="task-execution-form-title" class="text-lg sm:text-xl font-light tracking-tight">Nueva Ejecución</h3>
-            <button id="close-task-execution-form" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
-          </div>
-          <form id="task-execution-form-element">
-            <input type="hidden" id="task-execution-id">
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Tarea</label>
-              <select id="task-execution-task-select" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
-                <option value="">Seleccionar tarea</option>
-              </select>
-            </div>
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Empleado</label>
-              <select id="task-execution-employee-select" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
-                <option value="">Seleccionar empleado</option>
-              </select>
-            </div>
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Fecha</label>
-              <input type="date" id="task-execution-date" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
-            </div>
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Hora</label>
-              <input type="time" id="task-execution-time" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
-            </div>
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Resultado</label>
-              <select id="task-execution-result" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
-                <option value="OK">OK</option>
-                <option value="OBSERVADO">OBSERVADO</option>
-                <option value="ERROR">ERROR</option>
-              </select>
-            </div>
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Modalidad</label>
-              <select id="task-execution-payment-type" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
-                <option value="paid">Remunerada</option>
-                <option value="unpaid">No remunerada</option>
-                <option value="exchange">Canje</option>
-              </select>
-            </div>
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Observaciones</label>
-              <textarea id="task-execution-observations" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
-            </div>
-            <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
-              <button type="button" id="cancel-task-execution-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
       <!-- Inspections View -->
       <div id="inspections-view" class="view space-y-3 sm:space-y-4 hidden">
         <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
@@ -497,58 +421,6 @@
         </div>
       </div>
 
-      <!-- Incidents View -->
-      <div id="incidents-view" class="view space-y-3 sm:space-y-4 hidden">
-        <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
-          <button id="new-incident-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nueva Incidencia</button>
-        </div>
-        <div id="incidents-list" class="space-y-2 sm:space-y-3"></div>
-        <div id="incident-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
-          <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-lg sm:text-xl font-light tracking-tight">Detalle de la Incidencia</h3>
-              <button id="back-to-incidents" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
-            </div>
-          </div>
-          <div id="incident-detail-content"></div>
-          <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-            <button id="edit-incident-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
-            <button id="delete-incident-detail-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
-          </div>
-        </div>
-        <div id="incident-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
-          <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 id="incident-form-title" class="text-lg sm:text-xl font-light tracking-tight">Nueva Incidencia</h3>
-            <button id="close-incident-form" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
-          </div>
-          <form id="incident-form-element">
-            <input type="hidden" id="incident-id">
-            <input type="hidden" id="incident-inspection-id">
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Tarea</label>
-              <select id="incident-task-select" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
-                <option value="">Seleccionar tarea</option>
-              </select>
-            </div>
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Descripción</label>
-              <textarea id="incident-description" rows="3" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
-            </div>
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Estado</label>
-              <select id="incident-status" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
-                <option value="pending">Pendiente</option>
-                <option value="corrected">Corregida</option>
-              </select>
-            </div>
-            <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
-              <button type="button" id="cancel-incident-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
       <!-- Analytics View -->
       <div id="analytics-view" class="view space-y-3 sm:space-y-4 hidden">
         <div id="analytics-content"></div>
@@ -598,20 +470,18 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765799167102"></script>
-  <script src="modal.js?v=1765799167102"></script>
-  <script src="auth.js?v=1765799167102"></script>
-  <script src="db.js?v=1765799167102"></script>
+  <script src="firebase.js?v=1765799182616"></script>
+  <script src="modal.js?v=1765799182616"></script>
+  <script src="auth.js?v=1765799182616"></script>
+  <script src="db.js?v=1765799182616"></script>
   <script src="areas.js"></script>
   <script src="processes.js"></script>
   <script src="tasks.js"></script>
   <script src="roles.js"></script>
   <script src="employees.js"></script>
-  <script src="task-executions.js"></script>
   <script src="inspections.js"></script>
-  <script src="incidents.js"></script>
   <script src="analytics.js"></script>
-  <script src="app.js?v=1765799167102"></script>
+  <script src="app.js?v=1765799182616"></script>
 
   <script>
     // Global error handler
@@ -662,7 +532,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1765799167102')
+        navigator.serviceWorker.register('service-worker.js?v=1765799182616')
           .then(reg => {
             console.log('Service Worker registered');
             
