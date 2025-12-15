@@ -1,5 +1,23 @@
-<svg width='192' height='192' xmlns='http://www.w3.org/2000/svg'>
-    <rect width='192' height='192' fill='#dc2626'/>
-    <text x='96' y='76.8' font-family='Arial' font-size='57.599999999999994' font-weight='bold' fill='#ffffff' text-anchor='middle' dominant-baseline='middle'>NRD</text>
-    <text x='96' y='115.2' font-family='Arial' font-size='28.799999999999997' font-weight='bold' fill='#ffffff' text-anchor='middle' dominant-baseline='middle'>PEDIDOS</text>
-  </svg>
+<svg width="192" height="192" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b91c1c;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" fill="url(#bgGradient)" rx="19.200000000000003"/>
+  
+  <!-- Icono de proceso/operaciones (círculos conectados) -->
+  <g opacity="0.3">
+    <circle cx="57.599999999999994" cy="48" r="15.36" fill="#ffffff"/>
+    <circle cx="96" cy="48" r="15.36" fill="#ffffff"/>
+    <circle cx="134.39999999999998" cy="48" r="15.36" fill="#ffffff"/>
+    <line x1="72.96000000000001" y1="48" x2="80.64" y2="48" stroke="#ffffff" stroke-width="3.84"/>
+    <line x1="111.35999999999999" y1="48" x2="119.03999999999999" y2="48" stroke="#ffffff" stroke-width="3.84"/>
+  </g>
+  
+  <!-- Texto principal -->
+  <text x="96" y="73" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">NRD</text>
+  <text x="96" y="100" font-family="Arial, sans-serif" font-size="23" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">GESTIÓN</text>
+  <text x="96" y="123" font-family="Arial, sans-serif" font-size="23" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">OPERATIVA</text>
+</svg>

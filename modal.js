@@ -1,5 +1,13 @@
 // Custom Modal and Alert System
 
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // Show confirmation modal
 function showConfirm(title, message, confirmText = 'Confirmar', cancelText = 'Cancelar') {
   return new Promise((resolve) => {

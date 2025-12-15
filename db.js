@@ -7,78 +7,173 @@ function getUserRef() {
   return database.ref(`users/${user.uid}`);
 }
 
-// Get clients reference (shared across all users)
-function getClientsRef() {
-  return database.ref('clients');
+// ========== OPERATIONAL SYSTEM DATABASE FUNCTIONS ==========
+
+// Areas
+function getAreasRef() {
+  return database.ref('areas');
 }
 
-// Get products reference (shared across all users)
-function getProductsRef() {
-  return database.ref('products');
+function getArea(areaId) {
+  return getAreasRef().child(areaId).once('value');
 }
 
-// Get orders reference (shared across all users)
-function getOrdersRef() {
-  return database.ref('orders');
+function createArea(areaData) {
+  return getAreasRef().push(areaData);
 }
 
-// Get client by ID
-function getClient(clientId) {
-  return getClientsRef().child(clientId).once('value');
+function updateArea(areaId, areaData) {
+  return getAreasRef().child(areaId).update(areaData);
 }
 
-// Get product by ID
-function getProduct(productId) {
-  return getProductsRef().child(productId).once('value');
+function deleteArea(areaId) {
+  return getAreasRef().child(areaId).remove();
 }
 
-// Get order by ID
-function getOrder(orderId) {
-  return getOrdersRef().child(orderId).once('value');
+// Processes
+function getProcessesRef() {
+  return database.ref('processes');
 }
 
-// Create client
-function createClient(clientData) {
-  return getClientsRef().push(clientData);
+function getProcess(processId) {
+  return getProcessesRef().child(processId).once('value');
 }
 
-// Update client
-function updateClient(clientId, clientData) {
-  return getClientsRef().child(clientId).update(clientData);
+function createProcess(processData) {
+  return getProcessesRef().push(processData);
 }
 
-// Delete client
-function deleteClient(clientId) {
-  return getClientsRef().child(clientId).remove();
+function updateProcess(processId, processData) {
+  return getProcessesRef().child(processId).update(processData);
 }
 
-// Create product
-function createProduct(productData) {
-  return getProductsRef().push(productData);
+function deleteProcess(processId) {
+  return getProcessesRef().child(processId).remove();
 }
 
-// Update product
-function updateProduct(productId, productData) {
-  return getProductsRef().child(productId).update(productData);
+// Tasks
+function getTasksRef() {
+  return database.ref('tasks');
 }
 
-// Delete product
-function deleteProduct(productId) {
-  return getProductsRef().child(productId).remove();
+function getTask(taskId) {
+  return getTasksRef().child(taskId).once('value');
 }
 
-// Create order
-function createOrder(orderData) {
-  return getOrdersRef().push(orderData);
+function createTask(taskData) {
+  return getTasksRef().push(taskData);
 }
 
-// Update order
-function updateOrder(orderId, orderData) {
-  return getOrdersRef().child(orderId).update(orderData);
+function updateTask(taskId, taskData) {
+  return getTasksRef().child(taskId).update(taskData);
 }
 
-// Delete order
-function deleteOrder(orderId) {
-  return getOrdersRef().child(orderId).remove();
+function deleteTask(taskId) {
+  return getTasksRef().child(taskId).remove();
+}
+
+// Roles
+function getRolesRef() {
+  return database.ref('roles');
+}
+
+function getRole(roleId) {
+  return getRolesRef().child(roleId).once('value');
+}
+
+function createRole(roleData) {
+  return getRolesRef().push(roleData);
+}
+
+function updateRole(roleId, roleData) {
+  return getRolesRef().child(roleId).update(roleData);
+}
+
+function deleteRole(roleId) {
+  return getRolesRef().child(roleId).remove();
+}
+
+// Employees
+function getEmployeesRef() {
+  return database.ref('employees');
+}
+
+function getEmployee(employeeId) {
+  return getEmployeesRef().child(employeeId).once('value');
+}
+
+function createEmployee(employeeData) {
+  return getEmployeesRef().push(employeeData);
+}
+
+function updateEmployee(employeeId, employeeData) {
+  return getEmployeesRef().child(employeeId).update(employeeData);
+}
+
+function deleteEmployee(employeeId) {
+  return getEmployeesRef().child(employeeId).remove();
+}
+
+// Task Executions
+function getTaskExecutionsRef() {
+  return database.ref('taskExecutions');
+}
+
+function getTaskExecution(executionId) {
+  return getTaskExecutionsRef().child(executionId).once('value');
+}
+
+function createTaskExecution(executionData) {
+  return getTaskExecutionsRef().push(executionData);
+}
+
+function updateTaskExecution(executionId, executionData) {
+  return getTaskExecutionsRef().child(executionId).update(executionData);
+}
+
+function deleteTaskExecution(executionId) {
+  return getTaskExecutionsRef().child(executionId).remove();
+}
+
+// Inspections
+function getInspectionsRef() {
+  return database.ref('inspections');
+}
+
+function getInspection(inspectionId) {
+  return getInspectionsRef().child(inspectionId).once('value');
+}
+
+function createInspection(inspectionData) {
+  return getInspectionsRef().push(inspectionData);
+}
+
+function updateInspection(inspectionId, inspectionData) {
+  return getInspectionsRef().child(inspectionId).update(inspectionData);
+}
+
+function deleteInspection(inspectionId) {
+  return getInspectionsRef().child(inspectionId).remove();
+}
+
+// Incidents
+function getIncidentsRef() {
+  return database.ref('incidents');
+}
+
+function getIncident(incidentId) {
+  return getIncidentsRef().child(incidentId).once('value');
+}
+
+function createIncident(incidentData) {
+  return getIncidentsRef().push(incidentData);
+}
+
+function updateIncident(incidentId, incidentData) {
+  return getIncidentsRef().child(incidentId).update(incidentData);
+}
+
+function deleteIncident(incidentId) {
+  return getIncidentsRef().child(incidentId).remove();
 }
 

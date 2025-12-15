@@ -17,12 +17,14 @@
       
       // White text
       ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${size * 0.3}px Arial`;
+      ctx.font = `bold ${size * 0.25}px Arial`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('NRD', size / 2, size / 2 - size * 0.1);
-      ctx.font = `bold ${size * 0.15}px Arial`;
-      ctx.fillText('PEDIDOS', size / 2, size / 2 + size * 0.1);
+      ctx.fillText('NRD', size / 2, size / 2 - size * 0.12);
+      ctx.font = `bold ${size * 0.12}px Arial`;
+      ctx.fillText('GESTIÓN', size / 2, size / 2 + size * 0.02);
+      ctx.font = `bold ${size * 0.12}px Arial`;
+      ctx.fillText('OPERATIVA', size / 2, size / 2 + size * 0.14);
       
       // Convert to blob and download
       canvas.toBlob((blob) => {

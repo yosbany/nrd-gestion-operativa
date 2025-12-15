@@ -11,12 +11,14 @@ function createIcon(size, filename) {
   
   // White text
   ctx.fillStyle = '#ffffff';
-  ctx.font = `bold ${size * 0.3}px Arial`;
+  ctx.font = `bold ${size * 0.25}px Arial`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('NRD', size / 2, size / 2 - size * 0.1);
-  ctx.font = `bold ${size * 0.15}px Arial`;
-  ctx.fillText('PEDIDOS', size / 2, size / 2 + size * 0.1);
+  ctx.fillText('NRD', size / 2, size / 2 - size * 0.12);
+  ctx.font = `bold ${size * 0.12}px Arial`;
+  ctx.fillText('GESTIÓN', size / 2, size / 2 + size * 0.02);
+  ctx.font = `bold ${size * 0.12}px Arial`;
+  ctx.fillText('OPERATIVA', size / 2, size / 2 + size * 0.14);
   
   const buffer = canvas.toBuffer('image/png');
   fs.writeFileSync(filename, buffer);
@@ -34,13 +36,15 @@ try {
   // Create SVG icons as fallback
   const svg192 = `<svg width="192" height="192" xmlns="http://www.w3.org/2000/svg">
     <rect width="192" height="192" fill="#dc2626"/>
-    <text x="96" y="80" font-family="Arial" font-size="48" font-weight="bold" fill="#ffffff" text-anchor="middle">NRD</text>
-    <text x="96" y="120" font-family="Arial" font-size="24" font-weight="bold" fill="#ffffff" text-anchor="middle">PEDIDOS</text>
+    <text x="96" y="70" font-family="Arial" font-size="40" font-weight="bold" fill="#ffffff" text-anchor="middle">NRD</text>
+    <text x="96" y="100" font-family="Arial" font-size="18" font-weight="bold" fill="#ffffff" text-anchor="middle">GESTIÓN</text>
+    <text x="96" y="120" font-family="Arial" font-size="18" font-weight="bold" fill="#ffffff" text-anchor="middle">OPERATIVA</text>
   </svg>`;
   const svg512 = `<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
     <rect width="512" height="512" fill="#dc2626"/>
-    <text x="256" y="200" font-family="Arial" font-size="128" font-weight="bold" fill="#ffffff" text-anchor="middle">NRD</text>
-    <text x="256" y="320" font-family="Arial" font-size="64" font-weight="bold" fill="#ffffff" text-anchor="middle">PEDIDOS</text>
+    <text x="256" y="180" font-family="Arial" font-size="110" font-weight="bold" fill="#ffffff" text-anchor="middle">NRD</text>
+    <text x="256" y="270" font-family="Arial" font-size="50" font-weight="bold" fill="#ffffff" text-anchor="middle">GESTIÓN</text>
+    <text x="256" y="320" font-family="Arial" font-size="50" font-weight="bold" fill="#ffffff" text-anchor="middle">OPERATIVA</text>
   </svg>`;
   fs.writeFileSync('icon-192.svg', svg192);
   fs.writeFileSync('icon-512.svg', svg512);

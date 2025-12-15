@@ -21,7 +21,7 @@
   </style>
 </head>
 <body>
-  <h1>Generar Iconos PWA</h1>
+  <h1>Generar Iconos PWA - NRD Gestión Operativa</h1>
   <p>Haz clic en los botones para descargar los iconos</p>
   
   <canvas id="canvas192" width="192" height="192"></canvas>
@@ -42,12 +42,14 @@
       
       // White text
       ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${size * 0.3}px Arial`;
+      ctx.font = `bold ${size * 0.25}px Arial`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('NRD', size / 2, size / 2 - size * 0.1);
-      ctx.font = `bold ${size * 0.15}px Arial`;
-      ctx.fillText('PEDIDOS', size / 2, size / 2 + size * 0.1);
+      ctx.fillText('NRD', size / 2, size / 2 - size * 0.12);
+      ctx.font = `bold ${size * 0.12}px Arial`;
+      ctx.fillText('GESTIÓN', size / 2, size / 2 + size * 0.02);
+      ctx.font = `bold ${size * 0.12}px Arial`;
+      ctx.fillText('OPERATIVA', size / 2, size / 2 + size * 0.14);
     }
     
     function downloadIcon(size) {

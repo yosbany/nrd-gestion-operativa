@@ -1,7 +1,7 @@
 {
-  "name": "NRD Pedidos",
-  "short_name": "NRD Pedidos",
-  "description": "Sistema de gestión de pedidos",
+  "name": "NRD Gestión Operativa",
+  "short_name": "NRD Operativa",
+  "description": "Sistema de gestión operativa de panadería",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

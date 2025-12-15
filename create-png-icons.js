@@ -8,8 +8,9 @@ try {
     const svg = `
       <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
         <rect width="${size}" height="${size}" fill="#dc2626"/>
-        <text x="${size/2}" y="${size/2 - size*0.1}" font-family="Arial" font-size="${size*0.3}" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">NRD</text>
-        <text x="${size/2}" y="${size/2 + size*0.1}" font-family="Arial" font-size="${size*0.15}" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">PEDIDOS</text>
+        <text x="${size/2}" y="${size/2 - size*0.12}" font-family="Arial" font-size="${size*0.25}" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">NRD</text>
+        <text x="${size/2}" y="${size/2 + size*0.02}" font-family="Arial" font-size="${size*0.12}" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">GESTIÓN</text>
+        <text x="${size/2}" y="${size/2 + size*0.14}" font-family="Arial" font-size="${size*0.12}" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">OPERATIVA</text>
       </svg>
     `;
     
@@ -51,7 +52,7 @@ node create-png-icons.js
 Crea dos imágenes PNG:
 - icon-192.png (192x192 píxeles)
 - icon-512.png (512x512 píxeles)
-Con fondo rojo (#dc2626) y texto blanco "NRD PEDIDOS"
+Con fondo rojo (#dc2626) y texto blanco "NRD GESTIÓN OPERATIVA"
 `;
   fs.writeFileSync('ICONOS-INSTRUCCIONES.md', instructions);
   console.log('Created ICONOS-INSTRUCCIONES.md with instructions');

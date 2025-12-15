@@ -1,0 +1,293 @@
+// Role management
+
+let rolesListener = null;
+
+// Load roles
+function loadRoles() {
+  const rolesList = document.getElementById('roles-list');
+  if (!rolesList) return;
+  
+  rolesList.innerHTML = '';
+
+  // Remove previous listener
+  if (rolesListener) {
+    getRolesRef().off('value', rolesListener);
+    rolesListener = null;
+  }
+
+  // Listen for roles
+  rolesListener = getRolesRef().on('value', (snapshot) => {
+    if (!rolesList) return;
+    rolesList.innerHTML = '';
+    const roles = snapshot.val() || {};
+
+    if (Object.keys(roles).length === 0) {
+      rolesList.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No hay roles registrados</p>';
+      return;
+    }
+
+    Object.entries(roles).forEach(([id, role]) => {
+      const item = document.createElement('div');
+      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
+      item.dataset.roleId = id;
+      item.innerHTML = `
+        <div class="text-base sm:text-lg font-light mb-2 sm:mb-3">${escapeHtml(role.name)}</div>
+        ${role.description ? `<div class="text-xs sm:text-sm text-gray-600">${escapeHtml(role.description)}</div>` : ''}
+      `;
+      item.addEventListener('click', () => viewRole(id));
+      rolesList.appendChild(item);
+    });
+  });
+}
+
+// Show role form
+function showRoleForm(roleId = null) {
+  const form = document.getElementById('role-form');
+  const list = document.getElementById('roles-list');
+  const header = document.querySelector('#roles-view .flex.flex-col');
+  const detail = document.getElementById('role-detail');
+  const title = document.getElementById('role-form-title');
+  const formElement = document.getElementById('role-form-element');
+  
+  if (form) form.classList.remove('hidden');
+  if (list) list.style.display = 'none';
+  if (header) header.style.display = 'none';
+  if (detail) detail.classList.add('hidden');
+  
+  if (formElement) {
+    formElement.reset();
+    const roleIdInput = document.getElementById('role-id');
+    if (roleIdInput) roleIdInput.value = roleId || '';
+  }
+
+  if (roleId) {
+    if (title) title.textContent = 'Editar Rol';
+    getRole(roleId).then(snapshot => {
+      const role = snapshot.val();
+      if (role) {
+        const nameInput = document.getElementById('role-name');
+        const descInput = document.getElementById('role-description');
+        if (nameInput) nameInput.value = role.name || '';
+        if (descInput) descInput.value = role.description || '';
+      }
+    });
+  } else {
+    if (title) title.textContent = 'Nuevo Rol';
+  }
+}
+
+// Hide role form
+function hideRoleForm() {
+  const form = document.getElementById('role-form');
+  const list = document.getElementById('roles-list');
+  const header = document.querySelector('#roles-view .flex.flex-col');
+  const detail = document.getElementById('role-detail');
+  
+  if (form) form.classList.add('hidden');
+  if (list) list.style.display = 'block';
+  if (header) header.style.display = 'flex';
+  if (detail) detail.classList.add('hidden');
+}
+
+// Save role
+function saveRole(roleId, roleData) {
+  if (roleId) {
+    return updateRole(roleId, roleData);
+  } else {
+    return createRole(roleData);
+  }
+}
+
+// View role detail
+async function viewRole(roleId) {
+  showSpinner('Cargando rol...');
+  try {
+    const snapshot = await getRole(roleId);
+    const role = snapshot.val();
+    hideSpinner();
+    if (!role) {
+      await showError('Rol no encontrado');
+      return;
+    }
+
+    const list = document.getElementById('roles-list');
+    const header = document.querySelector('#roles-view .flex.flex-col');
+    const form = document.getElementById('role-form');
+    const detail = document.getElementById('role-detail');
+    const detailContent = document.getElementById('role-detail-content');
+    
+    if (list) list.style.display = 'none';
+    if (header) header.style.display = 'none';
+    if (form) form.classList.add('hidden');
+    if (detail) detail.classList.remove('hidden');
+
+    // Load tasks for this role
+    const tasksSnapshot = await getTasksRef().once('value');
+    const allTasks = tasksSnapshot.val() || {};
+    const roleTasks = Object.entries(allTasks)
+      .filter(([id, task]) => task.roleId === roleId)
+      .map(([id, task]) => ({ id, ...task }));
+
+    // Load employees with this role
+    const employeesSnapshot = await getEmployeesRef().once('value');
+    const allEmployees = employeesSnapshot.val() || {};
+    const roleEmployees = Object.entries(allEmployees)
+      .filter(([id, employee]) => employee.roleId === roleId)
+      .map(([id, employee]) => ({ id, ...employee }));
+
+    detailContent.innerHTML = `
+      <div class="space-y-3 sm:space-y-4">
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Nombre:</span>
+          <span class="font-light text-sm sm:text-base">${escapeHtml(role.name)}</span>
+        </div>
+        ${role.description ? `
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Descripción:</span>
+          <span class="font-light text-sm sm:text-base text-right">${escapeHtml(role.description)}</span>
+        </div>
+        ` : ''}
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Tareas asignadas:</span>
+          <span class="font-light text-sm sm:text-base">${roleTasks.length}</span>
+        </div>
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Empleados:</span>
+          <span class="font-light text-sm sm:text-base">${roleEmployees.length}</span>
+        </div>
+      </div>
+    `;
+
+    // Attach button handlers
+    const editBtn = document.getElementById('edit-role-detail-btn');
+    const deleteBtn = document.getElementById('delete-role-detail-btn');
+    
+    if (editBtn) {
+      editBtn.onclick = () => {
+        detail.classList.add('hidden');
+        showRoleForm(roleId);
+      };
+    }
+    
+    if (deleteBtn) {
+      deleteBtn.onclick = () => deleteRoleHandler(roleId);
+    }
+  } catch (error) {
+    hideSpinner();
+    await showError('Error al cargar rol: ' + error.message);
+  }
+}
+
+// Back to roles list
+function backToRoles() {
+  const list = document.getElementById('roles-list');
+  const header = document.querySelector('#roles-view .flex.flex-col');
+  const detail = document.getElementById('role-detail');
+  const form = document.getElementById('role-form');
+  
+  if (list) list.style.display = 'block';
+  if (header) header.style.display = 'flex';
+  if (detail) detail.classList.add('hidden');
+  if (form) form.classList.add('hidden');
+}
+
+// Delete role handler
+async function deleteRoleHandler(roleId) {
+  // Check if role has tasks or employees
+  const tasksSnapshot = await getTasksRef().once('value');
+  const tasks = tasksSnapshot.val() || {};
+  const hasTasks = Object.values(tasks).some(t => t.roleId === roleId);
+  
+  const employeesSnapshot = await getEmployeesRef().once('value');
+  const employees = employeesSnapshot.val() || {};
+  const hasEmployees = Object.values(employees).some(e => e.roleId === roleId);
+  
+  if (hasTasks || hasEmployees) {
+    await showError('No se puede eliminar un rol que tiene tareas o empleados asociados');
+    return;
+  }
+
+  const confirmed = await showConfirm('Eliminar Rol', '¿Está seguro de eliminar este rol?');
+  if (!confirmed) return;
+
+  showSpinner('Eliminando rol...');
+  try {
+    await deleteRole(roleId);
+    hideSpinner();
+    backToRoles();
+  } catch (error) {
+    hideSpinner();
+    await showError('Error al eliminar rol: ' + error.message);
+  }
+}
+
+// Role form submit
+const roleFormElement = document.getElementById('role-form-element');
+if (roleFormElement) {
+  roleFormElement.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const roleId = document.getElementById('role-id').value;
+    const name = document.getElementById('role-name').value.trim();
+    const description = document.getElementById('role-description').value.trim();
+
+    if (!name) {
+      await showError('Por favor complete el nombre del rol');
+      return;
+    }
+
+    showSpinner('Guardando rol...');
+    try {
+      await saveRole(roleId || null, { name, description: description || null });
+      hideSpinner();
+      hideRoleForm();
+      await showSuccess('Rol guardado exitosamente');
+    } catch (error) {
+      hideSpinner();
+      await showError('Error al guardar rol: ' + error.message);
+    }
+  });
+}
+
+// New role button
+const newRoleBtn = document.getElementById('new-role-btn');
+if (newRoleBtn) {
+  newRoleBtn.addEventListener('click', () => {
+    showRoleForm();
+  });
+}
+
+// Cancel role form
+const cancelRoleBtn = document.getElementById('cancel-role-btn');
+if (cancelRoleBtn) {
+  cancelRoleBtn.addEventListener('click', () => {
+    hideRoleForm();
+  });
+}
+
+// Close role form button
+const closeRoleFormBtn = document.getElementById('close-role-form');
+if (closeRoleFormBtn) {
+  closeRoleFormBtn.addEventListener('click', () => {
+    hideRoleForm();
+  });
+}
+
+// Back to roles button
+const backToRolesBtn = document.getElementById('back-to-roles');
+if (backToRolesBtn) {
+  backToRolesBtn.addEventListener('click', () => {
+    backToRoles();
+  });
+}
+
+// Load roles for task/employee forms
+function loadRolesForSelect() {
+  return getRolesRef().once('value').then(snapshot => {
+    const roles = snapshot.val() || {};
+    return Object.entries(roles).map(([id, role]) => ({ id, ...role }));
+  });
+}
+
+// Make functions available globally
+window.viewRole = viewRole;

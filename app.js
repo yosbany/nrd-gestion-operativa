@@ -11,7 +11,7 @@ function switchView(viewName) {
   currentView = viewName;
 
   // Hide all views
-  const views = ['orders', 'clients', 'products'];
+  const views = ['areas', 'processes', 'tasks', 'roles', 'employees', 'task-executions', 'inspections', 'incidents', 'analytics'];
   views.forEach(view => {
     const viewElement = document.getElementById(`${view}-view`);
     if (viewElement) {
@@ -37,34 +37,24 @@ function switchView(viewName) {
   }
 
   // Load data for the view
-  if (viewName === 'orders') {
-    loadOrders();
-    const ordersList = document.getElementById('orders-list');
-    if (ordersList) {
-      ordersList.style.display = 'block';
-    }
-    const orderDetail = document.getElementById('order-detail');
-    if (orderDetail) {
-      orderDetail.classList.add('hidden');
-    }
-    const newOrderForm = document.getElementById('new-order-form');
-    if (newOrderForm) {
-      newOrderForm.classList.add('hidden');
-    }
-    const dateFilter = document.getElementById('date-filter-container');
-    if (dateFilter) {
-      dateFilter.style.display = 'flex';
-    }
-  } else if (viewName === 'clients') {
-    loadClients();
-    hideClientForm();
-    const clientDetail = document.getElementById('client-detail');
-    if (clientDetail) clientDetail.classList.add('hidden');
-  } else if (viewName === 'products') {
-    loadProducts();
-    hideProductForm();
-    const productDetail = document.getElementById('product-detail');
-    if (productDetail) productDetail.classList.add('hidden');
+  if (viewName === 'areas') {
+    loadAreas();
+  } else if (viewName === 'processes') {
+    loadProcesses();
+  } else if (viewName === 'tasks') {
+    loadTasks();
+  } else if (viewName === 'roles') {
+    loadRoles();
+  } else if (viewName === 'employees') {
+    loadEmployees();
+  } else if (viewName === 'task-executions') {
+    loadTaskExecutions();
+  } else if (viewName === 'inspections') {
+    loadInspections();
+  } else if (viewName === 'incidents') {
+    loadIncidents();
+  } else if (viewName === 'analytics') {
+    loadAnalytics();
   }
 }
 
@@ -79,8 +69,8 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 // Initialize app
 auth.onAuthStateChanged((user) => {
   if (user) {
-    // Default to orders view
-    switchView('orders');
+    // Default to areas view
+    switchView('areas');
   }
 });
 
