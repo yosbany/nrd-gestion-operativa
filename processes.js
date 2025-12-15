@@ -256,6 +256,7 @@ async function viewProcess(processId) {
     // Attach button handlers
     const editBtn = document.getElementById('edit-process-detail-btn');
     const deleteBtn = document.getElementById('delete-process-detail-btn');
+    const diagramBtn = document.getElementById('view-process-diagram-btn');
     
     if (editBtn) {
       editBtn.onclick = () => {
@@ -266,6 +267,12 @@ async function viewProcess(processId) {
     
     if (deleteBtn) {
       deleteBtn.onclick = () => deleteProcessHandler(processId);
+    }
+    
+    if (diagramBtn) {
+      diagramBtn.onclick = () => {
+        showProcessDiagram(processId, process.name, processTasks, roleMap);
+      };
     }
   } catch (error) {
     hideSpinner();
@@ -377,5 +384,103 @@ if (backToProcessesBtn) {
   });
 }
 
+// Close process diagram button
+const closeProcessDiagramBtn = document.getElementById('close-process-diagram');
+if (closeProcessDiagramBtn) {
+  closeProcessDiagramBtn.addEventListener('click', () => {
+    closeProcessDiagram();
+  });
+}
+
+// Show process diagram
+function showProcessDiagram(processId, processName, processTasks, roleMap) {
+  const modal = document.getElementById('process-diagram-modal');
+  const title = document.getElementById('process-diagram-title');
+  const content = document.getElementById('process-diagram-content');
+  
+  if (!modal || !title || !content) return;
+  
+  title.textContent = `Diagrama: ${escapeHtml(processName)}`;
+  
+  if (!processTasks || processTasks.length === 0) {
+    content.innerHTML = '<p class="text-center text-gray-600 py-8">No hay tareas en este proceso</p>';
+    modal.classList.remove('hidden');
+    return;
+  }
+  
+  const taskTypeLabels = {
+    'with_role': 'Con rol',
+    'without_role': 'Sin rol',
+    'voluntary': 'Voluntaria',
+    'unpaid': 'No remunerada',
+    'exchange': 'Canje'
+  };
+  
+  const taskTypeColors = {
+    'with_role': 'bg-blue-100 border-blue-300',
+    'without_role': 'bg-gray-100 border-gray-300',
+    'voluntary': 'bg-green-100 border-green-300',
+    'unpaid': 'bg-yellow-100 border-yellow-300',
+    'exchange': 'bg-purple-100 border-purple-300'
+  };
+  
+  let diagramHTML = '<div class="flex flex-col items-center space-y-4">';
+  
+  processTasks.forEach((task, index) => {
+    const roleName = task.roleId && roleMap[task.roleId] ? roleMap[task.roleId] : null;
+    const taskTypeLabel = taskTypeLabels[task.type] || task.type;
+    const taskTypeColor = taskTypeColors[task.type] || 'bg-gray-100 border-gray-300';
+    
+    // Task card
+    diagramHTML += `
+      <div class="w-full max-w-md">
+        <div class="border-2 ${taskTypeColor} rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="viewTask('${task.id}'); closeProcessDiagram();">
+          <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-medium text-gray-700 bg-white rounded-full w-8 h-8 flex items-center justify-center border-2 border-gray-400">${index + 1}</span>
+              <h4 class="text-base sm:text-lg font-light text-gray-800">${escapeHtml(task.name)}</h4>
+            </div>
+            <span class="text-xs px-2 py-1 bg-white rounded border border-gray-300 text-gray-700 whitespace-nowrap">${taskTypeLabel}</span>
+          </div>
+          ${roleName ? `
+            <div class="mt-2 pt-2 border-t border-gray-300">
+              <span class="text-xs text-gray-600 uppercase tracking-wider">Rol:</span>
+              <span class="text-sm font-light text-gray-800 ml-2">${escapeHtml(roleName)}</span>
+            </div>
+          ` : ''}
+          ${task.description ? `
+            <div class="mt-2 text-sm text-gray-600 font-light">${escapeHtml(task.description.substring(0, 100))}${task.description.length > 100 ? '...' : ''}</div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+    
+    // Arrow connector (except for last task)
+    if (index < processTasks.length - 1) {
+      diagramHTML += `
+        <div class="flex items-center justify-center">
+          <svg class="w-6 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+          </svg>
+        </div>
+      `;
+    }
+  });
+  
+  diagramHTML += '</div>';
+  
+  content.innerHTML = diagramHTML;
+  modal.classList.remove('hidden');
+}
+
+// Close process diagram
+function closeProcessDiagram() {
+  const modal = document.getElementById('process-diagram-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
 // Make functions available globally
 window.viewProcess = viewProcess;
+window.closeProcessDiagram = closeProcessDiagram;

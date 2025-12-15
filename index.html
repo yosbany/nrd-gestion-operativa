@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765801001378">
+  <link rel="stylesheet" href="styles.css?v=1765801096221">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
   
@@ -146,6 +146,7 @@
           </div>
           <div id="process-detail-content"></div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+            <button id="view-process-diagram-btn" class="flex-1 px-4 sm:px-6 py-2 bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Ver Diagrama</button>
             <button id="edit-process-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
             <button id="delete-process-detail-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
           </div>
@@ -456,6 +457,19 @@
     </div>
   </div>
 
+  <!-- Process Diagram Modal -->
+  <div id="process-diagram-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] border border-gray-200 shadow-lg flex flex-col">
+      <div class="p-4 sm:p-6 border-b border-gray-200 flex items-center justify-between">
+        <h3 id="process-diagram-title" class="text-lg sm:text-xl font-light text-black"></h3>
+        <button id="close-process-diagram" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+      </div>
+      <div id="process-diagram-content" class="p-4 sm:p-6 overflow-y-auto flex-1">
+        <!-- Diagram content will be inserted here -->
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -465,10 +479,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765801001378"></script>
-  <script src="modal.js?v=1765801001378"></script>
-  <script src="auth.js?v=1765801001378"></script>
-  <script src="db.js?v=1765801001378"></script>
+  <script src="firebase.js?v=1765801096221"></script>
+  <script src="modal.js?v=1765801096221"></script>
+  <script src="auth.js?v=1765801096221"></script>
+  <script src="db.js?v=1765801096221"></script>
   <script src="areas.js"></script>
   <script src="processes.js"></script>
   <script src="tasks.js"></script>
@@ -476,7 +490,7 @@
   <script src="employees.js"></script>
   <script src="inspections.js"></script>
   <script src="analytics.js"></script>
-  <script src="app.js?v=1765801001378"></script>
+  <script src="app.js?v=1765801096221"></script>
 
   <script>
     // Global error handler
@@ -527,7 +541,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1765801001378')
+        navigator.serviceWorker.register('service-worker.js?v=1765801096221')
           .then(reg => {
             console.log('Service Worker registered');
             
