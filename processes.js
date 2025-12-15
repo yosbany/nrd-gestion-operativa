@@ -434,7 +434,7 @@ function showProcessDiagram(processId, processName, processTasks, roleMap) {
     // Task card
     diagramHTML += `
       <div class="w-full max-w-md">
-        <div class="border-2 ${taskTypeColor} rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="viewTask('${task.id}'); closeProcessDiagram();">
+        <div class="border-2 ${taskTypeColor} rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="closeProcessDiagram(); setTimeout(() => viewTask('${task.id}'), 100);">
           <div class="flex items-start justify-between mb-2">
             <div class="flex items-center gap-2">
               <span class="text-lg font-medium text-gray-700 bg-white rounded-full w-8 h-8 flex items-center justify-center border-2 border-gray-400">${index + 1}</span>
