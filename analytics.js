@@ -699,6 +699,11 @@ async function loadAnalytics() {
     areaIncidents.sort((a, b) => b.totalIncidents - a.totalIncidents);
     roleIncidents.sort((a, b) => b.totalIncidents - a.totalIncidents);
 
+    // Calculate totals for costs
+    const totalEmployeeCosts = employeeCosts.reduce((sum, cost) => sum + cost.cost, 0);
+    const totalRoleCosts = roleCosts.reduce((sum, cost) => sum + cost.totalCost, 0);
+    const totalAreaCosts = areaCosts.reduce((sum, cost) => sum + cost.totalCost, 0);
+
     analyticsContent.innerHTML = `
       <div class="space-y-6">
         <!-- COSTOS SECTION -->
@@ -720,6 +725,14 @@ async function loadAnalytics() {
                   </div>
                 </div>
               `).join('')}
+              <div class="border-t-2 border-green-600 pt-3 mt-4">
+                <div class="flex justify-between items-center">
+                  <span class="font-medium text-sm sm:text-base uppercase tracking-wider">Total:</span>
+                  <span class="text-sm sm:text-base font-bold text-green-600">
+                    $${totalEmployeeCosts.toFixed(2)}
+                  </span>
+                </div>
+              </div>
             </div>
             `}
           </div>
@@ -742,6 +755,14 @@ async function loadAnalytics() {
                   </div>
                 </div>
               `).join('')}
+              <div class="border-t-2 border-green-600 pt-3 mt-4">
+                <div class="flex justify-between items-center">
+                  <span class="font-medium text-sm sm:text-base uppercase tracking-wider">Total:</span>
+                  <span class="text-sm sm:text-base font-bold text-green-600">
+                    $${totalRoleCosts.toFixed(2)}
+                  </span>
+                </div>
+              </div>
             </div>
             `}
           </div>
@@ -766,6 +787,14 @@ async function loadAnalytics() {
                   </div>
                 </div>
               `).join('')}
+              <div class="border-t-2 border-green-600 pt-3 mt-4">
+                <div class="flex justify-between items-center">
+                  <span class="font-medium text-sm sm:text-base uppercase tracking-wider">Total:</span>
+                  <span class="text-sm sm:text-base font-bold text-green-600">
+                    $${totalAreaCosts.toFixed(2)}
+                  </span>
+                </div>
+              </div>
             </div>
             `}
           </div>
