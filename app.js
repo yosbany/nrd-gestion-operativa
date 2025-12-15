@@ -11,7 +11,7 @@ function switchView(viewName) {
   currentView = viewName;
 
   // Hide all views
-  const views = ['areas', 'processes', 'tasks', 'roles', 'employees', 'inspections', 'analytics'];
+  const views = ['inicio', 'areas', 'processes', 'tasks', 'roles', 'employees', 'inspections', 'analytics'];
   views.forEach(view => {
     const viewElement = document.getElementById(`${view}-view`);
     if (viewElement) {
@@ -37,7 +37,9 @@ function switchView(viewName) {
   }
 
   // Load data for the view
-  if (viewName === 'areas') {
+  if (viewName === 'inicio') {
+    loadInicio();
+  } else if (viewName === 'areas') {
     loadAreas();
   } else if (viewName === 'processes') {
     loadProcesses();
@@ -65,8 +67,8 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 // Initialize app
 auth.onAuthStateChanged((user) => {
   if (user) {
-    // Default to areas view
-    switchView('areas');
+    // Default to inicio view
+    switchView('inicio');
   }
 });
 

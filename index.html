@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765804454307">
+  <link rel="stylesheet" href="styles.css?v=1765820634737">
   <meta name="theme-color" content="#dc2626">
   <link rel="apple-touch-icon" href="icon-192.png">
   
@@ -76,7 +76,8 @@
     </header>
 
     <nav class="bg-white border-b border-gray-200 flex overflow-x-auto sticky top-[45px] sm:top-[53px] z-10 bg-white">
-      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-red-600 text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="areas">Áreas</button>
+      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-red-600 text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="inicio">Inicio</button>
+      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="areas">Áreas</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="processes">Procesos</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="tasks">Tareas</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="roles">Roles</button>
@@ -86,8 +87,13 @@
     </nav>
 
     <main class="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto max-w-6xl mx-auto w-full">
+      <!-- Inicio View -->
+      <div id="inicio-view" class="view space-y-3 sm:space-y-4">
+        <div id="inicio-content"></div>
+      </div>
+
       <!-- Areas View -->
-      <div id="areas-view" class="view space-y-3 sm:space-y-4">
+      <div id="areas-view" class="view space-y-3 sm:space-y-4 hidden">
         <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
           <button id="new-area-btn" 
             class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
@@ -513,10 +519,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765804454307"></script>
-  <script src="modal.js?v=1765804454307"></script>
-  <script src="auth.js?v=1765804454307"></script>
-  <script src="db.js?v=1765804454307"></script>
+  <script src="firebase.js?v=1765820634737"></script>
+  <script src="modal.js?v=1765820634737"></script>
+  <script src="auth.js?v=1765820634737"></script>
+  <script src="db.js?v=1765820634737"></script>
   <script src="areas.js"></script>
   <script src="processes.js"></script>
   <script src="tasks.js"></script>
@@ -524,7 +530,8 @@
   <script src="employees.js"></script>
   <script src="inspections.js"></script>
   <script src="analytics.js"></script>
-  <script src="app.js?v=1765804454307"></script>
+  <script src="inicio.js"></script>
+  <script src="app.js?v=1765820634737"></script>
 
   <script>
     // Global error handler
@@ -575,7 +582,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1765804454307')
+        navigator.serviceWorker.register('service-worker.js?v=1765820634737')
           .then(reg => {
             console.log('Service Worker registered');
             
