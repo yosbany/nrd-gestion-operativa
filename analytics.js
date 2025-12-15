@@ -509,6 +509,161 @@ async function calculateIncidentsByRole() {
   }
 }
 
+// Calculate cost by employee
+async function calculateCostByEmployee() {
+  try {
+    const employeesSnapshot = await getEmployeesRef().once('value');
+    const employees = employeesSnapshot.val() || {};
+
+    return Object.entries(employees)
+      .filter(([id, employee]) => employee.salary)
+      .map(([employeeId, employee]) => ({
+        employeeId,
+        employeeName: employee.name,
+        cost: parseFloat(employee.salary) || 0,
+        roleId: employee.roleId || null
+      }))
+      .sort((a, b) => b.cost - a.cost);
+  } catch (error) {
+    console.error('Error calculating cost by employee:', error);
+    throw error;
+  }
+}
+
+// Calculate cost by role
+async function calculateCostByRole() {
+  try {
+    const [employeesSnapshot, rolesSnapshot] = await Promise.all([
+      getEmployeesRef().once('value'),
+      getRolesRef().once('value')
+    ]);
+
+    const employees = employeesSnapshot.val() || {};
+    const roles = rolesSnapshot.val() || {};
+
+    const costMap = {};
+
+    // Initialize cost map for all roles
+    Object.entries(roles).forEach(([roleId, role]) => {
+      costMap[roleId] = {
+        roleId,
+        roleName: role.name,
+        totalCost: 0,
+        employeesCount: 0
+      };
+    });
+
+    // Sum costs by role
+    Object.entries(employees).forEach(([employeeId, employee]) => {
+      if (employee.roleId && employee.salary && costMap[employee.roleId]) {
+        costMap[employee.roleId].totalCost += parseFloat(employee.salary) || 0;
+        costMap[employee.roleId].employeesCount++;
+      }
+    });
+
+    return Object.entries(costMap)
+      .filter(([id, data]) => data.totalCost > 0)
+      .map(([roleId, data]) => ({
+        roleId,
+        ...data
+      }))
+      .sort((a, b) => b.totalCost - a.totalCost);
+  } catch (error) {
+    console.error('Error calculating cost by role:', error);
+    throw error;
+  }
+}
+
+// Calculate cost by area
+async function calculateCostByArea() {
+  try {
+    const [areasSnapshot, processesSnapshot, tasksSnapshot, employeesSnapshot, rolesSnapshot] = await Promise.all([
+      getAreasRef().once('value'),
+      getProcessesRef().once('value'),
+      getTasksRef().once('value'),
+      getEmployeesRef().once('value'),
+      getRolesRef().once('value')
+    ]);
+
+    const areas = areasSnapshot.val() || {};
+    const processes = processesSnapshot.val() || {};
+    const tasks = tasksSnapshot.val() || {};
+    const employees = employeesSnapshot.val() || {};
+    const roles = rolesSnapshot.val() || {};
+
+    const costMap = {};
+
+    // Initialize cost map for all areas
+    Object.entries(areas).forEach(([areaId, area]) => {
+      costMap[areaId] = {
+        areaId,
+        areaName: area.name,
+        totalCost: 0,
+        taskCosts: 0,
+        employeeCosts: 0
+      };
+    });
+
+    // Build process to area map
+    const processAreaMap = {};
+    Object.entries(processes).forEach(([processId, process]) => {
+      if (process.areaId) {
+        processAreaMap[processId] = process.areaId;
+      }
+    });
+
+    // Calculate costs from tasks with direct cost (tasks without role)
+    Object.entries(tasks).forEach(([taskId, task]) => {
+      if (task.cost && task.processId && processAreaMap[task.processId]) {
+        const areaId = processAreaMap[task.processId];
+        if (costMap[areaId]) {
+          costMap[areaId].taskCosts += parseFloat(task.cost) || 0;
+        }
+      }
+    });
+
+    // Calculate costs from employees whose roles are associated with tasks in this area
+    // Build role to area map through tasks
+    const roleAreaMap = {};
+    Object.entries(tasks).forEach(([taskId, task]) => {
+      if (task.roleId && task.processId && processAreaMap[task.processId]) {
+        const areaId = processAreaMap[task.processId];
+        if (!roleAreaMap[task.roleId]) {
+          roleAreaMap[task.roleId] = new Set();
+        }
+        roleAreaMap[task.roleId].add(areaId);
+      }
+    });
+
+    // Sum employee costs by area through roles
+    Object.entries(employees).forEach(([employeeId, employee]) => {
+      if (employee.roleId && employee.salary && roleAreaMap[employee.roleId]) {
+        roleAreaMap[employee.roleId].forEach(areaId => {
+          if (costMap[areaId]) {
+            costMap[areaId].employeeCosts += parseFloat(employee.salary) || 0;
+          }
+        });
+      }
+    });
+
+    // Calculate total cost per area
+    Object.keys(costMap).forEach(areaId => {
+      costMap[areaId].totalCost = costMap[areaId].taskCosts + costMap[areaId].employeeCosts;
+    });
+
+    return Object.entries(costMap)
+      .filter(([id, data]) => data.totalCost > 0)
+      .map(([areaId, data]) => ({
+        areaId,
+        ...data
+      }))
+      .sort((a, b) => b.totalCost - a.totalCost);
+  } catch (error) {
+    console.error('Error calculating cost by area:', error);
+    throw error;
+  }
+}
+
 // Load analytics view
 async function loadAnalytics() {
   const analyticsContent = document.getElementById('analytics-content');
@@ -516,7 +671,7 @@ async function loadAnalytics() {
 
   showSpinner('Calculando análisis...');
   try {
-    const [employeeWorkload, roleWorkload, areaWorkload, employeeIncidents, taskIncidents, processIncidents, areaIncidents, roleIncidents] = await Promise.all([
+    const [employeeWorkload, roleWorkload, areaWorkload, employeeIncidents, taskIncidents, processIncidents, areaIncidents, roleIncidents, employeeCosts, roleCosts, areaCosts] = await Promise.all([
       calculateWorkloadByEmployee(),
       calculateWorkloadByRole(),
       calculateWorkloadByArea(),
@@ -524,7 +679,10 @@ async function loadAnalytics() {
       calculateIncidentsByTask(),
       calculateIncidentsByProcess(),
       calculateIncidentsByArea(),
-      calculateIncidentsByRole()
+      calculateIncidentsByRole(),
+      calculateCostByEmployee(),
+      calculateCostByRole(),
+      calculateCostByArea()
     ]);
 
     hideSpinner();
@@ -543,6 +701,76 @@ async function loadAnalytics() {
 
     analyticsContent.innerHTML = `
       <div class="space-y-6">
+        <!-- COSTOS SECTION -->
+        <div class="border-t-2 border-green-600 pt-6">
+          <h2 class="text-xl sm:text-2xl font-light mb-6 text-green-600 uppercase tracking-wider">Indicadores de Costo</h2>
+          
+          <!-- Cost by Employee -->
+          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Costo por Empleado</h3>
+            ${employeeCosts.length === 0 ? '<p class="text-gray-600 text-sm">No hay costos registrados</p>' : `
+            <div class="space-y-3">
+              ${employeeCosts.map(cost => `
+                <div class="border border-gray-200 p-3">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(cost.employeeName)}</span>
+                    <span class="text-xs sm:text-sm font-medium text-green-600">
+                      $${cost.cost.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            `}
+          </div>
+
+          <!-- Cost by Role -->
+          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Costo por Rol</h3>
+            ${roleCosts.length === 0 ? '<p class="text-gray-600 text-sm">No hay costos registrados</p>' : `
+            <div class="space-y-3">
+              ${roleCosts.map(cost => `
+                <div class="border border-gray-200 p-3">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(cost.roleName)}</span>
+                    <span class="text-xs sm:text-sm font-medium text-green-600">
+                      $${cost.totalCost.toFixed(2)}
+                    </span>
+                  </div>
+                  <div class="text-xs text-gray-600">
+                    Empleados: ${cost.employeesCount}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            `}
+          </div>
+
+          <!-- Cost by Area -->
+          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Costo por Área</h3>
+            ${areaCosts.length === 0 ? '<p class="text-gray-600 text-sm">No hay costos registrados</p>' : `
+            <div class="space-y-3">
+              ${areaCosts.map(cost => `
+                <div class="border border-gray-200 p-3">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(cost.areaName)}</span>
+                    <span class="text-xs sm:text-sm font-medium text-green-600">
+                      $${cost.totalCost.toFixed(2)}
+                    </span>
+                  </div>
+                  <div class="text-xs text-gray-600">
+                    ${cost.employeeCosts > 0 ? `Costos salariales: $${cost.employeeCosts.toFixed(2)}` : ''}
+                    ${cost.employeeCosts > 0 && cost.taskCosts > 0 ? ' | ' : ''}
+                    ${cost.taskCosts > 0 ? `Costos por tareas: $${cost.taskCosts.toFixed(2)}` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            `}
+          </div>
+        </div>
+
         <!-- INCIDENCIAS SECTION -->
         <div class="border-t-2 border-red-600 pt-6">
           <h2 class="text-xl sm:text-2xl font-light mb-6 text-red-600 uppercase tracking-wider">Indicadores de Incidencias</h2>
