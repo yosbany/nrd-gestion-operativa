@@ -160,9 +160,21 @@ async function viewProcess(processId) {
       if (area) areaName = area.name;
     }
 
-    // Load tasks for this process
-    const tasksSnapshot = await getTasksRef().once('value');
+    // Load tasks and roles for this process
+    const [tasksSnapshot, rolesSnapshot] = await Promise.all([
+      getTasksRef().once('value'),
+      getRolesRef().once('value')
+    ]);
+    
     const allTasks = tasksSnapshot.val() || {};
+    const allRoles = rolesSnapshot.val() || {};
+    
+    // Create role map
+    const roleMap = {};
+    Object.entries(allRoles).forEach(([id, role]) => {
+      roleMap[id] = role.name;
+    });
+    
     const processTasks = Object.entries(allTasks)
       .filter(([id, task]) => task.processId === processId)
       .map(([id, task]) => ({ id, ...task }))
@@ -177,9 +189,8 @@ async function viewProcess(processId) {
           <div class="space-y-2">
             ${processTasks.map((task, index) => {
               let roleName = 'Sin rol';
-              if (task.roleId) {
-                // We'll load role names asynchronously, but for now show ID
-                roleName = `Rol ID: ${task.roleId}`;
+              if (task.roleId && roleMap[task.roleId]) {
+                roleName = roleMap[task.roleId];
               }
               
               const taskTypeLabels = {
