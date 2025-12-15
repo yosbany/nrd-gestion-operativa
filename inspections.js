@@ -120,7 +120,11 @@ function showInspectionForm(inspectionId = null) {
         }
         
         try {
-          const taskSnapshot = await getTask(taskId);
+          const [taskSnapshot, inspectionsSnapshot] = await Promise.all([
+            getTask(taskId),
+            getInspectionsRef().once('value')
+          ]);
+          
           const task = taskSnapshot.val();
           
           if (!task) {
@@ -128,7 +132,41 @@ function showInspectionForm(inspectionId = null) {
             return;
           }
           
+          // Find last inspection for this task
+          const inspections = inspectionsSnapshot.val() || {};
+          const taskInspections = Object.entries(inspections)
+            .filter(([id, inspection]) => inspection.taskId === taskId)
+            .map(([id, inspection]) => ({ id, ...inspection }))
+            .sort((a, b) => (b.inspectionDate || 0) - (a.inspectionDate || 0));
+          
+          const lastInspection = taskInspections.length > 0 ? taskInspections[0] : null;
+          
           let helpHTML = '';
+          
+          // Show last inspection info
+          if (lastInspection) {
+            const lastInspectionDate = lastInspection.inspectionDate ? new Date(lastInspection.inspectionDate) : null;
+            const lastDateStr = lastInspectionDate ? formatDate24h(lastInspectionDate) + ' ' + formatTime24h(lastInspectionDate) : 'Sin fecha';
+            
+            helpHTML += `
+              <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-300">
+                <h4 class="text-xs uppercase tracking-wider text-gray-600 mb-2 font-medium">Última Inspección:</h4>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm sm:text-base font-light text-gray-800">${lastDateStr}</span>
+                  <button onclick="viewInspection('${lastInspection.id}'); hideInspectionForm();" class="text-xs sm:text-sm text-red-600 hover:text-red-700 underline font-light">
+                    Ver detalles
+                  </button>
+                </div>
+              </div>
+            `;
+          } else {
+            helpHTML += `
+              <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-300">
+                <h4 class="text-xs uppercase tracking-wider text-gray-600 mb-2 font-medium">Última Inspección:</h4>
+                <p class="text-sm sm:text-base font-light text-gray-600">No hay inspecciones previas para esta tarea</p>
+              </div>
+            `;
+          }
           
           if (task.successCriteria) {
             helpHTML += `
