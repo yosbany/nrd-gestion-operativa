@@ -164,20 +164,6 @@ function showInspectionForm(inspectionId = null) {
     }
   });
 
-  // Set default date/time to now
-  const dateInput = document.getElementById('inspection-date');
-  const timeInput = document.getElementById('inspection-time');
-  if (dateInput && timeInput) {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    dateInput.value = `${year}-${month}-${day}`;
-    timeInput.value = `${hours}:${minutes}`;
-  }
-
   if (inspectionId) {
     if (title) title.textContent = 'Editar Inspección';
     getInspection(inspectionId).then(async snapshot => {
@@ -187,17 +173,6 @@ function showInspectionForm(inspectionId = null) {
         taskSelect.value = inspection.taskId || '';
         document.getElementById('inspection-severity').value = inspection.severity || 'leve';
         document.getElementById('inspection-observations').value = inspection.observations || '';
-        
-        if (inspection.inspectionDate) {
-          const inspDate = new Date(inspection.inspectionDate);
-          const year = inspDate.getFullYear();
-          const month = String(inspDate.getMonth() + 1).padStart(2, '0');
-          const day = String(inspDate.getDate()).padStart(2, '0');
-          const hours = String(inspDate.getHours()).padStart(2, '0');
-          const minutes = String(inspDate.getMinutes()).padStart(2, '0');
-          document.getElementById('inspection-date').value = `${year}-${month}-${day}`;
-          document.getElementById('inspection-time').value = `${hours}:${minutes}`;
-        }
         
         // Trigger change event to load task help if task is selected
         if (inspection.taskId && taskSelect) {
@@ -371,23 +346,25 @@ if (inspectionFormElement) {
     const severity = document.getElementById('inspection-severity').value;
     const observations = document.getElementById('inspection-observations').value.trim() || null;
     
-    const dateInput = document.getElementById('inspection-date').value;
-    const timeInput = document.getElementById('inspection-time').value;
-    
     if (!taskId) {
       await showError('Por favor seleccione una tarea');
       return;
     }
 
-    // Combine date and time
-    let inspectionDate = Date.now();
-    if (dateInput && timeInput) {
-      const dateTimeString = `${dateInput}T${timeInput}`;
-      inspectionDate = new Date(dateTimeString).getTime();
-    }
-
     showSpinner('Guardando inspección...');
     try {
+      let inspectionDate;
+      
+      if (inspectionId) {
+        // When editing, preserve the original inspection date
+        const inspectionSnapshot = await getInspection(inspectionId);
+        const existingInspection = inspectionSnapshot.val();
+        inspectionDate = existingInspection ? existingInspection.inspectionDate : Date.now();
+      } else {
+        // When creating new, use current timestamp
+        inspectionDate = Date.now();
+      }
+      
       await saveInspection(inspectionId || null, { 
         taskId,
         severity,
