@@ -294,9 +294,11 @@ async function loadInicio() {
 
     // Calculate overall completion percentage
     const docAvg = (docHealth.tasks.documentationRate + docHealth.processes.documentationRate + docHealth.areas.documentationRate) / 3;
-    const stdAvg = (stdHealth.tasks.standardizationRate + stdHealth.processes.standardizationRate + stdHealth.roles.standardizationRate) / 3;
+    const stdAvg = (stdHealth.tasks.standardizationRate + stdHealth.processes.standardizationRate + stdHealth.employees.standardizationRate) / 3;
     const sysAvg = (sysHealth.tasks.systematizationRate + sysHealth.processes.systematizationRate + sysHealth.areas.systematizationRate) / 3;
-    const overallCompletion = Math.round((companyInfoRate + docAvg + stdAvg + sysAvg) / 4);
+    const overallCompletion = isNaN(companyInfoRate) || isNaN(docAvg) || isNaN(stdAvg) || isNaN(sysAvg) 
+      ? 0 
+      : Math.round((companyInfoRate + docAvg + stdAvg + sysAvg) / 4);
     
     const getProgressColor = (percentage) => {
       if (percentage >= 80) return 'bg-green-600';
@@ -319,9 +321,7 @@ async function loadInicio() {
               </span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-4 sm:h-5 overflow-hidden">
-              <div class="h-full ${getProgressColor(overallCompletion)} transition-all duration-500 flex items-center justify-end pr-2" style="width: ${overallCompletion}%">
-                ${overallCompletion >= 10 ? `<span class="text-xs text-white font-medium">${overallCompletion}%</span>` : ''}
-              </div>
+              <div class="h-full ${getProgressColor(overallCompletion)} transition-all duration-500" style="width: ${overallCompletion}%"></div>
             </div>
           </div>
         </div>
