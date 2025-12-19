@@ -31,16 +31,22 @@ function loadEmployees() {
       item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
       item.dataset.employeeId = id;
       
-      // Get role name
-      let roleName = 'Sin rol';
-      if (employee.roleId) {
-        getRole(employee.roleId).then(snapshot => {
+      // Get role names (support both old roleId and new roleIds)
+      const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+      let roleNamesText = 'Sin roles';
+      
+      if (roleIds.length > 0) {
+        Promise.all(roleIds.map(roleId => getRole(roleId).then(snapshot => {
           const role = snapshot.val();
-          if (role) {
-            const roleSpan = item.querySelector('.role-name');
-            if (roleSpan) roleSpan.textContent = role.name;
+          return role ? role.name : null;
+        }))).then(names => {
+          const validNames = names.filter(n => n !== null);
+          const roleSpan = item.querySelector('.role-names');
+          if (roleSpan) {
+            roleSpan.textContent = validNames.length > 0 ? validNames.join(', ') : 'Sin roles';
           }
         });
+        roleNamesText = 'Cargando...';
       }
       
       item.innerHTML = `
@@ -49,7 +55,7 @@ function loadEmployees() {
           ${employee.salary ? `<span class="text-xs sm:text-sm text-gray-600">$${parseFloat(employee.salary).toFixed(2)}</span>` : ''}
         </div>
         <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
-          <div>Rol: <span class="role-name">${roleName}</span></div>
+          <div>Roles: <span class="role-names">${roleNamesText}</span></div>
           ${employee.email ? `<div>Email: ${escapeHtml(employee.email)}</div>` : ''}
           ${employee.phone ? `<div>Teléfono: ${escapeHtml(employee.phone)}</div>` : ''}
         </div>
@@ -80,16 +86,29 @@ function showEmployeeForm(employeeId = null) {
     if (employeeIdInput) employeeIdInput.value = employeeId || '';
   }
 
-  // Load roles for select
+  // Load roles for checkboxes
   loadRolesForSelect().then(roles => {
-    const roleSelect = document.getElementById('employee-role-select');
-    if (roleSelect) {
-      roleSelect.innerHTML = '<option value="">Sin rol</option>';
+    const rolesContainer = document.getElementById('employee-roles-container');
+    if (rolesContainer) {
+      rolesContainer.innerHTML = '';
+      if (roles.length === 0) {
+        rolesContainer.innerHTML = '<p class="text-sm text-gray-500">No hay roles disponibles</p>';
+        return;
+      }
       roles.forEach(role => {
-        const option = document.createElement('option');
-        option.value = role.id;
-        option.textContent = role.name;
-        roleSelect.appendChild(option);
+        const label = document.createElement('label');
+        label.className = 'flex items-center gap-2 cursor-pointer';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = role.id;
+        checkbox.className = 'w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500';
+        checkbox.dataset.roleId = role.id;
+        const span = document.createElement('span');
+        span.className = 'text-sm font-light';
+        span.textContent = role.name;
+        label.appendChild(checkbox);
+        label.appendChild(span);
+        rolesContainer.appendChild(label);
       });
     }
   });
@@ -102,13 +121,18 @@ function showEmployeeForm(employeeId = null) {
         const nameInput = document.getElementById('employee-name');
         const emailInput = document.getElementById('employee-email');
         const phoneInput = document.getElementById('employee-phone');
-        const roleSelect = document.getElementById('employee-role-select');
         const salaryInput = document.getElementById('employee-salary');
         if (nameInput) nameInput.value = employee.name || '';
         if (emailInput) emailInput.value = employee.email || '';
         if (phoneInput) phoneInput.value = employee.phone || '';
-        if (roleSelect) roleSelect.value = employee.roleId || '';
         if (salaryInput) salaryInput.value = employee.salary || '';
+        
+        // Set checked roles (support both old roleId and new roleIds)
+        const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+        const checkboxes = document.querySelectorAll('#employee-roles-container input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = roleIds.includes(checkbox.value);
+        });
       }
     });
   } else {
@@ -161,12 +185,18 @@ async function viewEmployee(employeeId) {
     if (form) form.classList.add('hidden');
     if (detail) detail.classList.remove('hidden');
 
-    // Get role name
-    let roleName = 'Sin rol';
-    if (employee.roleId) {
-      const roleSnapshot = await getRole(employee.roleId);
-      const role = roleSnapshot.val();
-      if (role) roleName = role.name;
+    // Get role names (support both old roleId and new roleIds)
+    const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+    let roleNames = 'Sin roles';
+    
+    if (roleIds.length > 0) {
+      const rolePromises = roleIds.map(roleId => getRole(roleId).then(snapshot => {
+        const role = snapshot.val();
+        return role ? role.name : null;
+      }));
+      const roleNamesArray = await Promise.all(rolePromises);
+      const validNames = roleNamesArray.filter(n => n !== null);
+      roleNames = validNames.length > 0 ? validNames.join(', ') : 'Sin roles';
     }
 
     detailContent.innerHTML = `
@@ -188,8 +218,8 @@ async function viewEmployee(employeeId) {
         </div>
         ` : ''}
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
-          <span class="text-gray-600 font-light text-sm sm:text-base">Rol:</span>
-          <span class="font-light text-sm sm:text-base">${escapeHtml(roleName)}</span>
+          <span class="text-gray-600 font-light text-sm sm:text-base">Roles:</span>
+          <span class="font-light text-sm sm:text-base text-right">${escapeHtml(roleNames)}</span>
         </div>
         ${employee.salary ? `
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
@@ -259,8 +289,11 @@ if (employeeFormElement) {
     const name = document.getElementById('employee-name').value.trim();
     const email = document.getElementById('employee-email').value.trim();
     const phone = document.getElementById('employee-phone').value.trim();
-    const roleId = document.getElementById('employee-role-select').value || null;
     const salary = parseFloat(document.getElementById('employee-salary').value) || null;
+    
+    // Get selected roles
+    const roleCheckboxes = document.querySelectorAll('#employee-roles-container input[type="checkbox"]:checked');
+    const roleIds = Array.from(roleCheckboxes).map(cb => cb.value);
 
     if (!name) {
       await showError('Por favor complete el nombre del empleado');
@@ -269,13 +302,24 @@ if (employeeFormElement) {
 
     showSpinner('Guardando empleado...');
     try {
-      await saveEmployee(employeeId || null, { 
+      const employeeData = { 
         name, 
         email: email || null, 
         phone: phone || null,
-        roleId: roleId || null,
         salary: salary || null
-      });
+      };
+      
+      // Store roleIds as array (or null if empty)
+      if (roleIds.length > 0) {
+        employeeData.roleIds = roleIds;
+        // Remove old roleId if exists (for migration)
+        employeeData.roleId = null;
+      } else {
+        employeeData.roleIds = null;
+        employeeData.roleId = null;
+      }
+      
+      await saveEmployee(employeeId || null, employeeData);
       hideSpinner();
       hideEmployeeForm();
       await showSuccess('Empleado guardado exitosamente');

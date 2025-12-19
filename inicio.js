@@ -140,7 +140,8 @@ async function calculateStandardizationHealth() {
     let employeesWithRole = 0;
 
     Object.values(employees).forEach(employee => {
-      if (employee.roleId) employeesWithRole++;
+      const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+      if (roleIds.length > 0) employeesWithRole++;
     });
 
     return {
@@ -314,8 +315,7 @@ async function loadInicio() {
           
           <!-- Overall Progress Bar -->
           <div class="max-w-2xl mx-auto">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm sm:text-base font-light text-gray-700">Completitud General</span>
+            <div class="flex items-center justify-end mb-2">
               <span class="text-lg sm:text-xl font-medium ${getHealthColor(overallCompletion)}">
                 ${overallCompletion}%
               </span>

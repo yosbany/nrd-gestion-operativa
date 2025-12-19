@@ -272,9 +272,11 @@ async function generateCompanyPDF() {
     if (Object.keys(employees).length > 0) {
       addSectionTitle('EMPLEADOS');
       Object.entries(employees).forEach(([id, employee]) => {
-        const roleName = employee.roleId && roles[employee.roleId] ? roles[employee.roleId].name : 'Sin rol';
+        const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+        const roleNames = roleIds.map(roleId => roles[roleId] ? roles[roleId].name : null).filter(n => n !== null);
+        const roleName = roleNames.length > 0 ? roleNames.join(', ') : 'Sin roles';
         addText(employee.name || 'Sin nombre', 11, true);
-        addText('Rol: ' + roleName, 9, false);
+        addText('Roles: ' + roleName, 9, false);
         if (employee.email) addText('Email: ' + employee.email, 9, false);
         if (employee.phone) addText('Teléfono: ' + employee.phone, 9, false);
         if (employee.salary) addText('Costo Salarial: $' + parseFloat(employee.salary).toFixed(2), 9, false);

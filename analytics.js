@@ -16,9 +16,10 @@ async function calculateWorkloadByEmployee() {
     const workloadMap = {};
 
     Object.entries(employees).forEach(([employeeId, employee]) => {
+      const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
       workloadMap[employeeId] = {
         employeeName: employee.name,
-        roleId: employee.roleId,
+        roleIds: roleIds,
         totalTasks: 0,
         totalEstimatedTime: 0,
         tasks: []
@@ -29,11 +30,12 @@ async function calculateWorkloadByEmployee() {
     Object.entries(tasks).forEach(([taskId, task]) => {
       if (task.roleId && task.estimatedTime) {
         Object.entries(employees).forEach(([employeeId, employee]) => {
-          if (employee.roleId === task.roleId) {
+          const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+          if (roleIds.includes(task.roleId)) {
             if (!workloadMap[employeeId]) {
               workloadMap[employeeId] = {
                 employeeName: employee.name,
-                roleId: employee.roleId,
+                roleIds: roleIds,
                 totalTasks: 0,
                 totalEstimatedTime: 0,
                 tasks: []
@@ -88,9 +90,12 @@ async function calculateWorkloadByRole() {
 
     // Count employees per role
     Object.entries(employees).forEach(([employeeId, employee]) => {
-      if (employee.roleId && workloadMap[employee.roleId]) {
-        workloadMap[employee.roleId].employeesCount++;
-      }
+      const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+      roleIds.forEach(roleId => {
+        if (workloadMap[roleId]) {
+          workloadMap[roleId].employeesCount++;
+        }
+      });
     });
 
     // Calculate workload from tasks
@@ -236,12 +241,15 @@ async function calculateCostByEmployee() {
 
     return Object.entries(employees)
       .filter(([id, employee]) => employee.salary)
-      .map(([employeeId, employee]) => ({
-        employeeId,
-        employeeName: employee.name,
-        cost: parseFloat(employee.salary) || 0,
-        roleId: employee.roleId || null
-      }))
+      .map(([employeeId, employee]) => {
+        const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+        return {
+          employeeId,
+          employeeName: employee.name,
+          cost: parseFloat(employee.salary) || 0,
+          roleIds: roleIds.length > 0 ? roleIds : null
+        };
+      })
       .sort((a, b) => b.cost - a.cost);
   } catch (error) {
     console.error('Error calculating cost by employee:', error);
@@ -274,9 +282,14 @@ async function calculateCostByRole() {
 
     // Sum costs by role
     Object.entries(employees).forEach(([employeeId, employee]) => {
-      if (employee.roleId && employee.salary && costMap[employee.roleId]) {
-        costMap[employee.roleId].totalCost += parseFloat(employee.salary) || 0;
-        costMap[employee.roleId].employeesCount++;
+      const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+      if (employee.salary && roleIds.length > 0) {
+        roleIds.forEach(roleId => {
+          if (costMap[roleId]) {
+            costMap[roleId].totalCost += parseFloat(employee.salary) || 0;
+            costMap[roleId].employeesCount++;
+          }
+        });
       }
     });
 
@@ -356,10 +369,15 @@ async function calculateCostByArea() {
 
     // Sum employee costs by area through roles
     Object.entries(employees).forEach(([employeeId, employee]) => {
-      if (employee.roleId && employee.salary && roleAreaMap[employee.roleId]) {
-        roleAreaMap[employee.roleId].forEach(areaId => {
-          if (costMap[areaId]) {
-            costMap[areaId].employeeCosts += parseFloat(employee.salary) || 0;
+      const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+      if (employee.salary && roleIds.length > 0) {
+        roleIds.forEach(roleId => {
+          if (roleAreaMap[roleId]) {
+            roleAreaMap[roleId].forEach(areaId => {
+              if (costMap[areaId]) {
+                costMap[areaId].employeeCosts += parseFloat(employee.salary) || 0;
+              }
+            });
           }
         });
       }

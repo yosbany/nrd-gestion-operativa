@@ -132,7 +132,10 @@ async function viewRole(roleId) {
     const employeesSnapshot = await getEmployeesRef().once('value');
     const allEmployees = employeesSnapshot.val() || {};
     const roleEmployees = Object.entries(allEmployees)
-      .filter(([id, employee]) => employee.roleId === roleId)
+      .filter(([id, employee]) => {
+        const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+        return roleIds.includes(roleId);
+      })
       .map(([id, employee]) => ({ id, ...employee }));
 
     detailContent.innerHTML = `
