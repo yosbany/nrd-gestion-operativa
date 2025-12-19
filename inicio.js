@@ -292,11 +292,38 @@ async function loadInicio() {
       return 'bg-red-50 border-red-200';
     };
 
+    // Calculate overall completion percentage
+    const docAvg = (docHealth.tasks.documentationRate + docHealth.processes.documentationRate + docHealth.areas.documentationRate) / 3;
+    const stdAvg = (stdHealth.tasks.standardizationRate + stdHealth.processes.standardizationRate + stdHealth.roles.standardizationRate) / 3;
+    const sysAvg = (sysHealth.tasks.systematizationRate + sysHealth.processes.systematizationRate + sysHealth.areas.systematizationRate) / 3;
+    const overallCompletion = Math.round((companyInfoRate + docAvg + stdAvg + sysAvg) / 4);
+    
+    const getProgressColor = (percentage) => {
+      if (percentage >= 80) return 'bg-green-600';
+      if (percentage >= 60) return 'bg-yellow-600';
+      return 'bg-red-600';
+    };
+
     inicioContent.innerHTML = `
       <div class="space-y-6">
         <div class="text-center mb-6">
           <h1 class="text-2xl sm:text-3xl font-light mb-2">Indicadores de Salud del Negocio</h1>
-          <p class="text-sm sm:text-base text-gray-600">Documentación, Estandarización y Sistematización</p>
+          <p class="text-sm sm:text-base text-gray-600 mb-4">Documentación, Estandarización y Sistematización</p>
+          
+          <!-- Overall Progress Bar -->
+          <div class="max-w-2xl mx-auto">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm sm:text-base font-light text-gray-700">Completitud General</span>
+              <span class="text-lg sm:text-xl font-medium ${getHealthColor(overallCompletion)}">
+                ${overallCompletion}%
+              </span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-4 sm:h-5 overflow-hidden">
+              <div class="h-full ${getProgressColor(overallCompletion)} transition-all duration-500 flex items-center justify-end pr-2" style="width: ${overallCompletion}%">
+                ${overallCompletion >= 10 ? `<span class="text-xs text-white font-medium">${overallCompletion}%</span>` : ''}
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- INFORMACIÓN DE LA EMPRESA -->
