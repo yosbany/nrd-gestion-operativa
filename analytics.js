@@ -390,15 +390,10 @@ async function loadAnalytics() {
 
   showSpinner('Calculando análisis...');
   try {
-    const [employeeWorkload, roleWorkload, areaWorkload, employeeIncidents, taskIncidents, processIncidents, areaIncidents, roleIncidents, employeeCosts, roleCosts, areaCosts] = await Promise.all([
+    const [employeeWorkload, roleWorkload, areaWorkload, employeeCosts, roleCosts, areaCosts] = await Promise.all([
       calculateWorkloadByEmployee(),
       calculateWorkloadByRole(),
       calculateWorkloadByArea(),
-      calculateIncidentsByEmployee(),
-      calculateIncidentsByTask(),
-      calculateIncidentsByProcess(),
-      calculateIncidentsByArea(),
-      calculateIncidentsByRole(),
       calculateCostByEmployee(),
       calculateCostByRole(),
       calculateCostByArea()
@@ -410,13 +405,6 @@ async function loadAnalytics() {
     employeeWorkload.sort((a, b) => b.totalEstimatedTime - a.totalEstimatedTime);
     roleWorkload.sort((a, b) => b.totalEstimatedTime - a.totalEstimatedTime);
     areaWorkload.sort((a, b) => b.totalEstimatedTime - a.totalEstimatedTime);
-
-    // Sort incidents by total (descending)
-    employeeIncidents.sort((a, b) => b.totalIncidents - a.totalIncidents);
-    taskIncidents.sort((a, b) => b.totalIncidents - a.totalIncidents);
-    processIncidents.sort((a, b) => b.totalIncidents - a.totalIncidents);
-    areaIncidents.sort((a, b) => b.totalIncidents - a.totalIncidents);
-    roleIncidents.sort((a, b) => b.totalIncidents - a.totalIncidents);
 
     // Calculate totals for costs
     const totalEmployeeCosts = employeeCosts.reduce((sum, cost) => sum + cost.cost, 0);
@@ -514,153 +502,6 @@ async function loadAnalytics() {
                   </span>
                 </div>
               </div>
-            </div>
-            `}
-          </div>
-        </div>
-
-        <!-- INCIDENCIAS SECTION -->
-        <div class="border-t-2 border-red-600 pt-6">
-          <h2 class="text-xl sm:text-2xl font-light mb-6 text-red-600 uppercase tracking-wider">Indicadores de Incidencias</h2>
-          
-          <!-- Incidents by Employee -->
-          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
-            <h3 class="text-lg sm:text-xl font-light mb-4">Incidencias por Empleado</h3>
-            ${employeeIncidents.length === 0 ? '<p class="text-gray-600 text-sm">No hay incidencias registradas</p>' : `
-            <div class="space-y-3">
-              ${employeeIncidents.map(incident => `
-                <div class="border border-gray-200 p-3 ${incident.critical > 0 ? 'border-red-300 bg-red-50' : incident.moderate > 0 ? 'border-orange-300 bg-orange-50' : ''}">
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="font-light text-sm sm:text-base">${escapeHtml(incident.employeeName)}</span>
-                    <span class="text-xs sm:text-sm font-medium ${incident.critical > 0 ? 'text-red-600' : 'text-orange-600'}">
-                      ${incident.totalIncidents} incidencia${incident.totalIncidents !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <div class="text-xs text-gray-600 space-y-1">
-                    <div>Moderadas: ${incident.moderate} | Críticas: <span class="${incident.critical > 0 ? 'text-red-600 font-medium' : ''}">${incident.critical}</span></div>
-                    ${Object.keys(incident.tasks).length > 0 ? `
-                    <div class="mt-2 pt-2 border-t border-gray-300">
-                      <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Tareas con incidencias:</div>
-                      ${Object.entries(incident.tasks).map(([taskId, taskData]) => `
-                        <div class="text-xs">• ${escapeHtml(taskData.taskName)}: ${taskData.count} vez${taskData.count !== 1 ? 'es' : ''}</div>
-                      `).join('')}
-                    </div>
-                    ` : ''}
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-            `}
-          </div>
-
-          <!-- Incidents by Task -->
-          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
-            <h3 class="text-lg sm:text-xl font-light mb-4">Incidencias por Tarea (Tareas con más problemas)</h3>
-            ${taskIncidents.length === 0 ? '<p class="text-gray-600 text-sm">No hay incidencias registradas</p>' : `
-            <div class="space-y-3">
-              ${taskIncidents.map(incident => `
-                <div class="border border-gray-200 p-3 ${incident.critical > 0 ? 'border-red-300 bg-red-50' : incident.moderate > 0 ? 'border-orange-300 bg-orange-50' : ''}">
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="font-light text-sm sm:text-base">${escapeHtml(incident.taskName)}</span>
-                    <span class="text-xs sm:text-sm font-medium ${incident.critical > 0 ? 'text-red-600' : 'text-orange-600'}">
-                      ${incident.totalIncidents} incidencia${incident.totalIncidents !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <div class="text-xs text-gray-600">
-                    Moderadas: ${incident.moderate} | Críticas: <span class="${incident.critical > 0 ? 'text-red-600 font-medium' : ''}">${incident.critical}</span>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-            `}
-          </div>
-
-          <!-- Incidents by Process -->
-          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
-            <h3 class="text-lg sm:text-xl font-light mb-4">Incidencias por Proceso</h3>
-            ${processIncidents.length === 0 ? '<p class="text-gray-600 text-sm">No hay incidencias registradas</p>' : `
-            <div class="space-y-3">
-              ${processIncidents.map(incident => `
-                <div class="border border-gray-200 p-3 ${incident.critical > 0 ? 'border-red-300 bg-red-50' : incident.moderate > 0 ? 'border-orange-300 bg-orange-50' : ''}">
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="font-light text-sm sm:text-base">${escapeHtml(incident.processName)}</span>
-                    <span class="text-xs sm:text-sm font-medium ${incident.critical > 0 ? 'text-red-600' : 'text-orange-600'}">
-                      ${incident.totalIncidents} incidencia${incident.totalIncidents !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <div class="text-xs text-gray-600 space-y-1">
-                    <div>Moderadas: ${incident.moderate} | Críticas: <span class="${incident.critical > 0 ? 'text-red-600 font-medium' : ''}">${incident.critical}</span></div>
-                    ${Object.keys(incident.tasks).length > 0 ? `
-                    <div class="mt-2 pt-2 border-t border-gray-300">
-                      <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Tareas con incidencias:</div>
-                      ${Object.entries(incident.tasks).map(([taskId, taskData]) => `
-                        <div class="text-xs">• ${escapeHtml(taskData.taskName)}: ${taskData.count} vez${taskData.count !== 1 ? 'es' : ''}</div>
-                      `).join('')}
-                    </div>
-                    ` : ''}
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-            `}
-          </div>
-
-          <!-- Incidents by Area -->
-          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
-            <h3 class="text-lg sm:text-xl font-light mb-4">Incidencias por Área</h3>
-            ${areaIncidents.length === 0 ? '<p class="text-gray-600 text-sm">No hay incidencias registradas</p>' : `
-            <div class="space-y-3">
-              ${areaIncidents.map(incident => `
-                <div class="border border-gray-200 p-3 ${incident.critical > 0 ? 'border-red-300 bg-red-50' : incident.moderate > 0 ? 'border-orange-300 bg-orange-50' : ''}">
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="font-light text-sm sm:text-base">${escapeHtml(incident.areaName)}</span>
-                    <span class="text-xs sm:text-sm font-medium ${incident.critical > 0 ? 'text-red-600' : 'text-orange-600'}">
-                      ${incident.totalIncidents} incidencia${incident.totalIncidents !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <div class="text-xs text-gray-600 space-y-1">
-                    <div>Moderadas: ${incident.moderate} | Críticas: <span class="${incident.critical > 0 ? 'text-red-600 font-medium' : ''}">${incident.critical}</span></div>
-                    ${Object.keys(incident.processes).length > 0 ? `
-                    <div class="mt-2 pt-2 border-t border-gray-300">
-                      <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Procesos con incidencias:</div>
-                      ${Object.entries(incident.processes).map(([processId, processData]) => `
-                        <div class="text-xs">• ${escapeHtml(processData.processName)}: ${processData.count} vez${processData.count !== 1 ? 'es' : ''}</div>
-                      `).join('')}
-                    </div>
-                    ` : ''}
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-            `}
-          </div>
-
-          <!-- Incidents by Role -->
-          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
-            <h3 class="text-lg sm:text-xl font-light mb-4">Incidencias por Rol</h3>
-            ${roleIncidents.length === 0 ? '<p class="text-gray-600 text-sm">No hay incidencias registradas</p>' : `
-            <div class="space-y-3">
-              ${roleIncidents.map(incident => `
-                <div class="border border-gray-200 p-3 ${incident.critical > 0 ? 'border-red-300 bg-red-50' : incident.moderate > 0 ? 'border-orange-300 bg-orange-50' : ''}">
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="font-light text-sm sm:text-base">${escapeHtml(incident.roleName)}</span>
-                    <span class="text-xs sm:text-sm font-medium ${incident.critical > 0 ? 'text-red-600' : 'text-orange-600'}">
-                      ${incident.totalIncidents} incidencia${incident.totalIncidents !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  <div class="text-xs text-gray-600 space-y-1">
-                    <div>Moderadas: ${incident.moderate} | Críticas: <span class="${incident.critical > 0 ? 'text-red-600 font-medium' : ''}">${incident.critical}</span></div>
-                    ${Object.keys(incident.tasks).length > 0 ? `
-                    <div class="mt-2 pt-2 border-t border-gray-300">
-                      <div class="text-xs uppercase tracking-wider text-gray-500 mb-1">Tareas con incidencias:</div>
-                      ${Object.entries(incident.tasks).map(([taskId, taskData]) => `
-                        <div class="text-xs">• ${escapeHtml(taskData.taskName)}: ${taskData.count} vez${taskData.count !== 1 ? 'es' : ''}</div>
-                      `).join('')}
-                    </div>
-                    ` : ''}
-                  </div>
-                </div>
-              `).join('')}
             </div>
             `}
           </div>
