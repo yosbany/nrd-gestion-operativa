@@ -86,8 +86,11 @@ function showEmployeeForm(employeeId = null) {
     if (employeeIdInput) employeeIdInput.value = employeeId || '';
   }
 
-  // Load roles for checkboxes
-  loadRolesForSelect().then(roles => {
+  // Load roles for checkboxes and employee data in parallel
+  Promise.all([
+    loadRolesForSelect(),
+    employeeId ? getEmployee(employeeId) : Promise.resolve(null)
+  ]).then(([roles, employeeSnapshot]) => {
     const rolesContainer = document.getElementById('employee-roles-container');
     if (rolesContainer) {
       rolesContainer.innerHTML = '';
@@ -95,6 +98,12 @@ function showEmployeeForm(employeeId = null) {
         rolesContainer.innerHTML = '<p class="text-sm text-gray-500">No hay roles disponibles</p>';
         return;
       }
+      
+      // Get employee roleIds if editing
+      const roleIds = employeeSnapshot && employeeSnapshot.val() 
+        ? (employeeSnapshot.val().roleIds || (employeeSnapshot.val().roleId ? [employeeSnapshot.val().roleId] : []))
+        : [];
+      
       roles.forEach(role => {
         const label = document.createElement('label');
         label.className = 'flex items-center gap-2 cursor-pointer';
@@ -103,6 +112,8 @@ function showEmployeeForm(employeeId = null) {
         checkbox.value = role.id;
         checkbox.className = 'w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500';
         checkbox.dataset.roleId = role.id;
+        // Mark as checked if this role is in the employee's roleIds
+        checkbox.checked = roleIds.includes(role.id);
         const span = document.createElement('span');
         span.className = 'text-sm font-light';
         span.textContent = role.name;
@@ -111,12 +122,11 @@ function showEmployeeForm(employeeId = null) {
         rolesContainer.appendChild(label);
       });
     }
-  });
-
-  if (employeeId) {
-    if (title) title.textContent = 'Editar Empleado';
-    getEmployee(employeeId).then(snapshot => {
-      const employee = snapshot.val();
+    
+    // Load other employee fields if editing
+    if (employeeId && employeeSnapshot) {
+      if (title) title.textContent = 'Editar Empleado';
+      const employee = employeeSnapshot.val();
       if (employee) {
         const nameInput = document.getElementById('employee-name');
         const emailInput = document.getElementById('employee-email');
@@ -126,18 +136,11 @@ function showEmployeeForm(employeeId = null) {
         if (emailInput) emailInput.value = employee.email || '';
         if (phoneInput) phoneInput.value = employee.phone || '';
         if (salaryInput) salaryInput.value = employee.salary || '';
-        
-        // Set checked roles (support both old roleId and new roleIds)
-        const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
-        const checkboxes = document.querySelectorAll('#employee-roles-container input[type="checkbox"]');
-        checkboxes.forEach(checkbox => {
-          checkbox.checked = roleIds.includes(checkbox.value);
-        });
       }
-    });
-  } else {
-    if (title) title.textContent = 'Nuevo Empleado';
-  }
+    } else {
+      if (title) title.textContent = 'Nuevo Empleado';
+    }
+  });
 }
 
 // Hide employee form
