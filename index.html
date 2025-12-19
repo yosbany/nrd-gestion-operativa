@@ -7,8 +7,10 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1765842236416">
+  <link rel="stylesheet" href="styles.css?v=1765842242817">
   <meta name="theme-color" content="#dc2626">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   
   <!-- Force cache reload with version parameter in URL -->
@@ -68,6 +70,10 @@
           class="px-3 sm:px-4 py-1.5 sm:py-2 border border-white/30 hover:border-white text-white hover:bg-white/10 transition-colors uppercase tracking-wider text-xs font-light hidden">
           Instalar
         </button>
+        <button id="initialize-btn" 
+          class="px-3 sm:px-4 py-1.5 sm:py-2 border border-white/30 hover:border-white text-white hover:bg-white/10 transition-colors uppercase tracking-wider text-xs font-light hidden">
+          Inicializar
+        </button>
         <button id="logout-btn" 
           class="px-3 sm:px-4 py-1.5 sm:py-2 border border-white/30 hover:border-white text-white hover:bg-white/10 transition-colors uppercase tracking-wider text-xs font-light">
           Salir
@@ -82,7 +88,6 @@
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="tasks">Tareas</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="roles">Roles</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="employees">Empleados</button>
-      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="inspections">Inspecciones</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="analytics">Análisis</button>
     </nav>
 
@@ -377,61 +382,6 @@
         </div>
       </div>
 
-      <!-- Inspections View -->
-      <div id="inspections-view" class="view space-y-3 sm:space-y-4 hidden">
-        <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
-          <button id="new-inspection-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nueva Inspección</button>
-        </div>
-        <div id="inspections-list" class="space-y-2 sm:space-y-3"></div>
-        <div id="inspection-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
-          <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-lg sm:text-xl font-light tracking-tight">Detalle de la Inspección</h3>
-              <button id="back-to-inspections" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
-            </div>
-          </div>
-          <div id="inspection-detail-content"></div>
-          <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-            <button id="edit-inspection-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
-            <button id="delete-inspection-detail-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
-          </div>
-        </div>
-        <div id="inspection-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
-          <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 id="inspection-form-title" class="text-lg sm:text-xl font-light tracking-tight">Nueva Inspección</h3>
-            <button id="close-inspection-form" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
-          </div>
-          <form id="inspection-form-element">
-            <input type="hidden" id="inspection-id">
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Tarea</label>
-              <select id="inspection-task-select" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
-                <option value="">Seleccionar tarea</option>
-              </select>
-            </div>
-            <div id="inspection-task-help" class="mb-4 sm:mb-6 hidden bg-gray-50 border border-gray-200 p-3 sm:p-4 rounded">
-              <div id="inspection-task-help-content"></div>
-            </div>
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Severidad</label>
-              <select id="inspection-severity" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
-                <option value="leve">Leve</option>
-                <option value="moderada">Moderada</option>
-                <option value="critica">Crítica</option>
-              </select>
-            </div>
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Observaciones</label>
-              <textarea id="inspection-observations" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
-            </div>
-            <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
-              <button type="button" id="cancel-inspection-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
       <!-- Analytics View -->
       <div id="analytics-view" class="view space-y-3 sm:space-y-4 hidden">
         <div id="analytics-content"></div>
@@ -502,22 +452,6 @@
     </div>
   </div>
 
-  <!-- Inspection Detail Modal -->
-  <div id="inspection-detail-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] border border-gray-200 shadow-lg flex flex-col">
-      <div class="p-4 sm:p-6 border-b border-gray-200 flex items-center justify-between">
-        <h3 id="inspection-detail-modal-title" class="text-lg sm:text-xl font-light text-black">Detalle de la Inspección</h3>
-        <button id="close-inspection-detail-modal" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
-      </div>
-      <div id="inspection-detail-modal-content" class="p-4 sm:p-6 overflow-y-auto flex-1">
-        <!-- Inspection detail content will be inserted here -->
-      </div>
-      <div class="p-4 sm:p-6 border-t border-gray-200 flex justify-end">
-        <button id="close-inspection-detail-modal-btn" class="px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cerrar</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -527,19 +461,18 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1765842236416"></script>
-  <script src="modal.js?v=1765842236416"></script>
-  <script src="auth.js?v=1765842236416"></script>
-  <script src="db.js?v=1765842236416"></script>
+  <script src="firebase.js?v=1765842242817"></script>
+  <script src="modal.js?v=1765842242817"></script>
+  <script src="auth.js?v=1765842242817"></script>
+  <script src="db.js?v=1765842242817"></script>
   <script src="areas.js"></script>
   <script src="processes.js"></script>
   <script src="tasks.js"></script>
   <script src="roles.js"></script>
   <script src="employees.js"></script>
-  <script src="inspections.js"></script>
   <script src="analytics.js"></script>
   <script src="inicio.js"></script>
-  <script src="app.js?v=1765842236416"></script>
+  <script src="app.js?v=1765842242817"></script>
 
   <script>
     // Global error handler
@@ -590,7 +523,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1765842236416')
+        navigator.serviceWorker.register('service-worker.js?v=1765842242817')
           .then(reg => {
             console.log('Service Worker registered');
             

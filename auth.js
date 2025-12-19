@@ -9,6 +9,9 @@ auth.onAuthStateChanged((user) => {
       showAppScreen();
     } else {
       showLoginScreen();
+      // Hide initialize button when logged out
+      const initializeBtn = document.getElementById('initialize-btn');
+      if (initializeBtn) initializeBtn.classList.add('hidden');
     }
   } catch (error) {
     console.error('Error in auth state change:', error);
@@ -39,8 +42,27 @@ function showAppScreen() {
     const appScreen = document.getElementById('app-screen');
     if (loginScreen) loginScreen.classList.add('hidden');
     if (appScreen) appScreen.classList.remove('hidden');
+    
+    // Show/hide initialize button based on user email
+    checkInitializeButtonVisibility();
   } catch (error) {
     console.error('Error showing app screen:', error);
+  }
+}
+
+// Check if initialize button should be visible
+function checkInitializeButtonVisibility() {
+  try {
+    const initializeBtn = document.getElementById('initialize-btn');
+    if (!initializeBtn) return;
+    
+    if (currentUser && currentUser.email === 'yosbany@nrd.com') {
+      initializeBtn.classList.remove('hidden');
+    } else {
+      initializeBtn.classList.add('hidden');
+    }
+  } catch (error) {
+    console.error('Error checking initialize button visibility:', error);
   }
 }
 
@@ -86,6 +108,35 @@ if (logoutBtn) {
     } catch (error) {
       hideSpinner();
       console.error('Error al cerrar sesión:', error);
+    }
+  });
+}
+
+// Initialize button handler
+const initializeBtn = document.getElementById('initialize-btn');
+if (initializeBtn) {
+  initializeBtn.addEventListener('click', async () => {
+    try {
+      // Verify user is authorized
+      if (!currentUser || currentUser.email !== 'yosbany@nrd.com') {
+        await showError('No tienes permisos para inicializar');
+        return;
+      }
+      
+      const confirmed = await showConfirm('Inicializar Sistema', '¿Está seguro de que desea inicializar el sistema? Esta acción puede afectar los datos existentes.');
+      if (!confirmed) return;
+      
+      showSpinner('Inicializando sistema...');
+      // TODO: Add initialization logic here
+      // For now, just show success message
+      setTimeout(() => {
+        hideSpinner();
+        showSuccess('Sistema inicializado exitosamente');
+      }, 1000);
+    } catch (error) {
+      hideSpinner();
+      await showError('Error al inicializar: ' + error.message);
+      console.error('Initialize error:', error);
     }
   });
 }

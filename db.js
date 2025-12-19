@@ -135,27 +135,6 @@ function deleteTaskExecution(executionId) {
   return getTaskExecutionsRef().child(executionId).remove();
 }
 
-// Inspections
-function getInspectionsRef() {
-  return database.ref('inspections');
-}
-
-function getInspection(inspectionId) {
-  return getInspectionsRef().child(inspectionId).once('value');
-}
-
-function createInspection(inspectionData) {
-  return getInspectionsRef().push(inspectionData);
-}
-
-function updateInspection(inspectionId, inspectionData) {
-  return getInspectionsRef().child(inspectionId).update(inspectionData);
-}
-
-function deleteInspection(inspectionId) {
-  return getInspectionsRef().child(inspectionId).remove();
-}
-
 // Incidents
 function getIncidentsRef() {
   return database.ref('incidents');

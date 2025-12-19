@@ -4,7 +4,7 @@ Sistema de gestión operativa de panadería - PWA
 
 ## Descripción
 
-Sistema completo para documentar, controlar y optimizar los procesos internos de una panadería. Permite a socios/dueños y empleados gestionar áreas operativas, procesos, tareas, roles, empleados, ejecuciones, inspecciones e incidencias.
+Sistema completo para documentar, controlar y optimizar los procesos internos de una panadería. Permite a socios/dueños y empleados gestionar áreas operativas, procesos, tareas, roles, empleados, ejecuciones e incidencias.
 
 ## Características Principales
 
@@ -38,12 +38,7 @@ Sistema completo para documentar, controlar y optimizar los procesos internos de
 - Resultados: OK / OBSERVADO / ERROR
 - Observaciones y modalidad de pago
 
-### 6. Inspecciones Operativas
-- Realizar inspecciones sobre tareas
-- Registrar incidencias
-- Clasificar severidad: leve / moderada / crítica
-
-### 7. Gestión de Incidencias
+### 6. Gestión de Incidencias
 - Incidencias asociadas a tareas
 - Impacto sobre roles y empleados
 - Estados: pendiente / corregida
@@ -82,7 +77,6 @@ Sistema completo para documentar, controlar y optimizar los procesos internos de
 ├── roles.js                # Gestión de roles
 ├── employees.js            # Gestión de empleados
 ├── task-executions.js      # Registro de ejecuciones
-├── inspections.js          # Inspecciones operativas
 ├── incidents.js            # Gestión de incidencias
 ├── analytics.js            # Análisis de carga de trabajo
 ├── firebase.js             # Configuración de Firebase

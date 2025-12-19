@@ -173,83 +173,11 @@ async function calculateWorkloadByArea() {
   }
 }
 
-// Calculate incidents by employee (based on inspections with moderate/critical severity)
+// Calculate incidents by employee
 async function calculateIncidentsByEmployee() {
   try {
-    const [inspectionsSnapshot, tasksSnapshot, employeesSnapshot, rolesSnapshot] = await Promise.all([
-      getInspectionsRef().once('value'),
-      getTasksRef().once('value'),
-      getEmployeesRef().once('value'),
-      getRolesRef().once('value')
-    ]);
-
-    const inspections = inspectionsSnapshot.val() || {};
-    const tasks = tasksSnapshot.val() || {};
-    const employees = employeesSnapshot.val() || {};
-    const roles = rolesSnapshot.val() || {};
-
-    // Filter inspections with moderate or critical severity
-    const incidents = Object.entries(inspections)
-      .filter(([id, inspection]) => inspection.severity === 'moderada' || inspection.severity === 'critica')
-      .map(([id, inspection]) => ({ id, ...inspection }));
-
-    // Build incidents map by employee
-    const incidentsMap = {};
-
-    Object.entries(employees).forEach(([employeeId, employee]) => {
-      incidentsMap[employeeId] = {
-        employeeName: employee.name,
-        roleId: employee.roleId,
-        totalIncidents: 0,
-        moderate: 0,
-        critical: 0,
-        tasks: {}
-      };
-    });
-
-    // Count incidents per employee through their role
-    incidents.forEach(inspection => {
-      if (inspection.taskId && tasks[inspection.taskId]) {
-        const task = tasks[inspection.taskId];
-        if (task.roleId) {
-          Object.entries(employees).forEach(([employeeId, employee]) => {
-            if (employee.roleId === task.roleId) {
-              if (!incidentsMap[employeeId]) {
-                incidentsMap[employeeId] = {
-                  employeeName: employee.name,
-                  roleId: employee.roleId,
-                  totalIncidents: 0,
-                  moderate: 0,
-                  critical: 0,
-                  tasks: {}
-                };
-              }
-              incidentsMap[employeeId].totalIncidents++;
-              if (inspection.severity === 'moderada') {
-                incidentsMap[employeeId].moderate++;
-              } else if (inspection.severity === 'critica') {
-                incidentsMap[employeeId].critical++;
-              }
-              // Track incidents by task
-              if (!incidentsMap[employeeId].tasks[inspection.taskId]) {
-                incidentsMap[employeeId].tasks[inspection.taskId] = {
-                  taskName: task.name,
-                  count: 0
-                };
-              }
-              incidentsMap[employeeId].tasks[inspection.taskId].count++;
-            }
-          });
-        }
-      }
-    });
-
-    return Object.entries(incidentsMap)
-      .filter(([id, data]) => data.totalIncidents > 0)
-      .map(([employeeId, data]) => ({
-        employeeId,
-        ...data
-      }));
+    // Inspecciones eliminadas - retornar array vacío
+    return [];
   } catch (error) {
     console.error('Error calculating incidents by employee:', error);
     throw error;
@@ -259,47 +187,8 @@ async function calculateIncidentsByEmployee() {
 // Calculate incidents by task
 async function calculateIncidentsByTask() {
   try {
-    const [inspectionsSnapshot, tasksSnapshot] = await Promise.all([
-      getInspectionsRef().once('value'),
-      getTasksRef().once('value')
-    ]);
-
-    const inspections = inspectionsSnapshot.val() || {};
-    const tasks = tasksSnapshot.val() || {};
-
-    // Filter inspections with moderate or critical severity
-    const incidents = Object.entries(inspections)
-      .filter(([id, inspection]) => inspection.severity === 'moderada' || inspection.severity === 'critica')
-      .map(([id, inspection]) => ({ id, ...inspection }));
-
-    // Build incidents map by task
-    const incidentsMap = {};
-
-    incidents.forEach(inspection => {
-      if (inspection.taskId && tasks[inspection.taskId]) {
-        const task = tasks[inspection.taskId];
-        if (!incidentsMap[inspection.taskId]) {
-          incidentsMap[inspection.taskId] = {
-            taskId: inspection.taskId,
-            taskName: task.name,
-            totalIncidents: 0,
-            moderate: 0,
-            critical: 0
-          };
-        }
-        incidentsMap[inspection.taskId].totalIncidents++;
-        if (inspection.severity === 'moderada') {
-          incidentsMap[inspection.taskId].moderate++;
-        } else if (inspection.severity === 'critica') {
-          incidentsMap[inspection.taskId].critical++;
-        }
-      }
-    });
-
-    return Object.entries(incidentsMap).map(([taskId, data]) => ({
-      taskId,
-      ...data
-    }));
+    // Inspecciones eliminadas - retornar array vacío
+    return [];
   } catch (error) {
     console.error('Error calculating incidents by task:', error);
     throw error;
@@ -309,63 +198,8 @@ async function calculateIncidentsByTask() {
 // Calculate incidents by process
 async function calculateIncidentsByProcess() {
   try {
-    const [inspectionsSnapshot, tasksSnapshot, processesSnapshot] = await Promise.all([
-      getInspectionsRef().once('value'),
-      getTasksRef().once('value'),
-      getProcessesRef().once('value')
-    ]);
-
-    const inspections = inspectionsSnapshot.val() || {};
-    const tasks = tasksSnapshot.val() || {};
-    const processes = processesSnapshot.val() || {};
-
-    // Filter inspections with moderate or critical severity
-    const incidents = Object.entries(inspections)
-      .filter(([id, inspection]) => inspection.severity === 'moderada' || inspection.severity === 'critica')
-      .map(([id, inspection]) => ({ id, ...inspection }));
-
-    // Build incidents map by process
-    const incidentsMap = {};
-
-    Object.entries(processes).forEach(([processId, process]) => {
-      incidentsMap[processId] = {
-        processId,
-        processName: process.name,
-        totalIncidents: 0,
-        moderate: 0,
-        critical: 0,
-        tasks: {}
-      };
-    });
-
-    incidents.forEach(inspection => {
-      if (inspection.taskId && tasks[inspection.taskId]) {
-        const task = tasks[inspection.taskId];
-        if (task.processId && incidentsMap[task.processId]) {
-          incidentsMap[task.processId].totalIncidents++;
-          if (inspection.severity === 'moderada') {
-            incidentsMap[task.processId].moderate++;
-          } else if (inspection.severity === 'critica') {
-            incidentsMap[task.processId].critical++;
-          }
-          // Track incidents by task
-          if (!incidentsMap[task.processId].tasks[inspection.taskId]) {
-            incidentsMap[task.processId].tasks[inspection.taskId] = {
-              taskName: task.name,
-              count: 0
-            };
-          }
-          incidentsMap[task.processId].tasks[inspection.taskId].count++;
-        }
-      }
-    });
-
-    return Object.entries(incidentsMap)
-      .filter(([id, data]) => data.totalIncidents > 0)
-      .map(([processId, data]) => ({
-        processId,
-        ...data
-      }));
+    // Inspecciones eliminadas - retornar array vacío
+    return [];
   } catch (error) {
     console.error('Error calculating incidents by process:', error);
     throw error;
@@ -375,68 +209,8 @@ async function calculateIncidentsByProcess() {
 // Calculate incidents by area
 async function calculateIncidentsByArea() {
   try {
-    const [inspectionsSnapshot, tasksSnapshot, processesSnapshot, areasSnapshot] = await Promise.all([
-      getInspectionsRef().once('value'),
-      getTasksRef().once('value'),
-      getProcessesRef().once('value'),
-      getAreasRef().once('value')
-    ]);
-
-    const inspections = inspectionsSnapshot.val() || {};
-    const tasks = tasksSnapshot.val() || {};
-    const processes = processesSnapshot.val() || {};
-    const areas = areasSnapshot.val() || {};
-
-    // Filter inspections with moderate or critical severity
-    const incidents = Object.entries(inspections)
-      .filter(([id, inspection]) => inspection.severity === 'moderada' || inspection.severity === 'critica')
-      .map(([id, inspection]) => ({ id, ...inspection }));
-
-    // Build incidents map by area
-    const incidentsMap = {};
-
-    Object.entries(areas).forEach(([areaId, area]) => {
-      incidentsMap[areaId] = {
-        areaId,
-        areaName: area.name,
-        totalIncidents: 0,
-        moderate: 0,
-        critical: 0,
-        processes: {}
-      };
-    });
-
-    incidents.forEach(inspection => {
-      if (inspection.taskId && tasks[inspection.taskId]) {
-        const task = tasks[inspection.taskId];
-        if (task.processId && processes[task.processId]) {
-          const process = processes[task.processId];
-          if (process.areaId && incidentsMap[process.areaId]) {
-            incidentsMap[process.areaId].totalIncidents++;
-            if (inspection.severity === 'moderada') {
-              incidentsMap[process.areaId].moderate++;
-            } else if (inspection.severity === 'critica') {
-              incidentsMap[process.areaId].critical++;
-            }
-            // Track incidents by process
-            if (!incidentsMap[process.areaId].processes[task.processId]) {
-              incidentsMap[process.areaId].processes[task.processId] = {
-                processName: process.name,
-                count: 0
-              };
-            }
-            incidentsMap[process.areaId].processes[task.processId].count++;
-          }
-        }
-      }
-    });
-
-    return Object.entries(incidentsMap)
-      .filter(([id, data]) => data.totalIncidents > 0)
-      .map(([areaId, data]) => ({
-        areaId,
-        ...data
-      }));
+    // Inspecciones eliminadas - retornar array vacío
+    return [];
   } catch (error) {
     console.error('Error calculating incidents by area:', error);
     throw error;
@@ -446,63 +220,8 @@ async function calculateIncidentsByArea() {
 // Calculate incidents by role
 async function calculateIncidentsByRole() {
   try {
-    const [inspectionsSnapshot, tasksSnapshot, rolesSnapshot] = await Promise.all([
-      getInspectionsRef().once('value'),
-      getTasksRef().once('value'),
-      getRolesRef().once('value')
-    ]);
-
-    const inspections = inspectionsSnapshot.val() || {};
-    const tasks = tasksSnapshot.val() || {};
-    const roles = rolesSnapshot.val() || {};
-
-    // Filter inspections with moderate or critical severity
-    const incidents = Object.entries(inspections)
-      .filter(([id, inspection]) => inspection.severity === 'moderada' || inspection.severity === 'critica')
-      .map(([id, inspection]) => ({ id, ...inspection }));
-
-    // Build incidents map by role
-    const incidentsMap = {};
-
-    Object.entries(roles).forEach(([roleId, role]) => {
-      incidentsMap[roleId] = {
-        roleId,
-        roleName: role.name,
-        totalIncidents: 0,
-        moderate: 0,
-        critical: 0,
-        tasks: {}
-      };
-    });
-
-    incidents.forEach(inspection => {
-      if (inspection.taskId && tasks[inspection.taskId]) {
-        const task = tasks[inspection.taskId];
-        if (task.roleId && incidentsMap[task.roleId]) {
-          incidentsMap[task.roleId].totalIncidents++;
-          if (inspection.severity === 'moderada') {
-            incidentsMap[task.roleId].moderate++;
-          } else if (inspection.severity === 'critica') {
-            incidentsMap[task.roleId].critical++;
-          }
-          // Track incidents by task
-          if (!incidentsMap[task.roleId].tasks[inspection.taskId]) {
-            incidentsMap[task.roleId].tasks[inspection.taskId] = {
-              taskName: task.name,
-              count: 0
-            };
-          }
-          incidentsMap[task.roleId].tasks[inspection.taskId].count++;
-        }
-      }
-    });
-
-    return Object.entries(incidentsMap)
-      .filter(([id, data]) => data.totalIncidents > 0)
-      .map(([roleId, data]) => ({
-        roleId,
-        ...data
-      }));
+    // Inspecciones eliminadas - retornar array vacío
+    return [];
   } catch (error) {
     console.error('Error calculating incidents by role:', error);
     throw error;
