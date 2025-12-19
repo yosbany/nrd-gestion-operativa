@@ -260,10 +260,22 @@ async function loadInicio() {
     ]);
 
     const companyInfo = companyInfoSnapshot.val() || {};
+    
+    // Check all required fields
+    const hasLegalName = companyInfo.legalName && companyInfo.legalName.trim().length > 0;
+    const hasTradeName = companyInfo.tradeName && companyInfo.tradeName.trim().length > 0;
+    const hasRut = companyInfo.rut && companyInfo.rut.trim().length > 0;
+    const hasAddress = companyInfo.address && companyInfo.address.trim().length > 0;
+    const hasPhone = companyInfo.phone && companyInfo.phone.trim().length > 0;
+    const hasMobile = companyInfo.mobile && companyInfo.mobile.trim().length > 0;
+    const hasEmail = companyInfo.email && companyInfo.email.trim().length > 0;
     const hasMission = companyInfo.mission && companyInfo.mission.trim().length > 0;
     const hasVision = companyInfo.vision && companyInfo.vision.trim().length > 0;
-    const companyInfoComplete = hasMission && hasVision;
-    const companyInfoRate = companyInfoComplete ? 100 : (hasMission || hasVision ? 50 : 0);
+    
+    const totalFields = 9;
+    const completedFields = [hasLegalName, hasTradeName, hasRut, hasAddress, hasPhone, hasMobile, hasEmail, hasMission, hasVision].filter(Boolean).length;
+    const companyInfoRate = Math.round((completedFields / totalFields) * 100);
+    const companyInfoComplete = completedFields === totalFields;
 
     hideSpinner();
 
@@ -300,6 +312,48 @@ async function loadInicio() {
             </div>
             <div class="space-y-2 text-sm">
               <div class="flex justify-between">
+                <span class="text-gray-600">Razón Social:</span>
+                <span class="font-light ${hasLegalName ? 'text-green-600' : 'text-red-600'}">
+                  ${hasLegalName ? '✓ Completada' : '✗ Pendiente'}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Nombre Fantasía:</span>
+                <span class="font-light ${hasTradeName ? 'text-green-600' : 'text-red-600'}">
+                  ${hasTradeName ? '✓ Completada' : '✗ Pendiente'}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Número de Rut:</span>
+                <span class="font-light ${hasRut ? 'text-green-600' : 'text-red-600'}">
+                  ${hasRut ? '✓ Completada' : '✗ Pendiente'}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Dirección Fiscal:</span>
+                <span class="font-light ${hasAddress ? 'text-green-600' : 'text-red-600'}">
+                  ${hasAddress ? '✓ Completada' : '✗ Pendiente'}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Teléfono:</span>
+                <span class="font-light ${hasPhone ? 'text-green-600' : 'text-red-600'}">
+                  ${hasPhone ? '✓ Completada' : '✗ Pendiente'}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Celular:</span>
+                <span class="font-light ${hasMobile ? 'text-green-600' : 'text-red-600'}">
+                  ${hasMobile ? '✓ Completada' : '✗ Pendiente'}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Correo Electrónico:</span>
+                <span class="font-light ${hasEmail ? 'text-green-600' : 'text-red-600'}">
+                  ${hasEmail ? '✓ Completada' : '✗ Pendiente'}
+                </span>
+              </div>
+              <div class="flex justify-between">
                 <span class="text-gray-600">Misión:</span>
                 <span class="font-light ${hasMission ? 'text-green-600' : 'text-red-600'}">
                   ${hasMission ? '✓ Completada' : '✗ Pendiente'}
@@ -314,7 +368,7 @@ async function loadInicio() {
               <div class="flex justify-between pt-2 border-t border-gray-200">
                 <span class="font-medium">Estado general:</span>
                 <span class="font-medium ${companyInfoComplete ? 'text-green-600' : 'text-red-600'}">
-                  ${companyInfoComplete ? 'Completo' : 'Incompleto'}
+                  ${completedFields}/${totalFields} campos completados
                 </span>
               </div>
             </div>
