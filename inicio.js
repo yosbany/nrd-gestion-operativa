@@ -252,11 +252,18 @@ async function loadInicio() {
 
   showSpinner('Calculando indicadores de salud...');
   try {
-    const [docHealth, stdHealth, sysHealth] = await Promise.all([
+    const [docHealth, stdHealth, sysHealth, companyInfoSnapshot] = await Promise.all([
       calculateDocumentationHealth(),
       calculateStandardizationHealth(),
-      calculateSystematizationHealth()
+      calculateSystematizationHealth(),
+      getCompanyInfo()
     ]);
+
+    const companyInfo = companyInfoSnapshot.val() || {};
+    const hasMission = companyInfo.mission && companyInfo.mission.trim().length > 0;
+    const hasVision = companyInfo.vision && companyInfo.vision.trim().length > 0;
+    const companyInfoComplete = hasMission && hasVision;
+    const companyInfoRate = companyInfoComplete ? 100 : (hasMission || hasVision ? 50 : 0);
 
     hideSpinner();
 
@@ -278,6 +285,47 @@ async function loadInicio() {
         <div class="text-center mb-6">
           <h1 class="text-2xl sm:text-3xl font-light mb-2">Indicadores de Salud del Negocio</h1>
           <p class="text-sm sm:text-base text-gray-600">Documentación, Estandarización y Sistematización</p>
+        </div>
+
+        <!-- INFORMACIÓN DE LA EMPRESA -->
+        <div class="border-2 border-gray-300 rounded-lg p-4 sm:p-6">
+          <h2 class="text-xl sm:text-2xl font-light mb-4 text-gray-800 uppercase tracking-wider">Información de la Empresa</h2>
+          
+          <div class="mb-6">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-lg font-light">Información Básica</h3>
+              <span class="text-2xl font-light ${getHealthColor(companyInfoRate)}">
+                ${companyInfoRate}%
+              </span>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-600">Misión:</span>
+                <span class="font-light ${hasMission ? 'text-green-600' : 'text-red-600'}">
+                  ${hasMission ? '✓ Completada' : '✗ Pendiente'}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Visión:</span>
+                <span class="font-light ${hasVision ? 'text-green-600' : 'text-red-600'}">
+                  ${hasVision ? '✓ Completada' : '✗ Pendiente'}
+                </span>
+              </div>
+              <div class="flex justify-between pt-2 border-t border-gray-200">
+                <span class="font-medium">Estado general:</span>
+                <span class="font-medium ${companyInfoComplete ? 'text-green-600' : 'text-red-600'}">
+                  ${companyInfoComplete ? 'Completo' : 'Incompleto'}
+                </span>
+              </div>
+            </div>
+            ${!companyInfoComplete ? `
+            <div class="mt-4 pt-4 border-t border-gray-200">
+              <a href="#" onclick="switchView('informacion'); return false;" class="text-sm text-red-600 hover:text-red-700 underline">
+                Completar información de la empresa →
+              </a>
+            </div>
+            ` : ''}
+          </div>
         </div>
 
         <!-- DOCUMENTACIÓN -->

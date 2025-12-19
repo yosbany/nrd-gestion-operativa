@@ -135,6 +135,19 @@ function deleteTaskExecution(executionId) {
   return getTaskExecutionsRef().child(executionId).remove();
 }
 
+// Company Information
+function getCompanyInfoRef() {
+  return database.ref('companyInfo');
+}
+
+function getCompanyInfo() {
+  return getCompanyInfoRef().once('value');
+}
+
+function updateCompanyInfo(companyData) {
+  return getCompanyInfoRef().set(companyData);
+}
+
 // Incidents
 function getIncidentsRef() {
   return database.ref('incidents');

@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1766157615310">
+  <link rel="stylesheet" href="styles.css?v=1766158068597">
   <meta name="theme-color" content="#dc2626">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -83,6 +83,7 @@
 
     <nav class="bg-white border-b border-gray-200 flex overflow-x-auto sticky top-[45px] sm:top-[53px] z-10 bg-white">
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-red-600 text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="inicio">Inicio</button>
+      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="informacion">Información</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="areas">Áreas</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="processes">Procesos</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="tasks">Tareas</button>
@@ -95,6 +96,28 @@
       <!-- Inicio View -->
       <div id="inicio-view" class="view space-y-3 sm:space-y-4">
         <div id="inicio-content"></div>
+      </div>
+
+      <!-- Información View -->
+      <div id="informacion-view" class="view space-y-3 sm:space-y-4 hidden">
+        <div class="border border-gray-200 p-3 sm:p-4 md:p-6">
+          <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
+            <h3 class="text-lg sm:text-xl font-light tracking-tight">Información de la Empresa</h3>
+          </div>
+          <form id="company-info-form">
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Misión</label>
+              <textarea id="company-mission" rows="5" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base" placeholder="Describe la misión de la empresa..."></textarea>
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Visión</label>
+              <textarea id="company-vision" rows="5" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base" placeholder="Describe la visión de la empresa..."></textarea>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
+              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
+            </div>
+          </form>
+        </div>
       </div>
 
       <!-- Areas View -->
@@ -461,10 +484,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1766157615310"></script>
-  <script src="modal.js?v=1766157615310"></script>
-  <script src="auth.js?v=1766157615310"></script>
-  <script src="db.js?v=1766157615310"></script>
+  <script src="firebase.js?v=1766158068597"></script>
+  <script src="modal.js?v=1766158068597"></script>
+  <script src="auth.js?v=1766158068597"></script>
+  <script src="db.js?v=1766158068597"></script>
   <script src="areas.js"></script>
   <script src="processes.js"></script>
   <script src="tasks.js"></script>
@@ -472,7 +495,8 @@
   <script src="employees.js"></script>
   <script src="analytics.js"></script>
   <script src="inicio.js"></script>
-  <script src="app.js?v=1766157615310"></script>
+  <script src="informacion.js"></script>
+  <script src="app.js?v=1766158068597"></script>
 
   <script>
     // Global error handler
@@ -523,7 +547,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1766157615310')
+        navigator.serviceWorker.register('service-worker.js?v=1766158068597')
           .then(reg => {
             console.log('Service Worker registered');
             
