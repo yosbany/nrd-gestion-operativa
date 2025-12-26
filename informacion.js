@@ -358,7 +358,6 @@ async function generateCompanyPDF() {
 
     // Save PDF
     doc.save(filename);
-    await showSuccess('PDF generado exitosamente');
   } catch (error) {
     hideSpinner();
     await showError('Error al generar PDF: ' + error.message);
