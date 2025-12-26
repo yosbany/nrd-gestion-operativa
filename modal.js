@@ -242,11 +242,11 @@ function showReportModal() {
           <input type="date" id="report-date-input" class="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm sm:text-base rounded">
         </div>
         <div class="flex flex-col sm:flex-row gap-2">
-          <button id="report-whatsapp-btn" class="flex-1 px-4 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light rounded">
-            Enviar por WhatsApp
-          </button>
-          <button id="report-print-btn" class="flex-1 px-4 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light rounded">
+          <button id="report-print-btn" class="flex-1 px-4 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
             Imprimir
+          </button>
+          <button id="report-whatsapp-btn" class="flex-1 px-4 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+            Enviar por WhatsApp
           </button>
         </div>
       </div>

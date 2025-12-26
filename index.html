@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1766778218758">
+  <link rel="stylesheet" href="styles.css?v=1766778527153">
   <meta name="theme-color" content="#dc2626">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -146,8 +146,8 @@
               </div>
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200 mt-6">
-              <button id="edit-company-info-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar Información</button>
-              <button id="print-company-pdf-btn" class="flex-1 px-4 sm:px-6 py-2 bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Imprimir PDF</button>
+              <button id="print-company-pdf-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Imprimir PDF</button>
+              <button id="edit-company-info-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar Información</button>
             </div>
           </div>
 
@@ -190,8 +190,8 @@
               <textarea id="company-vision" rows="5" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base" placeholder="Describe la visión de la empresa..."></textarea>
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
-              <button type="button" id="cancel-edit-company-info-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="button" id="cancel-edit-company-info-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
             </div>
           </form>
         </div>
@@ -201,7 +201,7 @@
       <div id="areas-view" class="view space-y-3 sm:space-y-4 hidden">
         <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
           <button id="new-area-btn" 
-            class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+            class="w-full sm:w-auto px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
             Nueva Área
           </button>
         </div>
@@ -219,8 +219,8 @@
           </div>
           <div id="area-detail-content"></div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-            <button id="edit-area-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
-            <button id="delete-area-detail-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="delete-area-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="edit-area-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
           </div>
         </div>
         <div id="area-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
@@ -239,8 +239,8 @@
               <textarea id="area-description" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
-              <button type="button" id="cancel-area-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="button" id="cancel-area-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
             </div>
           </form>
         </div>
@@ -249,7 +249,7 @@
       <!-- Processes View -->
       <div id="processes-view" class="view space-y-3 sm:space-y-4 hidden">
         <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
-          <button id="new-process-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nuevo Proceso</button>
+          <button id="new-process-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nuevo Proceso</button>
         </div>
         <div class="mb-2 sm:mb-3">
           <input type="text" id="processes-search" placeholder="Buscar procesos..." 
@@ -265,10 +265,10 @@
           </div>
           <div id="process-detail-content"></div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-            <button id="view-process-diagram-btn" class="flex-1 px-4 sm:px-6 py-2 bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Ver Diagrama</button>
-            <button id="edit-process-flow-btn" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar Flujo</button>
-            <button id="edit-process-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
-            <button id="delete-process-detail-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="delete-process-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="view-process-diagram-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Ver Diagrama</button>
+            <button id="edit-process-flow-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar Flujo</button>
+            <button id="edit-process-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
           </div>
         </div>
         <div id="process-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
@@ -293,8 +293,8 @@
               <textarea id="process-objective" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
-              <button type="button" id="cancel-process-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="button" id="cancel-process-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
             </div>
           </form>
         </div>
@@ -303,7 +303,7 @@
       <!-- Tasks View -->
       <div id="tasks-view" class="view space-y-3 sm:space-y-4 hidden">
         <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
-          <button id="new-task-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nueva Tarea</button>
+          <button id="new-task-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nueva Tarea</button>
         </div>
         <div class="mb-2 sm:mb-3">
           <input type="text" id="tasks-search" placeholder="Buscar tareas..." 
@@ -319,8 +319,8 @@
           </div>
           <div id="task-detail-content"></div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-            <button id="edit-task-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
-            <button id="delete-task-detail-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="delete-task-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="edit-task-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
           </div>
         </div>
         <div id="task-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
@@ -389,8 +389,8 @@
               <textarea id="task-common-errors" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
-              <button type="button" id="cancel-task-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="button" id="cancel-task-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
             </div>
           </form>
         </div>
@@ -399,7 +399,7 @@
       <!-- Roles View -->
       <div id="roles-view" class="view space-y-3 sm:space-y-4 hidden">
         <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
-          <button id="new-role-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nuevo Rol</button>
+          <button id="new-role-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nuevo Rol</button>
         </div>
         <div class="mb-2 sm:mb-3">
           <input type="text" id="roles-search" placeholder="Buscar roles..." 
@@ -415,8 +415,8 @@
           </div>
           <div id="role-detail-content"></div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-            <button id="edit-role-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
-            <button id="delete-role-detail-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="delete-role-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="edit-role-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
           </div>
         </div>
         <div id="role-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
@@ -435,8 +435,8 @@
               <textarea id="role-description" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
-              <button type="button" id="cancel-role-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="button" id="cancel-role-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
             </div>
           </form>
         </div>
@@ -445,7 +445,7 @@
       <!-- Employees View -->
       <div id="employees-view" class="view space-y-3 sm:space-y-4 hidden">
         <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
-          <button id="new-employee-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nuevo Empleado</button>
+          <button id="new-employee-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nuevo Empleado</button>
         </div>
         <div class="mb-2 sm:mb-3">
           <input type="text" id="employees-search" placeholder="Buscar empleados..." 
@@ -461,8 +461,8 @@
           </div>
           <div id="employee-detail-content"></div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-            <button id="edit-employee-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
-            <button id="delete-employee-detail-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="delete-employee-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="edit-employee-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
           </div>
         </div>
         <div id="employee-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
@@ -495,8 +495,8 @@
               <input type="number" id="employee-salary" min="0" step="0.01" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base" placeholder="0.00">
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
-              <button type="button" id="cancel-employee-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="button" id="cancel-employee-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
             </div>
           </form>
         </div>
@@ -516,11 +516,11 @@
         <h3 id="modal-title" class="text-lg sm:text-xl font-light mb-3 sm:mb-4 text-black"></h3>
         <p id="modal-message" class="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6"></p>
         <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <button id="modal-confirm" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
-            Confirmar
-          </button>
-          <button id="modal-cancel" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+          <button id="modal-cancel" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
             Cancelar
+          </button>
+          <button id="modal-confirm" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+            Confirmar
           </button>
         </div>
       </div>
@@ -566,8 +566,8 @@
         <!-- Flow edit content will be inserted here -->
       </div>
       <div class="p-4 sm:p-6 border-t border-gray-200 flex gap-2 sm:gap-4">
-        <button id="save-process-flow-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar Cambios</button>
-        <button id="cancel-process-flow-edit-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+        <button id="cancel-process-flow-edit-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+        <button id="save-process-flow-btn" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar Cambios</button>
       </div>
     </div>
   </div>
@@ -581,10 +581,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1766778218758"></script>
-  <script src="modal.js?v=1766778218758"></script>
-  <script src="auth.js?v=1766778218758"></script>
-  <script src="db.js?v=1766778218758"></script>
+  <script src="firebase.js?v=1766778527153"></script>
+  <script src="modal.js?v=1766778527153"></script>
+  <script src="auth.js?v=1766778527153"></script>
+  <script src="db.js?v=1766778527153"></script>
   <script src="areas.js"></script>
   <script src="processes.js"></script>
   <script src="tasks.js"></script>
@@ -593,7 +593,7 @@
   <script src="analytics.js"></script>
   <script src="inicio.js"></script>
   <script src="informacion.js"></script>
-  <script src="app.js?v=1766778218758"></script>
+  <script src="app.js?v=1766778527153"></script>
 
   <script>
     // Global error handler
@@ -644,7 +644,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1766778218758')
+        navigator.serviceWorker.register('service-worker.js?v=1766778527153')
           .then(reg => {
             console.log('Service Worker registered');
             

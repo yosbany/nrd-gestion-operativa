@@ -320,14 +320,14 @@ async function loadInicio() {
                 ${overallCompletion}%
               </span>
             </div>
-            <div class="w-full bg-gray-200 rounded-full h-4 sm:h-5 overflow-hidden">
+            <div class="w-full bg-gray-200 h-4 sm:h-5 overflow-hidden">
               <div class="h-full ${getProgressColor(overallCompletion)} transition-all duration-500" style="width: ${overallCompletion}%"></div>
             </div>
           </div>
         </div>
 
         <!-- INFORMACIÓN DE LA EMPRESA -->
-        <div class="border-2 border-gray-300 rounded-lg p-4 sm:p-6">
+        <div class="border-2 border-gray-300 p-4 sm:p-6">
           <h2 class="text-xl sm:text-2xl font-light mb-4 text-gray-800 uppercase tracking-wider">Información de la Empresa</h2>
           
           <div class="mb-6">
@@ -410,7 +410,7 @@ async function loadInicio() {
         </div>
 
         <!-- DOCUMENTACIÓN -->
-        <div class="border-2 border-gray-300 rounded-lg p-4 sm:p-6">
+        <div class="border-2 border-gray-300 p-4 sm:p-6">
           <h2 class="text-xl sm:text-2xl font-light mb-4 text-gray-800 uppercase tracking-wider">Documentación</h2>
           
           <!-- Tareas -->
@@ -499,7 +499,7 @@ async function loadInicio() {
         </div>
 
         <!-- ESTANDARIZACIÓN -->
-        <div class="border-2 border-gray-300 rounded-lg p-4 sm:p-6">
+        <div class="border-2 border-gray-300 p-4 sm:p-6">
           <h2 class="text-xl sm:text-2xl font-light mb-4 text-gray-800 uppercase tracking-wider">Estandarización</h2>
           
           <!-- Tareas -->
@@ -584,7 +584,7 @@ async function loadInicio() {
         </div>
 
         <!-- SISTEMATIZACIÓN -->
-        <div class="border-2 border-gray-300 rounded-lg p-4 sm:p-6">
+        <div class="border-2 border-gray-300 p-4 sm:p-6">
           <h2 class="text-xl sm:text-2xl font-light mb-4 text-gray-800 uppercase tracking-wider">Sistematización</h2>
           
           <!-- Tareas -->
