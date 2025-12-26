@@ -13,6 +13,17 @@ const taskTypeLabels = {
   'exchange': 'Canje'
 };
 
+// Normalize text for search (remove accents, ñ->n, b->v, c->s)
+function normalizeSearchText(text) {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/ñ/g, 'n')
+    .replace(/b/g, 'v')
+    .replace(/c/g, 's');
+}
+
 // Filter and display tasks
 async function filterAndDisplayTasks(searchTerm = '') {
   const tasksList = document.getElementById('tasks-list');
@@ -20,15 +31,15 @@ async function filterAndDisplayTasks(searchTerm = '') {
   
   tasksList.innerHTML = '';
   
-  const term = searchTerm.toLowerCase().trim();
+  const term = normalizeSearchText(searchTerm.trim());
   const filteredTasks = Object.entries(allTasks).filter(([id, task]) => {
     if (!term) return true;
-    const name = (task.name || '').toLowerCase();
-    const description = (task.description || '').toLowerCase();
-    const processName = (taskProcessMap[task.processId] || '').toLowerCase();
-    const roleName = (taskRoleMap[task.roleId] || '').toLowerCase();
-    const frequency = (task.frequency || '').toLowerCase();
-    const typeLabel = (taskTypeLabels[task.type] || '').toLowerCase();
+    const name = normalizeSearchText(task.name || '');
+    const description = normalizeSearchText(task.description || '');
+    const processName = normalizeSearchText(taskProcessMap[task.processId] || '');
+    const roleName = normalizeSearchText(taskRoleMap[task.roleId] || '');
+    const frequency = normalizeSearchText(task.frequency || '');
+    const typeLabel = normalizeSearchText(taskTypeLabels[task.type] || '');
     return name.includes(term) || description.includes(term) || processName.includes(term) || 
            roleName.includes(term) || frequency.includes(term) || typeLabel.includes(term);
   });

@@ -3,6 +3,17 @@
 let rolesListener = null;
 let allRoles = {}; // Store all roles for filtering
 
+// Normalize text for search (remove accents, ñ->n, b->v, c->s)
+function normalizeSearchText(text) {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/ñ/g, 'n')
+    .replace(/b/g, 'v')
+    .replace(/c/g, 's');
+}
+
 // Filter and display roles
 function filterAndDisplayRoles(searchTerm = '') {
   const rolesList = document.getElementById('roles-list');
@@ -10,11 +21,11 @@ function filterAndDisplayRoles(searchTerm = '') {
   
   rolesList.innerHTML = '';
   
-  const term = searchTerm.toLowerCase().trim();
+  const term = normalizeSearchText(searchTerm.trim());
   const filteredRoles = Object.entries(allRoles).filter(([id, role]) => {
     if (!term) return true;
-    const name = (role.name || '').toLowerCase();
-    const description = (role.description || '').toLowerCase();
+    const name = normalizeSearchText(role.name || '');
+    const description = normalizeSearchText(role.description || '');
     return name.includes(term) || description.includes(term);
   });
 

@@ -4,6 +4,17 @@ let processesListener = null;
 let allProcesses = {}; // Store all processes for filtering
 let processAreaMap = {}; // Store area names for processes
 
+// Normalize text for search (remove accents, ñ->n, b->v, c->s)
+function normalizeSearchText(text) {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/ñ/g, 'n')
+    .replace(/b/g, 'v')
+    .replace(/c/g, 's');
+}
+
 // Filter and display processes
 async function filterAndDisplayProcesses(searchTerm = '') {
   const processesList = document.getElementById('processes-list');
@@ -11,12 +22,12 @@ async function filterAndDisplayProcesses(searchTerm = '') {
   
   processesList.innerHTML = '';
   
-  const term = searchTerm.toLowerCase().trim();
+  const term = normalizeSearchText(searchTerm.trim());
   const filteredProcesses = Object.entries(allProcesses).filter(([id, process]) => {
     if (!term) return true;
-    const name = (process.name || '').toLowerCase();
-    const objective = (process.objective || '').toLowerCase();
-    const areaName = (processAreaMap[process.areaId] || '').toLowerCase();
+    const name = normalizeSearchText(process.name || '');
+    const objective = normalizeSearchText(process.objective || '');
+    const areaName = normalizeSearchText(processAreaMap[process.areaId] || '');
     return name.includes(term) || objective.includes(term) || areaName.includes(term);
   });
 

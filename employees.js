@@ -3,6 +3,17 @@
 let employeesListener = null;
 let allEmployees = {}; // Store all employees for filtering
 
+// Normalize text for search (remove accents, ñ->n, b->v, c->s)
+function normalizeSearchText(text) {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/ñ/g, 'n')
+    .replace(/b/g, 'v')
+    .replace(/c/g, 's');
+}
+
 // Filter and display employees
 async function filterAndDisplayEmployees(searchTerm = '') {
   const employeesList = document.getElementById('employees-list');
@@ -10,7 +21,7 @@ async function filterAndDisplayEmployees(searchTerm = '') {
   
   employeesList.innerHTML = '';
   
-  const term = searchTerm.toLowerCase().trim();
+  const term = normalizeSearchText(searchTerm.trim());
   
   // Load roles for filtering by role names
   const rolesSnapshot = await getRolesRef().once('value');
@@ -22,13 +33,13 @@ async function filterAndDisplayEmployees(searchTerm = '') {
   
   const filteredEmployees = Object.entries(allEmployees).filter(([id, employee]) => {
     if (!term) return true;
-    const name = (employee.name || '').toLowerCase();
-    const email = (employee.email || '').toLowerCase();
-    const phone = (employee.phone || '').toLowerCase();
+    const name = normalizeSearchText(employee.name || '');
+    const email = normalizeSearchText(employee.email || '');
+    const phone = normalizeSearchText(employee.phone || '');
     
     // Check role names
     const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
-    const roleNames = roleIds.map(rid => (roleMap[rid] || '').toLowerCase()).join(' ');
+    const roleNames = normalizeSearchText(roleIds.map(rid => roleMap[rid] || '').join(' '));
     
     return name.includes(term) || email.includes(term) || phone.includes(term) || roleNames.includes(term);
   });

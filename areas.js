@@ -3,6 +3,17 @@
 let areasListener = null;
 let allAreas = {}; // Store all areas for filtering
 
+// Normalize text for search (remove accents, ñ->n, b->v, c->s)
+function normalizeSearchText(text) {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/ñ/g, 'n')
+    .replace(/b/g, 'v')
+    .replace(/c/g, 's');
+}
+
 // Filter and display areas
 function filterAndDisplayAreas(searchTerm = '') {
   const areasList = document.getElementById('areas-list');
@@ -10,11 +21,11 @@ function filterAndDisplayAreas(searchTerm = '') {
   
   areasList.innerHTML = '';
   
-  const term = searchTerm.toLowerCase().trim();
+  const term = normalizeSearchText(searchTerm.trim());
   const filteredAreas = Object.entries(allAreas).filter(([id, area]) => {
     if (!term) return true;
-    const name = (area.name || '').toLowerCase();
-    const description = (area.description || '').toLowerCase();
+    const name = normalizeSearchText(area.name || '');
+    const description = normalizeSearchText(area.description || '');
     return name.includes(term) || description.includes(term);
   });
 
