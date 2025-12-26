@@ -431,7 +431,72 @@ async function loadAnalytics() {
 
     analyticsContent.innerHTML = `
       <div class="space-y-6">
-        <!-- COSTOS SECTION -->
+        <!-- INDICADORES DE CARGA SECTION -->
+        <div class="border-t-2 border-gray-300 pt-6">
+          <h2 class="text-xl sm:text-2xl font-light mb-6 text-gray-700 uppercase tracking-wider">Indicadores de Carga</h2>
+          
+          <!-- Employee Workload -->
+          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Carga de Trabajo por Empleado</h3>
+            ${employeeWorkload.length === 0 ? '<p class="text-gray-600 text-sm">No hay datos disponibles</p>' : `
+            <div class="space-y-3">
+              ${employeeWorkload.map(workload => `
+                <div class="border border-gray-200 p-3">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(workload.employeeName)}</span>
+                    <span class="text-xs sm:text-sm text-gray-600">${workload.totalEstimatedTime} min estimados</span>
+                  </div>
+                  <div class="text-xs text-gray-600">
+                    Tareas asignadas: ${workload.totalTasks}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            `}
+          </div>
+
+          <!-- Role Workload -->
+          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Carga de Trabajo por Rol</h3>
+            ${roleWorkload.length === 0 ? '<p class="text-gray-600 text-sm">No hay datos disponibles</p>' : `
+            <div class="space-y-3">
+              ${roleWorkload.map(workload => `
+                <div class="border border-gray-200 p-3">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(workload.roleName)}</span>
+                    <span class="text-xs sm:text-sm text-gray-600">${workload.totalEstimatedTime} min estimados</span>
+                  </div>
+                  <div class="text-xs text-gray-600">
+                    Tareas: ${workload.totalTasks} | Empleados: ${workload.employeesCount}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            `}
+          </div>
+
+          <!-- Area Workload -->
+          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+            <h3 class="text-lg sm:text-xl font-light mb-4">Carga de Trabajo por Área</h3>
+            ${areaWorkload.length === 0 ? '<p class="text-gray-600 text-sm">No hay datos disponibles</p>' : `
+            <div class="space-y-3">
+              ${areaWorkload.map(workload => `
+                <div class="border border-gray-200 p-3">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-light text-sm sm:text-base">${escapeHtml(workload.areaName)}</span>
+                    <span class="text-xs sm:text-sm text-gray-600">${workload.totalEstimatedTime} min estimados</span>
+                  </div>
+                  <div class="text-xs text-gray-600">
+                    Procesos: ${workload.processesCount} | Tareas: ${workload.tasksCount}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            `}
+          </div>
+        </div>
+
+        <!-- INDICADORES DE COSTO SECTION -->
         <div class="border-t-2 border-green-600 pt-6">
           <h2 class="text-xl sm:text-2xl font-light mb-6 text-green-600 uppercase tracking-wider">Indicadores de Costo</h2>
           
@@ -493,7 +558,7 @@ async function loadAnalytics() {
           </div>
 
           <!-- Cost by Area -->
-          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
+          <div class="border border-gray-200 p-4 sm:p-6">
             <h3 class="text-lg sm:text-xl font-light mb-4">Costo por Área</h3>
             ${areaCosts.length === 0 ? '<p class="text-gray-600 text-sm">No hay costos registrados</p>' : `
             <div class="space-y-3">
@@ -520,71 +585,6 @@ async function loadAnalytics() {
                   </span>
                 </div>
               </div>
-            </div>
-            `}
-          </div>
-        </div>
-
-        <!-- CARGA DE TRABAJO SECTION -->
-        <div class="border-t-2 border-gray-300 pt-6">
-          <h2 class="text-xl sm:text-2xl font-light mb-6 text-gray-700 uppercase tracking-wider">Carga de Trabajo</h2>
-          
-          <!-- Employee Workload -->
-          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
-            <h3 class="text-lg sm:text-xl font-light mb-4">Carga de Trabajo por Empleado</h3>
-            ${employeeWorkload.length === 0 ? '<p class="text-gray-600 text-sm">No hay datos disponibles</p>' : `
-            <div class="space-y-3">
-              ${employeeWorkload.map(workload => `
-                <div class="border border-gray-200 p-3">
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="font-light text-sm sm:text-base">${escapeHtml(workload.employeeName)}</span>
-                    <span class="text-xs sm:text-sm text-gray-600">${workload.totalEstimatedTime} min estimados</span>
-                  </div>
-                  <div class="text-xs text-gray-600">
-                    Tareas asignadas: ${workload.totalTasks}
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-            `}
-          </div>
-
-          <!-- Role Workload -->
-          <div class="border border-gray-200 p-4 sm:p-6 mb-6">
-            <h3 class="text-lg sm:text-xl font-light mb-4">Carga de Trabajo por Rol</h3>
-            ${roleWorkload.length === 0 ? '<p class="text-gray-600 text-sm">No hay datos disponibles</p>' : `
-            <div class="space-y-3">
-              ${roleWorkload.map(workload => `
-                <div class="border border-gray-200 p-3">
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="font-light text-sm sm:text-base">${escapeHtml(workload.roleName)}</span>
-                    <span class="text-xs sm:text-sm text-gray-600">${workload.totalEstimatedTime} min estimados</span>
-                  </div>
-                  <div class="text-xs text-gray-600">
-                    Tareas: ${workload.totalTasks} | Empleados: ${workload.employeesCount}
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-            `}
-          </div>
-
-          <!-- Area Workload -->
-          <div class="border border-gray-200 p-4 sm:p-6">
-            <h3 class="text-lg sm:text-xl font-light mb-4">Carga de Trabajo por Área</h3>
-            ${areaWorkload.length === 0 ? '<p class="text-gray-600 text-sm">No hay datos disponibles</p>' : `
-            <div class="space-y-3">
-              ${areaWorkload.map(workload => `
-                <div class="border border-gray-200 p-3">
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="font-light text-sm sm:text-base">${escapeHtml(workload.areaName)}</span>
-                    <span class="text-xs sm:text-sm text-gray-600">${workload.totalEstimatedTime} min estimados</span>
-                  </div>
-                  <div class="text-xs text-gray-600">
-                    Procesos: ${workload.processesCount} | Tareas: ${workload.tasksCount}
-                  </div>
-                </div>
-              `).join('')}
             </div>
             `}
           </div>
