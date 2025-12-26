@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1766789564131">
+  <link rel="stylesheet" href="styles.css?v=1766791875553">
   <meta name="theme-color" content="#dc2626">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -385,7 +385,7 @@
               <textarea id="task-execution-steps" rows="5" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
             </div>
             <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Criterios de Ejecución Correcta</label>
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Criterios de Ejecución Correcta (uno por línea)</label>
               <textarea id="task-success-criteria" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
             </div>
             <div class="mb-4 sm:mb-6">
@@ -585,10 +585,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1766789564131"></script>
-  <script src="modal.js?v=1766789564131"></script>
-  <script src="auth.js?v=1766789564131"></script>
-  <script src="db.js?v=1766789564131"></script>
+  <script src="firebase.js?v=1766791875553"></script>
+  <script src="modal.js?v=1766791875553"></script>
+  <script src="auth.js?v=1766791875553"></script>
+  <script src="db.js?v=1766791875553"></script>
   <script src="areas.js"></script>
   <script src="processes.js"></script>
   <script src="tasks.js"></script>
@@ -597,7 +597,7 @@
   <script src="analytics.js"></script>
   <script src="inicio.js"></script>
   <script src="informacion.js"></script>
-  <script src="app.js?v=1766789564131"></script>
+  <script src="app.js?v=1766791875553"></script>
 
   <script>
     // Global error handler
@@ -648,7 +648,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1766789564131')
+        navigator.serviceWorker.register('service-worker.js?v=1766791875553')
           .then(reg => {
             console.log('Service Worker registered');
             
