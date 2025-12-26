@@ -310,7 +310,7 @@ async function loadInicio() {
     inicioContent.innerHTML = `
       <div class="space-y-6">
         <div class="text-center mb-6">
-          <h1 class="text-2xl sm:text-3xl font-light mb-2">Indicadores de Salud del Negocio</h1>
+          <h1 class="text-2xl sm:text-3xl font-light mb-2">Indicadores de Salud</h1>
           <p class="text-sm sm:text-base text-gray-600 mb-4">Documentación, Estandarización y Sistematización</p>
           
           <!-- Overall Progress Bar -->
