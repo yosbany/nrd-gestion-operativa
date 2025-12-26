@@ -1,6 +1,49 @@
 // Process management
 
 let processesListener = null;
+let allProcesses = {}; // Store all processes for filtering
+let processAreaMap = {}; // Store area names for processes
+
+// Filter and display processes
+async function filterAndDisplayProcesses(searchTerm = '') {
+  const processesList = document.getElementById('processes-list');
+  if (!processesList) return;
+  
+  processesList.innerHTML = '';
+  
+  const term = searchTerm.toLowerCase().trim();
+  const filteredProcesses = Object.entries(allProcesses).filter(([id, process]) => {
+    if (!term) return true;
+    const name = (process.name || '').toLowerCase();
+    const objective = (process.objective || '').toLowerCase();
+    const areaName = (processAreaMap[process.areaId] || '').toLowerCase();
+    return name.includes(term) || objective.includes(term) || areaName.includes(term);
+  });
+
+  if (filteredProcesses.length === 0) {
+    processesList.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No se encontraron procesos</p>';
+    return;
+  }
+
+  filteredProcesses.forEach(([id, process]) => {
+    const item = document.createElement('div');
+    item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
+    item.dataset.processId = id;
+    const areaName = process.areaId ? (processAreaMap[process.areaId] || 'Área desconocida') : 'Sin área';
+    
+    item.innerHTML = `
+      <div class="flex justify-between items-center mb-2 sm:mb-3">
+        <div class="text-base sm:text-lg font-light">${escapeHtml(process.name)}</div>
+      </div>
+      <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
+        <div>Área: ${escapeHtml(areaName)}</div>
+        ${process.objective ? `<div>Objetivo: ${escapeHtml(process.objective)}</div>` : ''}
+      </div>
+    `;
+    item.addEventListener('click', () => viewProcess(id));
+    processesList.appendChild(item);
+  });
+}
 
 // Load processes
 function loadProcesses() {
@@ -18,41 +61,29 @@ function loadProcesses() {
   // Listen for processes
   processesListener = getProcessesRef().on('value', async (snapshot) => {
     if (!processesList) return;
-    processesList.innerHTML = '';
-    const processes = snapshot.val() || {};
-
-    if (Object.keys(processes).length === 0) {
-      processesList.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No hay procesos registrados</p>';
-      return;
-    }
+    allProcesses = snapshot.val() || {};
 
     // Load areas for display
     const areasSnapshot = await getAreasRef().once('value');
     const areas = areasSnapshot.val() || {};
-    const areaMap = {};
+    processAreaMap = {};
     Object.entries(areas).forEach(([id, area]) => {
-      areaMap[id] = area.name;
+      processAreaMap[id] = area.name;
     });
-
-    Object.entries(processes).forEach(([id, process]) => {
-      const item = document.createElement('div');
-      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
-      item.dataset.processId = id;
-      const areaName = process.areaId ? (areaMap[process.areaId] || 'Área desconocida') : 'Sin área';
-      
-      item.innerHTML = `
-        <div class="flex justify-between items-center mb-2 sm:mb-3">
-          <div class="text-base sm:text-lg font-light">${escapeHtml(process.name)}</div>
-        </div>
-        <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
-          <div>Área: ${escapeHtml(areaName)}</div>
-          ${process.objective ? `<div>Objetivo: ${escapeHtml(process.objective)}</div>` : ''}
-        </div>
-      `;
-      item.addEventListener('click', () => viewProcess(id));
-      processesList.appendChild(item);
-    });
+    
+    // Get search term and filter
+    const searchInput = document.getElementById('processes-search');
+    const searchTerm = searchInput ? searchInput.value : '';
+    await filterAndDisplayProcesses(searchTerm);
   });
+  
+  // Add search input listener
+  const searchInput = document.getElementById('processes-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', async (e) => {
+      await filterAndDisplayProcesses(e.target.value);
+    });
+  }
 }
 
 // Show process form

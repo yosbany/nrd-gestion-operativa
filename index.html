@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1766161632135">
+  <link rel="stylesheet" href="styles.css?v=1766164876896">
   <meta name="theme-color" content="#dc2626">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -205,6 +205,10 @@
             Nueva Área
           </button>
         </div>
+        <div class="mb-2 sm:mb-3">
+          <input type="text" id="areas-search" placeholder="Buscar áreas..." 
+            class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+        </div>
         <div id="areas-list" class="space-y-2 sm:space-y-3"></div>
         <div id="area-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
           <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
@@ -246,6 +250,10 @@
       <div id="processes-view" class="view space-y-3 sm:space-y-4 hidden">
         <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
           <button id="new-process-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nuevo Proceso</button>
+        </div>
+        <div class="mb-2 sm:mb-3">
+          <input type="text" id="processes-search" placeholder="Buscar procesos..." 
+            class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
         </div>
         <div id="processes-list" class="space-y-2 sm:space-y-3"></div>
         <div id="process-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
@@ -296,6 +304,10 @@
       <div id="tasks-view" class="view space-y-3 sm:space-y-4 hidden">
         <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
           <button id="new-task-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nueva Tarea</button>
+        </div>
+        <div class="mb-2 sm:mb-3">
+          <input type="text" id="tasks-search" placeholder="Buscar tareas..." 
+            class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
         </div>
         <div id="tasks-list" class="space-y-2 sm:space-y-3"></div>
         <div id="task-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
@@ -389,6 +401,10 @@
         <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
           <button id="new-role-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nuevo Rol</button>
         </div>
+        <div class="mb-2 sm:mb-3">
+          <input type="text" id="roles-search" placeholder="Buscar roles..." 
+            class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+        </div>
         <div id="roles-list" class="space-y-2 sm:space-y-3"></div>
         <div id="role-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
           <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
@@ -430,6 +446,10 @@
       <div id="employees-view" class="view space-y-3 sm:space-y-4 hidden">
         <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
           <button id="new-employee-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nuevo Empleado</button>
+        </div>
+        <div class="mb-2 sm:mb-3">
+          <input type="text" id="employees-search" placeholder="Buscar empleados..." 
+            class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
         </div>
         <div id="employees-list" class="space-y-2 sm:space-y-3"></div>
         <div id="employee-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
@@ -561,10 +581,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1766161632135"></script>
-  <script src="modal.js?v=1766161632135"></script>
-  <script src="auth.js?v=1766161632135"></script>
-  <script src="db.js?v=1766161632135"></script>
+  <script src="firebase.js?v=1766164876896"></script>
+  <script src="modal.js?v=1766164876896"></script>
+  <script src="auth.js?v=1766164876896"></script>
+  <script src="db.js?v=1766164876896"></script>
   <script src="areas.js"></script>
   <script src="processes.js"></script>
   <script src="tasks.js"></script>
@@ -573,7 +593,7 @@
   <script src="analytics.js"></script>
   <script src="inicio.js"></script>
   <script src="informacion.js"></script>
-  <script src="app.js?v=1766161632135"></script>
+  <script src="app.js?v=1766164876896"></script>
 
   <script>
     // Global error handler
@@ -624,7 +644,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1766161632135')
+        navigator.serviceWorker.register('service-worker.js?v=1766164876896')
           .then(reg => {
             console.log('Service Worker registered');
             

@@ -1,6 +1,40 @@
 // Area management
 
 let areasListener = null;
+let allAreas = {}; // Store all areas for filtering
+
+// Filter and display areas
+function filterAndDisplayAreas(searchTerm = '') {
+  const areasList = document.getElementById('areas-list');
+  if (!areasList) return;
+  
+  areasList.innerHTML = '';
+  
+  const term = searchTerm.toLowerCase().trim();
+  const filteredAreas = Object.entries(allAreas).filter(([id, area]) => {
+    if (!term) return true;
+    const name = (area.name || '').toLowerCase();
+    const description = (area.description || '').toLowerCase();
+    return name.includes(term) || description.includes(term);
+  });
+
+  if (filteredAreas.length === 0) {
+    areasList.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No se encontraron áreas</p>';
+    return;
+  }
+
+  filteredAreas.forEach(([id, area]) => {
+    const item = document.createElement('div');
+    item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
+    item.dataset.areaId = id;
+    item.innerHTML = `
+      <div class="text-base sm:text-lg font-light mb-2 sm:mb-3">${escapeHtml(area.name)}</div>
+      ${area.description ? `<div class="text-xs sm:text-sm text-gray-600">${escapeHtml(area.description)}</div>` : ''}
+    `;
+    item.addEventListener('click', () => viewArea(id));
+    areasList.appendChild(item);
+  });
+}
 
 // Load areas
 function loadAreas() {
@@ -18,26 +52,21 @@ function loadAreas() {
   // Listen for areas
   areasListener = getAreasRef().on('value', (snapshot) => {
     if (!areasList) return;
-    areasList.innerHTML = '';
-    const areas = snapshot.val() || {};
-
-    if (Object.keys(areas).length === 0) {
-      areasList.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No hay áreas registradas</p>';
-      return;
-    }
-
-    Object.entries(areas).forEach(([id, area]) => {
-      const item = document.createElement('div');
-      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
-      item.dataset.areaId = id;
-      item.innerHTML = `
-        <div class="text-base sm:text-lg font-light mb-2 sm:mb-3">${escapeHtml(area.name)}</div>
-        ${area.description ? `<div class="text-xs sm:text-sm text-gray-600">${escapeHtml(area.description)}</div>` : ''}
-      `;
-      item.addEventListener('click', () => viewArea(id));
-      areasList.appendChild(item);
-    });
+    allAreas = snapshot.val() || {};
+    
+    // Get search term and filter
+    const searchInput = document.getElementById('areas-search');
+    const searchTerm = searchInput ? searchInput.value : '';
+    filterAndDisplayAreas(searchTerm);
   });
+  
+  // Add search input listener
+  const searchInput = document.getElementById('areas-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      filterAndDisplayAreas(e.target.value);
+    });
+  }
 }
 
 // Show area form

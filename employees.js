@@ -1,6 +1,72 @@
 // Employee management
 
 let employeesListener = null;
+let allEmployees = {}; // Store all employees for filtering
+
+// Filter and display employees
+async function filterAndDisplayEmployees(searchTerm = '') {
+  const employeesList = document.getElementById('employees-list');
+  if (!employeesList) return;
+  
+  employeesList.innerHTML = '';
+  
+  const term = searchTerm.toLowerCase().trim();
+  
+  // Load roles for filtering by role names
+  const rolesSnapshot = await getRolesRef().once('value');
+  const roles = rolesSnapshot.val() || {};
+  const roleMap = {};
+  Object.entries(roles).forEach(([id, role]) => {
+    roleMap[id] = role.name;
+  });
+  
+  const filteredEmployees = Object.entries(allEmployees).filter(([id, employee]) => {
+    if (!term) return true;
+    const name = (employee.name || '').toLowerCase();
+    const email = (employee.email || '').toLowerCase();
+    const phone = (employee.phone || '').toLowerCase();
+    
+    // Check role names
+    const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+    const roleNames = roleIds.map(rid => (roleMap[rid] || '').toLowerCase()).join(' ');
+    
+    return name.includes(term) || email.includes(term) || phone.includes(term) || roleNames.includes(term);
+  });
+
+  if (filteredEmployees.length === 0) {
+    employeesList.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No se encontraron empleados</p>';
+    return;
+  }
+
+  filteredEmployees.forEach(([id, employee]) => {
+    const item = document.createElement('div');
+    item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
+    item.dataset.employeeId = id;
+    
+    // Get role names (support both old roleId and new roleIds)
+    const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+    let roleNamesText = 'Sin roles';
+    
+    if (roleIds.length > 0) {
+      const roleNames = roleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
+      roleNamesText = roleNames.length > 0 ? roleNames.join(', ') : 'Sin roles';
+    }
+    
+    item.innerHTML = `
+      <div class="flex justify-between items-center mb-2 sm:mb-3">
+        <div class="text-base sm:text-lg font-light">${escapeHtml(employee.name)}</div>
+        ${employee.salary ? `<span class="text-xs sm:text-sm text-gray-600">$${parseFloat(employee.salary).toFixed(2)}</span>` : ''}
+      </div>
+      <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
+        <div>Roles: <span class="role-names">${escapeHtml(roleNamesText)}</span></div>
+        ${employee.email ? `<div>Email: ${escapeHtml(employee.email)}</div>` : ''}
+        ${employee.phone ? `<div>Teléfono: ${escapeHtml(employee.phone)}</div>` : ''}
+      </div>
+    `;
+    item.addEventListener('click', () => viewEmployee(id));
+    employeesList.appendChild(item);
+  });
+}
 
 // Load employees
 function loadEmployees() {
@@ -16,54 +82,23 @@ function loadEmployees() {
   }
 
   // Listen for employees
-  employeesListener = getEmployeesRef().on('value', (snapshot) => {
+  employeesListener = getEmployeesRef().on('value', async (snapshot) => {
     if (!employeesList) return;
-    employeesList.innerHTML = '';
-    const employees = snapshot.val() || {};
-
-    if (Object.keys(employees).length === 0) {
-      employeesList.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No hay empleados registrados</p>';
-      return;
-    }
-
-    Object.entries(employees).forEach(([id, employee]) => {
-      const item = document.createElement('div');
-      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
-      item.dataset.employeeId = id;
-      
-      // Get role names (support both old roleId and new roleIds)
-      const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
-      let roleNamesText = 'Sin roles';
-      
-      if (roleIds.length > 0) {
-        Promise.all(roleIds.map(roleId => getRole(roleId).then(snapshot => {
-          const role = snapshot.val();
-          return role ? role.name : null;
-        }))).then(names => {
-          const validNames = names.filter(n => n !== null);
-          const roleSpan = item.querySelector('.role-names');
-          if (roleSpan) {
-            roleSpan.textContent = validNames.length > 0 ? validNames.join(', ') : 'Sin roles';
-          }
-        });
-        roleNamesText = 'Cargando...';
-      }
-      
-      item.innerHTML = `
-        <div class="flex justify-between items-center mb-2 sm:mb-3">
-          <div class="text-base sm:text-lg font-light">${escapeHtml(employee.name)}</div>
-          ${employee.salary ? `<span class="text-xs sm:text-sm text-gray-600">$${parseFloat(employee.salary).toFixed(2)}</span>` : ''}
-        </div>
-        <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
-          <div>Roles: <span class="role-names">${roleNamesText}</span></div>
-          ${employee.email ? `<div>Email: ${escapeHtml(employee.email)}</div>` : ''}
-          ${employee.phone ? `<div>Teléfono: ${escapeHtml(employee.phone)}</div>` : ''}
-        </div>
-      `;
-      item.addEventListener('click', () => viewEmployee(id));
-      employeesList.appendChild(item);
-    });
+    allEmployees = snapshot.val() || {};
+    
+    // Get search term and filter
+    const searchInput = document.getElementById('employees-search');
+    const searchTerm = searchInput ? searchInput.value : '';
+    await filterAndDisplayEmployees(searchTerm);
   });
+  
+  // Add search input listener
+  const searchInput = document.getElementById('employees-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', async (e) => {
+      await filterAndDisplayEmployees(e.target.value);
+    });
+  }
 }
 
 // Show employee form

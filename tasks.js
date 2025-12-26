@@ -1,6 +1,69 @@
 // Task management
 
 let tasksListener = null;
+let allTasks = {}; // Store all tasks for filtering
+let taskProcessMap = {}; // Store process names for tasks
+let taskRoleMap = {}; // Store role names for tasks
+
+const taskTypeLabels = {
+  'with_role': 'Con rol',
+  'without_role': 'Sin rol',
+  'voluntary': 'Voluntaria',
+  'unpaid': 'No remunerada',
+  'exchange': 'Canje'
+};
+
+// Filter and display tasks
+async function filterAndDisplayTasks(searchTerm = '') {
+  const tasksList = document.getElementById('tasks-list');
+  if (!tasksList) return;
+  
+  tasksList.innerHTML = '';
+  
+  const term = searchTerm.toLowerCase().trim();
+  const filteredTasks = Object.entries(allTasks).filter(([id, task]) => {
+    if (!term) return true;
+    const name = (task.name || '').toLowerCase();
+    const description = (task.description || '').toLowerCase();
+    const processName = (taskProcessMap[task.processId] || '').toLowerCase();
+    const roleName = (taskRoleMap[task.roleId] || '').toLowerCase();
+    const frequency = (task.frequency || '').toLowerCase();
+    const typeLabel = (taskTypeLabels[task.type] || '').toLowerCase();
+    return name.includes(term) || description.includes(term) || processName.includes(term) || 
+           roleName.includes(term) || frequency.includes(term) || typeLabel.includes(term);
+  });
+
+  if (filteredTasks.length === 0) {
+    tasksList.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No se encontraron tareas</p>';
+    return;
+  }
+
+  filteredTasks.forEach(([id, task]) => {
+    const item = document.createElement('div');
+    item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
+    item.dataset.taskId = id;
+    const processName = task.processId ? (taskProcessMap[task.processId] || 'Proceso desconocido') : 'Sin proceso';
+    const roleName = task.roleId ? (taskRoleMap[task.roleId] || 'Rol desconocido') : 'Sin rol';
+    
+    item.innerHTML = `
+      <div class="flex justify-between items-center mb-2 sm:mb-3">
+        <div class="text-base sm:text-lg font-light">${escapeHtml(task.name)}</div>
+        <div class="flex items-center gap-2">
+          ${task.cost ? `<span class="text-xs sm:text-sm text-gray-600">$${parseFloat(task.cost).toFixed(2)}</span>` : ''}
+          <span class="text-xs px-2 py-0.5 bg-gray-100 rounded">${taskTypeLabels[task.type] || task.type || 'Sin tipo'}</span>
+        </div>
+      </div>
+      <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
+        <div>Proceso: ${escapeHtml(processName)}</div>
+        ${task.roleId ? `<div>Rol: ${escapeHtml(roleName)}</div>` : ''}
+        ${task.estimatedTime ? `<div>Tiempo estimado: ${task.estimatedTime} min</div>` : ''}
+        ${task.frequency ? `<div>Frecuencia: ${escapeHtml(task.frequency)}</div>` : ''}
+      </div>
+    `;
+    item.addEventListener('click', () => viewTask(id));
+    tasksList.appendChild(item);
+  });
+}
 
 // Load tasks
 function loadTasks() {
@@ -18,63 +81,36 @@ function loadTasks() {
   // Listen for tasks
   tasksListener = getTasksRef().on('value', async (snapshot) => {
     if (!tasksList) return;
-    tasksList.innerHTML = '';
-    const tasks = snapshot.val() || {};
-
-    if (Object.keys(tasks).length === 0) {
-      tasksList.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No hay tareas registradas</p>';
-      return;
-    }
+    allTasks = snapshot.val() || {};
 
     // Load processes and roles for display
     const processesSnapshot = await getProcessesRef().once('value');
     const processes = processesSnapshot.val() || {};
-    const processMap = {};
+    taskProcessMap = {};
     Object.entries(processes).forEach(([id, process]) => {
-      processMap[id] = process.name;
+      taskProcessMap[id] = process.name;
     });
 
     const rolesSnapshot = await getRolesRef().once('value');
     const roles = rolesSnapshot.val() || {};
-    const roleMap = {};
+    taskRoleMap = {};
     Object.entries(roles).forEach(([id, role]) => {
-      roleMap[id] = role.name;
+      taskRoleMap[id] = role.name;
     });
-
-    Object.entries(tasks).forEach(([id, task]) => {
-      const item = document.createElement('div');
-      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
-      item.dataset.taskId = id;
-      const processName = task.processId ? (processMap[task.processId] || 'Proceso desconocido') : 'Sin proceso';
-      const roleName = task.roleId ? (roleMap[task.roleId] || 'Rol desconocido') : 'Sin rol';
-      
-      const taskTypeLabels = {
-        'with_role': 'Con rol',
-        'without_role': 'Sin rol',
-        'voluntary': 'Voluntaria',
-        'unpaid': 'No remunerada',
-        'exchange': 'Canje'
-      };
-      
-      item.innerHTML = `
-        <div class="flex justify-between items-center mb-2 sm:mb-3">
-          <div class="text-base sm:text-lg font-light">${escapeHtml(task.name)}</div>
-          <div class="flex items-center gap-2">
-            ${task.cost ? `<span class="text-xs sm:text-sm text-gray-600">$${parseFloat(task.cost).toFixed(2)}</span>` : ''}
-            <span class="text-xs px-2 py-0.5 bg-gray-100 rounded">${taskTypeLabels[task.type] || task.type || 'Sin tipo'}</span>
-          </div>
-        </div>
-        <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
-          <div>Proceso: ${escapeHtml(processName)}</div>
-          ${task.roleId ? `<div>Rol: ${escapeHtml(roleName)}</div>` : ''}
-          ${task.estimatedTime ? `<div>Tiempo estimado: ${task.estimatedTime} min</div>` : ''}
-          ${task.frequency ? `<div>Frecuencia: ${escapeHtml(task.frequency)}</div>` : ''}
-        </div>
-      `;
-      item.addEventListener('click', () => viewTask(id));
-      tasksList.appendChild(item);
-    });
+    
+    // Get search term and filter
+    const searchInput = document.getElementById('tasks-search');
+    const searchTerm = searchInput ? searchInput.value : '';
+    await filterAndDisplayTasks(searchTerm);
   });
+  
+  // Add search input listener
+  const searchInput = document.getElementById('tasks-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', async (e) => {
+      await filterAndDisplayTasks(e.target.value);
+    });
+  }
 }
 
 // Show task form

@@ -1,6 +1,40 @@
 // Role management
 
 let rolesListener = null;
+let allRoles = {}; // Store all roles for filtering
+
+// Filter and display roles
+function filterAndDisplayRoles(searchTerm = '') {
+  const rolesList = document.getElementById('roles-list');
+  if (!rolesList) return;
+  
+  rolesList.innerHTML = '';
+  
+  const term = searchTerm.toLowerCase().trim();
+  const filteredRoles = Object.entries(allRoles).filter(([id, role]) => {
+    if (!term) return true;
+    const name = (role.name || '').toLowerCase();
+    const description = (role.description || '').toLowerCase();
+    return name.includes(term) || description.includes(term);
+  });
+
+  if (filteredRoles.length === 0) {
+    rolesList.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No se encontraron roles</p>';
+    return;
+  }
+
+  filteredRoles.forEach(([id, role]) => {
+    const item = document.createElement('div');
+    item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
+    item.dataset.roleId = id;
+    item.innerHTML = `
+      <div class="text-base sm:text-lg font-light mb-2 sm:mb-3">${escapeHtml(role.name)}</div>
+      ${role.description ? `<div class="text-xs sm:text-sm text-gray-600">${escapeHtml(role.description)}</div>` : ''}
+    `;
+    item.addEventListener('click', () => viewRole(id));
+    rolesList.appendChild(item);
+  });
+}
 
 // Load roles
 function loadRoles() {
@@ -18,26 +52,21 @@ function loadRoles() {
   // Listen for roles
   rolesListener = getRolesRef().on('value', (snapshot) => {
     if (!rolesList) return;
-    rolesList.innerHTML = '';
-    const roles = snapshot.val() || {};
-
-    if (Object.keys(roles).length === 0) {
-      rolesList.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No hay roles registrados</p>';
-      return;
-    }
-
-    Object.entries(roles).forEach(([id, role]) => {
-      const item = document.createElement('div');
-      item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
-      item.dataset.roleId = id;
-      item.innerHTML = `
-        <div class="text-base sm:text-lg font-light mb-2 sm:mb-3">${escapeHtml(role.name)}</div>
-        ${role.description ? `<div class="text-xs sm:text-sm text-gray-600">${escapeHtml(role.description)}</div>` : ''}
-      `;
-      item.addEventListener('click', () => viewRole(id));
-      rolesList.appendChild(item);
-    });
+    allRoles = snapshot.val() || {};
+    
+    // Get search term and filter
+    const searchInput = document.getElementById('roles-search');
+    const searchTerm = searchInput ? searchInput.value : '';
+    filterAndDisplayRoles(searchTerm);
   });
+  
+  // Add search input listener
+  const searchInput = document.getElementById('roles-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      filterAndDisplayRoles(e.target.value);
+    });
+  }
 }
 
 // Show role form
