@@ -33,9 +33,12 @@ async function filterAndDisplayTasks(searchTerm = '', selectedRoleId = '') {
   
   const term = normalizeSearchText(searchTerm.trim());
   const filteredTasks = Object.entries(allTasks).filter(([id, task]) => {
-    // Filter by role first
-    if (selectedRoleId && task.roleId !== selectedRoleId) {
-      return false;
+    // Filter by role first (support both old roleId and new roleIds)
+    if (selectedRoleId) {
+      const roleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+      if (!roleIds.includes(selectedRoleId)) {
+        return false;
+      }
     }
     
     // Filter by search term
@@ -44,11 +47,15 @@ async function filterAndDisplayTasks(searchTerm = '', selectedRoleId = '') {
     const name = normalizeSearchText(task.name || '');
     const description = normalizeSearchText(task.description || '');
     const processName = normalizeSearchText(taskProcessMap[task.processId] || '');
-    const roleName = normalizeSearchText(taskRoleMap[task.roleId] || '');
+    
+    // Get all role names for search
+    const roleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+    const roleNames = roleIds.map(rid => normalizeSearchText(taskRoleMap[rid] || '')).join(' ');
+    
     const frequency = normalizeSearchText(task.frequency || '');
     const typeLabel = normalizeSearchText(taskTypeLabels[task.type] || '');
     return name.includes(term) || description.includes(term) || processName.includes(term) || 
-           roleName.includes(term) || frequency.includes(term) || typeLabel.includes(term);
+           roleNames.includes(term) || frequency.includes(term) || typeLabel.includes(term);
   });
 
   if (filteredTasks.length === 0) {
@@ -61,7 +68,11 @@ async function filterAndDisplayTasks(searchTerm = '', selectedRoleId = '') {
     item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
     item.dataset.taskId = id;
     const processName = task.processId ? (taskProcessMap[task.processId] || 'Proceso desconocido') : 'Sin proceso';
-    const roleName = task.roleId ? (taskRoleMap[task.roleId] || 'Rol desconocido') : 'Sin rol';
+    
+    // Get role names (support both old roleId and new roleIds)
+    const roleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+    const roleNames = roleIds.map(rid => taskRoleMap[rid]).filter(n => n !== undefined);
+    const roleName = roleNames.length > 0 ? roleNames.join(', ') : 'Sin rol';
     
     item.innerHTML = `
       <div class="flex justify-between items-center mb-2 sm:mb-3">
@@ -73,7 +84,7 @@ async function filterAndDisplayTasks(searchTerm = '', selectedRoleId = '') {
       </div>
       <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
         <div>Proceso: ${escapeHtml(processName)}</div>
-        ${task.roleId ? `<div>Rol: ${escapeHtml(roleName)}</div>` : ''}
+        ${roleNames.length > 0 ? `<div>Roles: ${escapeHtml(roleName)}</div>` : ''}
         ${task.estimatedTime ? `<div>Tiempo estimado: ${task.estimatedTime} min</div>` : ''}
         ${task.frequency ? `<div>Frecuencia: ${escapeHtml(task.frequency)}</div>` : ''}
       </div>
@@ -180,8 +191,9 @@ function showTaskForm(taskId = null) {
   // Load processes and roles for selects
   Promise.all([
     getProcessesRef().once('value'),
-    getRolesRef().once('value')
-  ]).then(([processesSnapshot, rolesSnapshot]) => {
+    getRolesRef().once('value'),
+    taskId ? getTask(taskId) : Promise.resolve(null)
+  ]).then(([processesSnapshot, rolesSnapshot, taskSnapshot]) => {
     const processes = processesSnapshot.val() || {};
     const roles = rolesSnapshot.val() || {};
     
@@ -197,16 +209,36 @@ function showTaskForm(taskId = null) {
       });
     }
     
-    // Role select
-    const roleSelect = document.getElementById('task-role-select');
-    if (roleSelect) {
-      roleSelect.innerHTML = '<option value="">Sin rol</option>';
-      Object.entries(roles).forEach(([id, role]) => {
-        const option = document.createElement('option');
-        option.value = id;
-        option.textContent = role.name;
-        roleSelect.appendChild(option);
-      });
+    // Roles checkboxes
+    const rolesContainer = document.getElementById('task-roles-container');
+    if (rolesContainer) {
+      rolesContainer.innerHTML = '';
+      if (Object.keys(roles).length === 0) {
+        rolesContainer.innerHTML = '<p class="text-sm text-gray-500">No hay roles disponibles</p>';
+      } else {
+        // Get task roleIds if editing
+        const roleIds = taskSnapshot && taskSnapshot.val() 
+          ? (taskSnapshot.val().roleIds || (taskSnapshot.val().roleId ? [taskSnapshot.val().roleId] : []))
+          : [];
+        
+        Object.entries(roles).forEach(([roleId, role]) => {
+          const label = document.createElement('label');
+          label.className = 'flex items-center gap-2 cursor-pointer';
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.value = roleId;
+          checkbox.className = 'w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500';
+          checkbox.dataset.roleId = roleId;
+          // Mark as checked if this role is in the task's roleIds
+          checkbox.checked = roleIds.includes(roleId);
+          const span = document.createElement('span');
+          span.className = 'text-sm font-light';
+          span.textContent = role.name;
+          label.appendChild(checkbox);
+          label.appendChild(span);
+          rolesContainer.appendChild(label);
+        });
+      }
     }
   });
 
@@ -219,7 +251,6 @@ function showTaskForm(taskId = null) {
         document.getElementById('task-description').value = task.description || '';
         document.getElementById('task-type').value = task.type || 'with_role';
         document.getElementById('task-process-select').value = task.processId || '';
-        document.getElementById('task-role-select').value = task.roleId || '';
         document.getElementById('task-frequency').value = task.frequency || '';
         document.getElementById('task-estimated-time').value = task.estimatedTime || '';
         document.getElementById('task-cost').value = task.cost || '';
@@ -228,7 +259,14 @@ function showTaskForm(taskId = null) {
         document.getElementById('task-success-criteria').value = task.successCriteria || '';
         document.getElementById('task-common-errors').value = task.commonErrors ? task.commonErrors.join('\n') : '';
         
-        // Update role select visibility based on type
+        // Set checked roles (support both old roleId and new roleIds)
+        const roleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+        const checkboxes = document.querySelectorAll('#task-roles-container input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = roleIds.includes(checkbox.value);
+        });
+        
+        // Update role container visibility based on type
         updateRoleSelectVisibility(task.type);
       }
     });
@@ -250,16 +288,14 @@ function showTaskForm(taskId = null) {
 // Update role select visibility based on task type
 function updateRoleSelectVisibility(taskType) {
   const roleSelectContainer = document.getElementById('task-role-select-container');
-  const roleSelect = document.getElementById('task-role-select');
-  
-  if (roleSelectContainer && roleSelect) {
+  if (roleSelectContainer) {
     if (taskType === 'with_role') {
       roleSelectContainer.style.display = 'block';
-      roleSelect.required = true;
     } else {
       roleSelectContainer.style.display = 'none';
-      roleSelect.required = false;
-      roleSelect.value = '';
+      // Uncheck all checkboxes when hiding
+      const checkboxes = document.querySelectorAll('#task-roles-container input[type="checkbox"]');
+      checkboxes.forEach(checkbox => checkbox.checked = false);
     }
   }
 }
@@ -317,11 +353,18 @@ async function viewTask(taskId) {
       if (process) processName = process.name;
     }
 
-    let roleName = 'Sin rol';
-    if (task.roleId) {
-      const roleSnapshot = await getRole(task.roleId);
-      const role = roleSnapshot.val();
-      if (role) roleName = role.name;
+    // Get role names (support both old roleId and new roleIds)
+    const roleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+    let roleNames = 'Sin rol';
+    
+    if (roleIds.length > 0) {
+      const rolePromises = roleIds.map(roleId => getRole(roleId).then(snapshot => {
+        const role = snapshot.val();
+        return role ? role.name : null;
+      }));
+      const roleNamesArray = await Promise.all(rolePromises);
+      const validNames = roleNamesArray.filter(n => n !== null);
+      roleNames = validNames.length > 0 ? validNames.join(', ') : 'Sin rol';
     }
 
     const taskTypeLabels = {
@@ -352,10 +395,10 @@ async function viewTask(taskId) {
           <span class="text-gray-600 font-light text-sm sm:text-base">Proceso:</span>
           <span class="font-light text-sm sm:text-base">${escapeHtml(processName)}</span>
         </div>
-        ${task.roleId ? `
+        ${roleIds.length > 0 ? `
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
-          <span class="text-gray-600 font-light text-sm sm:text-base">Rol:</span>
-          <span class="font-light text-sm sm:text-base">${escapeHtml(roleName)}</span>
+          <span class="text-gray-600 font-light text-sm sm:text-base">Roles:</span>
+          <span class="font-light text-sm sm:text-base text-right">${escapeHtml(roleNames)}</span>
         </div>
         ` : ''}
         ${task.frequency ? `
@@ -477,11 +520,14 @@ if (taskFormElement) {
     const description = document.getElementById('task-description').value.trim();
     const type = document.getElementById('task-type').value;
     const processId = document.getElementById('task-process-select').value || null;
-    const roleId = document.getElementById('task-role-select').value || null;
     const frequency = document.getElementById('task-frequency').value.trim() || null;
     const estimatedTime = parseInt(document.getElementById('task-estimated-time').value) || null;
     const cost = parseFloat(document.getElementById('task-cost').value) || null;
     const order = parseInt(document.getElementById('task-order').value) || null;
+    
+    // Get selected roles
+    const roleCheckboxes = document.querySelectorAll('#task-roles-container input[type="checkbox"]:checked');
+    const roleIds = Array.from(roleCheckboxes).map(cb => cb.value);
     
     // Parse execution steps (one per line)
     const executionStepsText = document.getElementById('task-execution-steps').value.trim();
@@ -498,19 +544,18 @@ if (taskFormElement) {
       return;
     }
 
-    if (type === 'with_role' && !roleId) {
-      await showError('Las tareas con rol asignado deben tener un rol seleccionado');
+    if (type === 'with_role' && roleIds.length === 0) {
+      await showError('Las tareas con rol asignado deben tener al menos un rol seleccionado');
       return;
     }
 
     showSpinner('Guardando tarea...');
     try {
-      await saveTask(taskId || null, { 
+      const taskData = { 
         name,
         description: description || null,
         type,
         processId: processId || null,
-        roleId: (type === 'with_role' && roleId) ? roleId : null,
         frequency,
         estimatedTime,
         cost: cost || null,
@@ -518,7 +563,19 @@ if (taskFormElement) {
         executionSteps,
         successCriteria,
         commonErrors
-      });
+      };
+      
+      // Store roleIds as array (or null if empty or type is not with_role)
+      if (type === 'with_role' && roleIds.length > 0) {
+        taskData.roleIds = roleIds;
+        // Remove old roleId if exists (for migration)
+        taskData.roleId = null;
+      } else {
+        taskData.roleIds = null;
+        taskData.roleId = null;
+      }
+      
+      await saveTask(taskId || null, taskData);
       hideSpinner();
       hideTaskForm();
       await showSuccess('Tarea guardada exitosamente');

@@ -116,11 +116,12 @@ async function calculateStandardizationHealth() {
     let tasksStandardized = 0;
 
     Object.values(tasks).forEach(task => {
-      if (task.roleId) tasksWithRole++;
+      const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+      if (taskRoleIds.length > 0) tasksWithRole++;
       if (task.processId) tasksWithProcess++;
       if (task.order !== null && task.order !== undefined) tasksWithOrder++;
       if (task.estimatedTime) tasksWithTime++;
-      if (task.roleId && task.processId && task.order !== null && task.order !== undefined && task.estimatedTime) {
+      if (taskRoleIds.length > 0 && task.processId && task.order !== null && task.order !== undefined && task.estimatedTime) {
         tasksStandardized++;
       }
     });

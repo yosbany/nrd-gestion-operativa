@@ -28,14 +28,17 @@ async function calculateWorkloadByEmployee() {
 
     // Calculate workload from tasks assigned to roles
     Object.entries(tasks).forEach(([taskId, task]) => {
-      if (task.roleId && task.estimatedTime) {
+      const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+      if (taskRoleIds.length > 0 && task.estimatedTime) {
         Object.entries(employees).forEach(([employeeId, employee]) => {
-          const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
-          if (roleIds.includes(task.roleId)) {
+          const employeeRoleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+          // Check if employee has any role that matches task roles
+          const hasMatchingRole = employeeRoleIds.some(empRoleId => taskRoleIds.includes(empRoleId));
+          if (hasMatchingRole) {
             if (!workloadMap[employeeId]) {
               workloadMap[employeeId] = {
                 employeeName: employee.name,
-                roleIds: roleIds,
+                roleIds: employeeRoleIds,
                 totalTasks: 0,
                 totalEstimatedTime: 0,
                 tasks: []
@@ -100,13 +103,18 @@ async function calculateWorkloadByRole() {
 
     // Calculate workload from tasks
     Object.entries(tasks).forEach(([taskId, task]) => {
-      if (task.roleId && workloadMap[task.roleId]) {
-        workloadMap[task.roleId].totalTasks++;
-        workloadMap[task.roleId].totalEstimatedTime += task.estimatedTime || 0;
-        workloadMap[task.roleId].tasks.push({
-          taskId,
-          taskName: task.name,
-          estimatedTime: task.estimatedTime
+      const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+      if (taskRoleIds.length > 0) {
+        taskRoleIds.forEach(roleId => {
+          if (workloadMap[roleId]) {
+            workloadMap[roleId].totalTasks++;
+            workloadMap[roleId].totalEstimatedTime += task.estimatedTime || 0;
+            workloadMap[roleId].tasks.push({
+              taskId,
+              taskName: task.name,
+              estimatedTime: task.estimatedTime
+            });
+          }
         });
       }
     });
@@ -358,12 +366,15 @@ async function calculateCostByArea() {
     // Build role to area map through tasks
     const roleAreaMap = {};
     Object.entries(tasks).forEach(([taskId, task]) => {
-      if (task.roleId && task.processId && processAreaMap[task.processId]) {
+      const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+      if (taskRoleIds.length > 0 && task.processId && processAreaMap[task.processId]) {
         const areaId = processAreaMap[task.processId];
-        if (!roleAreaMap[task.roleId]) {
-          roleAreaMap[task.roleId] = new Set();
-        }
-        roleAreaMap[task.roleId].add(areaId);
+        taskRoleIds.forEach(roleId => {
+          if (!roleAreaMap[roleId]) {
+            roleAreaMap[roleId] = new Set();
+          }
+          roleAreaMap[roleId].add(areaId);
+        });
       }
     });
 

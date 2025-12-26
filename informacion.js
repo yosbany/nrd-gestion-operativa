@@ -304,9 +304,11 @@ async function generateCompanyPDF() {
         if (processTasks.length > 0) {
           addText('Tareas del proceso:', 9, true);
           processTasks.forEach((task, index) => {
-            const roleName = task.roleId && roles[task.roleId] ? roles[task.roleId].name : 'Sin rol';
+            const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+            const roleNames = taskRoleIds.map(rid => roles[rid] ? roles[rid].name : null).filter(n => n !== null);
+            const roleName = roleNames.length > 0 ? roleNames.join(', ') : 'Sin rol';
             addText(`${index + 1}. ${task.name || 'Sin nombre'}`, 9, false);
-            addText(`   Rol: ${roleName}`, 8, false);
+            addText(`   Roles: ${roleName}`, 8, false);
             if (task.frequency) addText(`   Frecuencia: ${task.frequency}`, 8, false);
             if (task.estimatedTime) addText(`   Tiempo estimado: ${task.estimatedTime} min`, 8, false);
           });
@@ -320,11 +322,13 @@ async function generateCompanyPDF() {
       addSectionTitle('TAREAS');
       Object.entries(tasks).forEach(([id, task]) => {
         const processName = task.processId && processes[task.processId] ? processes[task.processId].name : 'Sin proceso';
-        const roleName = task.roleId && roles[task.roleId] ? roles[task.roleId].name : 'Sin rol';
+        const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+        const roleNames = taskRoleIds.map(rid => roles[rid] ? roles[rid].name : null).filter(n => n !== null);
+        const roleName = roleNames.length > 0 ? roleNames.join(', ') : 'Sin rol';
         
         addText(task.name || 'Sin nombre', 11, true);
         addText('Proceso: ' + processName, 9, false);
-        addText('Rol: ' + roleName, 9, false);
+        addText('Roles: ' + roleName, 9, false);
         if (task.description) addText('Descripción: ' + task.description, 9, false);
         if (task.frequency) addText('Frecuencia: ' + task.frequency, 9, false);
         if (task.estimatedTime) addText('Tiempo estimado: ' + task.estimatedTime + ' min', 9, false);

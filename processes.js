@@ -233,10 +233,9 @@ async function viewProcess(processId) {
           <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Flujo del Proceso:</h4>
           <div class="space-y-2">
             ${processTasks.map((task, index) => {
-              let roleName = 'Sin rol';
-              if (task.roleId && roleMap[task.roleId]) {
-                roleName = roleMap[task.roleId];
-              }
+              const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+              const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
+              const roleName = roleNames.length > 0 ? roleNames.join(', ') : 'Sin rol';
               
               const taskTypeLabels = {
                 'with_role': 'Con rol',
@@ -253,7 +252,7 @@ async function viewProcess(processId) {
                     <span class="font-light text-sm sm:text-base flex-1">${escapeHtml(task.name)}</span>
                     <span class="text-xs px-2 py-0.5 bg-gray-100 rounded">${taskTypeLabels[task.type] || task.type}</span>
                   </div>
-                  ${task.roleId ? `<div class="text-xs text-gray-600 ml-6">Rol: ${escapeHtml(roleName)}</div>` : ''}
+                  ${roleNames.length > 0 ? `<div class="text-xs text-gray-600 ml-6">Roles: ${escapeHtml(roleName)}</div>` : ''}
                 </div>
               `;
             }).join('')}
@@ -502,7 +501,9 @@ function showProcessDiagram(processId, processName, processTasks, roleMap) {
   let diagramHTML = '<div class="flex flex-col items-center space-y-4">';
   
   processTasks.forEach((task, index) => {
-    const roleName = task.roleId && roleMap[task.roleId] ? roleMap[task.roleId] : null;
+    const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+    const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
+    const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
     const taskTypeLabel = taskTypeLabels[task.type] || task.type;
     const taskTypeColor = taskTypeColors[task.type] || 'bg-gray-100 border-gray-300';
     
@@ -519,7 +520,7 @@ function showProcessDiagram(processId, processName, processTasks, roleMap) {
           </div>
           ${roleName ? `
             <div class="mt-2 pt-2 border-t border-gray-300">
-              <span class="text-xs text-gray-600 uppercase tracking-wider">Rol:</span>
+              <span class="text-xs text-gray-600 uppercase tracking-wider">Roles:</span>
               <span class="text-sm font-light text-gray-800 ml-2">${escapeHtml(roleName)}</span>
             </div>
           ` : ''}
@@ -590,14 +591,16 @@ async function showProcessFlowEdit(processId, processName, processTasks, roleMap
           <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas en el Proceso (Ordenadas)</h4>
           <div id="process-tasks-list" class="space-y-2">
             ${tasksInProcess.map((task, index) => {
-              const roleName = task.roleId && roleMap[task.roleId] ? roleMap[task.roleId] : null;
+              const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+              const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
+              const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
               return `
                 <div class="border border-gray-200 p-3 flex items-center gap-3 bg-gray-50" data-task-id="${task.id}">
                   <div class="flex items-center gap-2 flex-1">
                     <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
                     <div class="flex-1">
                       <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
-                      ${roleName ? `<div class="text-xs text-gray-600">Rol: ${escapeHtml(roleName)}</div>` : ''}
+                      ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
                     </div>
                   </div>
                   <div class="flex gap-1">
@@ -616,12 +619,14 @@ async function showProcessFlowEdit(processId, processName, processTasks, roleMap
           <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas Disponibles (Agregar al Proceso)</h4>
           <div id="available-tasks-list" class="space-y-2">
             ${availableTasks.map(task => {
-              const roleName = task.roleId && roleMap[task.roleId] ? roleMap[task.roleId] : null;
+              const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+              const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
+              const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
               return `
                 <div class="border border-gray-200 p-3 flex items-center gap-3">
                   <div class="flex-1">
                     <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
-                    ${roleName ? `<div class="text-xs text-gray-600">Rol: ${escapeHtml(roleName)}</div>` : ''}
+                    ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
                   </div>
                   <button onclick="addTaskToProcess('${task.id}')" class="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors" title="Agregar al proceso">+ Agregar</button>
                 </div>
@@ -723,14 +728,16 @@ async function updateProcessFlowDisplay() {
         <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas en el Proceso (Ordenadas)</h4>
         <div id="process-tasks-list" class="space-y-2">
           ${tasksInProcess.map((task, index) => {
-            const roleName = task.roleId && roleMap[task.roleId] ? roleMap[task.roleId] : null;
+            const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+            const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
+            const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
             return `
               <div class="border border-gray-200 p-3 flex items-center gap-3 bg-gray-50" data-task-id="${task.id}">
                 <div class="flex items-center gap-2 flex-1">
                   <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
                   <div class="flex-1">
                     <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
-                    ${roleName ? `<div class="text-xs text-gray-600">Rol: ${escapeHtml(roleName)}</div>` : ''}
+                    ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
                   </div>
                 </div>
                 <div class="flex gap-1">
@@ -749,13 +756,15 @@ async function updateProcessFlowDisplay() {
         <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas Disponibles (Agregar al Proceso)</h4>
         <div id="available-tasks-list" class="space-y-2">
           ${availableTasks.map(task => {
-            const roleName = task.roleId && roleMap[task.roleId] ? roleMap[task.roleId] : null;
+            const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+            const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
+            const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
             return `
-              <div class="border border-gray-200 p-3 flex items-center gap-3">
-                <div class="flex-1">
-                  <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
-                  ${roleName ? `<div class="text-xs text-gray-600">Rol: ${escapeHtml(roleName)}</div>` : ''}
-                </div>
+                <div class="border border-gray-200 p-3 flex items-center gap-3">
+                  <div class="flex-1">
+                    <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
+                    ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
+                  </div>
                 <button onclick="addTaskToProcess('${task.id}')" class="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors" title="Agregar al proceso">+ Agregar</button>
               </div>
             `;

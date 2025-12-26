@@ -165,7 +165,10 @@ async function viewRole(roleId) {
     const tasksSnapshot = await getTasksRef().once('value');
     const allTasks = tasksSnapshot.val() || {};
     const roleTasks = Object.entries(allTasks)
-      .filter(([id, task]) => task.roleId === roleId)
+      .filter(([id, task]) => {
+        const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+        return taskRoleIds.includes(roleId);
+      })
       .map(([id, task]) => ({ id, ...task }));
 
     // Load employees with this role
