@@ -244,7 +244,7 @@ async function viewProcess(processId) {
     if (processTasks.length > 0) {
       flowHtml = `
         <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-          <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Flujo del Proceso:</h4>
+          <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Flujo del Proceso (${processTasks.length} ${processTasks.length === 1 ? 'tarea' : 'tareas'}):</h4>
           <div class="space-y-2">
             ${processTasks.map((task, index) => {
               const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
@@ -294,24 +294,8 @@ async function viewProcess(processId) {
           <span class="font-light text-sm sm:text-base text-right">${escapeHtml(process.objective)}</span>
         </div>
         ` : ''}
-        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
-          <span class="text-gray-600 font-light text-sm sm:text-base">Tareas:</span>
-          <span class="font-light text-sm sm:text-base">${processTasks.length}</span>
-        </div>
       </div>
       ${flowHtml}
-      ${processTasks.length > 0 ? `
-      <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-        <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Tareas del Proceso:</h4>
-        <div class="space-y-2">
-          ${processTasks.map(task => `
-            <div class="border border-gray-200 p-2 sm:p-3 hover:border-red-600 transition-colors cursor-pointer" onclick="viewTask('${task.id}')">
-              <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-      ` : ''}
     `;
 
     // Attach button handlers
