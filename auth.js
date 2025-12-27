@@ -112,34 +112,6 @@ if (logoutBtn) {
   });
 }
 
-// Initialize button handler
-const initializeBtn = document.getElementById('initialize-btn');
-if (initializeBtn) {
-  initializeBtn.addEventListener('click', async () => {
-    try {
-      // Verify user is authorized
-      if (!currentUser || currentUser.email !== 'yosbany@nrd.com') {
-        await showError('No tienes permisos para inicializar');
-        return;
-      }
-      
-      const confirmed = await showConfirm('Inicializar Sistema', '¿Está seguro de que desea inicializar el sistema? Esta acción puede afectar los datos existentes.');
-      if (!confirmed) return;
-      
-      showSpinner('Inicializando sistema...');
-      // TODO: Add initialization logic here
-      // For now, just show success message
-      setTimeout(() => {
-        hideSpinner();
-        showSuccess('Sistema inicializado exitosamente');
-      }, 1000);
-    } catch (error) {
-      hideSpinner();
-      await showError('Error al inicializar: ' + error.message);
-      console.error('Initialize error:', error);
-    }
-  });
-}
 
 // Get current user
 function getCurrentUser() {
