@@ -98,14 +98,14 @@ async function loadOrganigrama(editMode = false) {
       structure: organigramaStructure
     };
 
-    // Generate HTML
+    // Generate HTML with hierarchical chart design
     let organigramaHTML = `
       <div class="mb-4 flex justify-end">
         <button id="toggle-organigrama-edit-btn" class="px-4 sm:px-6 py-2 ${editMode ? 'bg-gray-600 text-white border border-gray-600 hover:bg-gray-700' : 'border border-gray-300 hover:border-gray-400'} transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
           ${editMode ? 'Cancelar Edición' : 'Editar Organigrama'}
         </button>
       </div>
-      <div class="space-y-6">
+      <div class="organigrama-container">
     `;
     
     // Sort areas by name
@@ -118,6 +118,7 @@ async function loadOrganigrama(editMode = false) {
     if (sortedAreas.length === 0) {
       organigramaHTML += '<p class="text-center text-gray-600 py-8 text-sm sm:text-base">No hay áreas registradas</p>';
     } else {
+      // Generate organigrama for each area separately for better visual hierarchy
       sortedAreas.forEach(([areaId, areaData]) => {
         const area = areaData.area;
         const rolesData = areaData.roles;
@@ -130,82 +131,143 @@ async function loadOrganigrama(editMode = false) {
         });
 
         organigramaHTML += `
-          <div class="border-2 border-gray-300 p-4 sm:p-6">
-            <h4 class="text-base sm:text-lg font-light mb-4 pb-2 border-b border-gray-200">
-              ${escapeHtml(area.name || 'Área sin nombre')}
-            </h4>
-            ${area.description ? `
-              <p class="text-sm text-gray-600 mb-4 font-light">${escapeHtml(area.description)}</p>
-            ` : ''}
-            ${sortedRoles.length === 0 ? `
-              <p class="text-sm text-gray-500 italic">No hay roles asignados a esta área</p>
-            ` : `
-              <div class="space-y-4">
-                ${sortedRoles.map(([roleId, roleData]) => {
-                  const role = roleData.role;
-                  const roleEmployees = roleData.employees.sort((a, b) => {
-                    const nameA = a.name || '';
-                    const nameB = b.name || '';
-                    return nameA.localeCompare(nameB);
-                  });
-                  
-                  return `
-                    <div class="border border-gray-200 p-3 sm:p-4 bg-gray-50">
-                      <h5 class="text-sm sm:text-base font-medium mb-3 pb-2 border-b border-gray-300">
-                        ${escapeHtml(role.name || 'Rol sin nombre')}
-                      </h5>
-                      ${role.description ? `
-                        <p class="text-xs text-gray-600 mb-3 font-light">${escapeHtml(role.description)}</p>
-                      ` : ''}
-                      ${editMode ? `
-                        <div class="space-y-2">
-                          <label class="block text-xs uppercase tracking-wider text-gray-600 mb-2">Empleados con este rol:</label>
-                          <div class="space-y-2 max-h-64 overflow-y-auto border border-gray-200 p-3 bg-white rounded">
-                            ${Object.entries(employees).map(([empId, employee]) => {
-                              const employeeRoleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
-                              const hasRole = employeeRoleIds.includes(roleId);
-                              return `
-                                <label class="flex items-center gap-2 cursor-pointer py-1">
+          <div class="organigrama-area-section mb-8">
+            <!-- Level 1: Area (Top level - Red like the app theme) -->
+            <div class="flex justify-center mb-6">
+              <div class="organigrama-box-area">
+                <div class="bg-red-600 text-white px-8 py-4 rounded-lg shadow-lg min-w-[250px] text-center">
+                  <div class="font-medium text-base sm:text-lg">${escapeHtml(area.name || 'Área sin nombre')}</div>
+                  ${area.description ? `<div class="text-red-100 text-xs mt-1 font-light">${escapeHtml(area.description)}</div>` : ''}
+                </div>
+              </div>
+            </div>
+        `;
+
+        if (sortedRoles.length > 0) {
+          // Level 2: Roles (Medium level - Dark blue)
+          organigramaHTML += `
+            <div class="organigrama-level-2 flex flex-wrap justify-center gap-4 mb-4">
+              ${sortedRoles.map(([roleId, roleData]) => {
+                const role = roleData.role;
+                const roleEmployees = roleData.employees.sort((a, b) => {
+                  const nameA = a.name || '';
+                  const nameB = b.name || '';
+                  return nameA.localeCompare(nameB);
+                });
+                
+                return `
+                  <div class="organigrama-box-role flex flex-col items-center">
+                    <!-- Role Box -->
+                    <div class="bg-blue-700 text-white px-5 py-3 rounded-lg shadow-md min-w-[200px] text-center mb-3">
+                      <div class="font-medium text-sm">${escapeHtml(role.name || 'Rol sin nombre')}</div>
+                      ${role.description ? `<div class="text-blue-200 text-xs mt-1 font-light">${escapeHtml(role.description)}</div>` : ''}
+                    </div>
+                    ${roleEmployees.length > 0 || editMode ? `
+                      <!-- Level 3: Employees (Light blue) -->
+                      <div class="organigrama-level-3 flex flex-wrap justify-center gap-2">
+                        ${editMode ? `
+                          ${Object.entries(employees).map(([empId, employee]) => {
+                            const employeeRoleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+                            const hasRole = employeeRoleIds.includes(roleId);
+                            return `
+                              <div class="organigrama-box-employee" data-employee-id="${empId}" data-role-id="${roleId}">
+                                <label class="cursor-pointer block">
                                   <input type="checkbox" 
-                                    class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 employee-role-checkbox"
+                                    class="employee-role-checkbox hidden"
                                     data-employee-id="${empId}"
                                     data-role-id="${roleId}"
                                     ${hasRole ? 'checked' : ''}>
-                                  <span class="text-xs sm:text-sm font-light">
-                                    ${escapeHtml(employee.name || 'Empleado sin nombre')}
-                                    ${employee.email ? `<span class="text-gray-500 text-xs"> - ${escapeHtml(employee.email)}</span>` : ''}
-                                  </span>
+                                  <div class="${hasRole ? 'bg-blue-300 text-blue-900 border-blue-500' : 'bg-blue-100 text-blue-700 border-blue-300'} px-3 py-2 rounded-lg shadow-sm text-center border-2 hover:border-blue-400 transition-all">
+                                    <div class="font-light text-xs">${escapeHtml(employee.name || 'Empleado sin nombre')}</div>
+                                    ${employee.email ? `<div class="text-xs mt-1 opacity-75 truncate max-w-[140px]">${escapeHtml(employee.email)}</div>` : ''}
+                                  </div>
                                 </label>
-                              `;
-                            }).join('')}
-                          </div>
-                        </div>
-                      ` : roleEmployees.length === 0 ? `
-                        <p class="text-xs text-gray-500 italic">No hay empleados asignados a este rol</p>
-                      ` : `
-                        <div class="space-y-2">
-                          <p class="text-xs uppercase tracking-wider text-gray-600 mb-2">Empleados:</p>
-                          <ul class="space-y-1">
-                            ${roleEmployees.map(employee => `
-                              <li class="text-xs sm:text-sm font-light pl-4 border-l-2 border-gray-300">
-                                ${escapeHtml(employee.name || 'Empleado sin nombre')}
-                                ${employee.email ? `<span class="text-gray-500 text-xs"> - ${escapeHtml(employee.email)}</span>` : ''}
-                              </li>
-                            `).join('')}
-                          </ul>
-                        </div>
-                      `}
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            `}
-          </div>
-        `;
+                              </div>
+                            `;
+                          }).join('')}
+                        ` : `
+                          ${roleEmployees.map(employee => `
+                            <div class="organigrama-box-employee">
+                              <div class="bg-blue-200 text-blue-900 px-3 py-2 rounded-lg shadow-sm min-w-[140px] text-center">
+                                <div class="font-light text-xs">${escapeHtml(employee.name || 'Empleado sin nombre')}</div>
+                                ${employee.email ? `<div class="text-blue-700 text-[10px] mt-1 truncate max-w-[140px]">${escapeHtml(employee.email)}</div>` : ''}
+                              </div>
+                            </div>
+                          `).join('')}
+                        `}
+                      </div>
+                    ` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        } else {
+          organigramaHTML += `
+            <div class="text-center text-gray-500 text-sm italic py-4">
+              No hay roles asignados a esta área
+            </div>
+          `;
+        }
+        
+        organigramaHTML += `</div>`;
       });
     }
 
     organigramaHTML += '</div>';
+    
+    // Add CSS styles for the organigrama
+    if (!document.getElementById('organigrama-styles')) {
+      const style = document.createElement('style');
+      style.id = 'organigrama-styles';
+      style.textContent = `
+        .organigrama-container {
+          font-family: inherit;
+          padding: 1rem;
+        }
+        .organigrama-area-section {
+          margin-bottom: 3rem;
+        }
+        .organigrama-box-area {
+          position: relative;
+        }
+        .organigrama-box-role {
+          position: relative;
+          margin-bottom: 1rem;
+        }
+        .organigrama-box-employee {
+          position: relative;
+        }
+        .organigrama-level-2 {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 1.5rem;
+          margin-top: 1rem;
+        }
+        .organigrama-level-3 {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 0.5rem;
+        }
+        @media (max-width: 640px) {
+          .organigrama-level-2 {
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+          }
+          .organigrama-level-3 {
+            width: 100%;
+          }
+          .organigrama-box-area > div,
+          .organigrama-box-role > div:first-child {
+            min-width: 100%;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
     if (editMode) {
       organigramaHTML += `
         <div class="mt-6 pt-6 border-t border-gray-200 flex justify-end gap-4">
@@ -241,6 +303,24 @@ async function loadOrganigrama(editMode = false) {
       if (saveBtn) {
         saveBtn.addEventListener('click', saveOrganigramaChanges);
       }
+      
+      // Update visual state of checkboxes
+      document.querySelectorAll('.employee-role-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          const employeeBox = this.closest('.organigrama-employee');
+          if (this.checked) {
+            employeeBox.classList.add('selected');
+            const boxDiv = employeeBox.querySelector('div');
+            boxDiv.classList.remove('bg-blue-100', 'text-blue-700', 'border-transparent');
+            boxDiv.classList.add('bg-blue-300', 'text-blue-900', 'border-blue-500');
+          } else {
+            employeeBox.classList.remove('selected');
+            const boxDiv = employeeBox.querySelector('div');
+            boxDiv.classList.remove('bg-blue-300', 'text-blue-900', 'border-blue-500');
+            boxDiv.classList.add('bg-blue-100', 'text-blue-700', 'border-transparent');
+          }
+        });
+      });
     } else {
       const toggleBtn = document.getElementById('toggle-organigrama-edit-btn');
       if (toggleBtn) {
