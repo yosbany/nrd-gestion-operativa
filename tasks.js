@@ -25,7 +25,7 @@ function normalizeSearchText(text) {
 }
 
 // Filter and display tasks
-async function filterAndDisplayTasks(searchTerm = '', selectedRoleId = '') {
+async function filterAndDisplayTasks(searchTerm = '') {
   const tasksList = document.getElementById('tasks-list');
   if (!tasksList) return;
   
@@ -33,14 +33,6 @@ async function filterAndDisplayTasks(searchTerm = '', selectedRoleId = '') {
   
   const term = normalizeSearchText(searchTerm.trim());
   const filteredTasks = Object.entries(allTasks).filter(([id, task]) => {
-    // Filter by role first (support both old roleId and new roleIds)
-    if (selectedRoleId) {
-      const roleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-      if (!roleIds.includes(selectedRoleId)) {
-        return false;
-      }
-    }
-    
     // Filter by search term
     if (!term) return true;
     
@@ -127,43 +119,18 @@ function loadTasks() {
       taskRoleMap[id] = role.name;
     });
     
-    // Get search term and role filter
+    // Get search term
     const searchInput = document.getElementById('tasks-search');
-    const roleFilterSelect = document.getElementById('tasks-role-filter');
     const searchTerm = searchInput ? searchInput.value : '';
-    const selectedRoleId = roleFilterSelect ? roleFilterSelect.value : '';
     
-    // Populate role filter select
-    if (roleFilterSelect) {
-      roleFilterSelect.innerHTML = '<option value="">Todos los roles</option>';
-      Object.entries(roles).forEach(([roleId, role]) => {
-        const option = document.createElement('option');
-        option.value = roleId;
-        option.textContent = role.name;
-        roleFilterSelect.appendChild(option);
-      });
-    }
-    
-    await filterAndDisplayTasks(searchTerm, selectedRoleId);
+    await filterAndDisplayTasks(searchTerm);
   });
   
   // Add search input listener
   const searchInput = document.getElementById('tasks-search');
   if (searchInput) {
     searchInput.addEventListener('input', async (e) => {
-      const roleFilterSelect = document.getElementById('tasks-role-filter');
-      const selectedRoleId = roleFilterSelect ? roleFilterSelect.value : '';
-      await filterAndDisplayTasks(e.target.value, selectedRoleId);
-    });
-  }
-  
-  // Add role filter listener
-  const roleFilterSelect = document.getElementById('tasks-role-filter');
-  if (roleFilterSelect) {
-    roleFilterSelect.addEventListener('change', async (e) => {
-      const searchInput = document.getElementById('tasks-search');
-      const searchTerm = searchInput ? searchInput.value : '';
-      await filterAndDisplayTasks(searchTerm, e.target.value);
+      await filterAndDisplayTasks(e.target.value);
     });
   }
 }

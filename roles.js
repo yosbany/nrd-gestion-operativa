@@ -168,9 +168,20 @@ async function viewRole(roleId) {
     if (detail) detail.classList.remove('hidden');
     if (searchContainer) searchContainer.style.display = 'none';
 
-    // Load tasks for this role
-    const tasksSnapshot = await getTasksRef().once('value');
+    // Load tasks and processes for this role
+    const [tasksSnapshot, processesSnapshot] = await Promise.all([
+      getTasksRef().once('value'),
+      getProcessesRef().once('value')
+    ]);
     const allTasks = tasksSnapshot.val() || {};
+    const allProcesses = processesSnapshot.val() || {};
+    
+    // Create process map
+    const processMap = {};
+    Object.entries(allProcesses).forEach(([id, process]) => {
+      processMap[id] = process.name;
+    });
+    
     const roleTasks = Object.entries(allTasks)
       .filter(([id, task]) => {
         const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
@@ -187,6 +198,34 @@ async function viewRole(roleId) {
         return roleIds.includes(roleId);
       })
       .map(([id, employee]) => ({ id, ...employee }));
+
+    // Build tasks list HTML
+    let tasksListHTML = '';
+    if (roleTasks.length > 0) {
+      tasksListHTML = `
+        <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+          <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Tareas Asociadas:</h4>
+          <div class="space-y-2">
+            ${roleTasks.map(task => {
+              // Get process names (support both processId and processIds)
+              const taskProcessIds = task.processIds || (task.processId ? [task.processId] : []);
+              const processNames = taskProcessIds
+                .map(pid => processMap[pid])
+                .filter(n => n !== undefined);
+              const processName = processNames.length > 0 ? processNames.join(', ') : 'Sin proceso';
+              
+              return `
+                <div class="border border-gray-200 p-2 sm:p-3 hover:border-red-600 transition-colors cursor-pointer" onclick="viewTask('${task.id}')">
+                  <div class="font-light text-sm sm:text-base">${escapeHtml(task.name || 'Tarea sin nombre')}</div>
+                  <div class="text-xs text-gray-600 mt-1">Proceso: ${escapeHtml(processName)}</div>
+                  ${task.description ? `<div class="text-xs text-gray-500 mt-1 line-clamp-2">${escapeHtml(task.description.substring(0, 100))}${task.description.length > 100 ? '...' : ''}</div>` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
 
     detailContent.innerHTML = `
       <div class="space-y-3 sm:space-y-4">
@@ -209,6 +248,7 @@ async function viewRole(roleId) {
           <span class="font-light text-sm sm:text-base">${roleEmployees.length}</span>
         </div>
       </div>
+      ${tasksListHTML}
     `;
 
     // Attach button handlers
