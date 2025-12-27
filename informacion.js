@@ -9,11 +9,15 @@ async function loadInformacion() {
 
   showSpinner('Cargando información...');
   try {
-    const snapshot = await getCompanyInfo();
-    const companyInfo = snapshot.val() || {};
+    const [companyInfoSnapshot, contractsSnapshot] = await Promise.all([
+      getCompanyInfo(),
+      getContractsRef().once('value')
+    ]);
+    const companyInfo = companyInfoSnapshot.val() || {};
+    const contracts = contractsSnapshot.val() || {};
 
     // Show read mode
-    showReadMode(companyInfo);
+    showReadMode(companyInfo, contracts);
 
     hideSpinner();
   } catch (error) {
@@ -24,7 +28,7 @@ async function loadInformacion() {
 }
 
 // Show read mode
-function showReadMode(companyInfo) {
+function showReadMode(companyInfo, contracts = {}) {
   isEditMode = false;
   
   const readMode = document.getElementById('company-info-read-mode');
@@ -53,10 +57,13 @@ function showReadMode(companyInfo) {
   if (emailRead) emailRead.textContent = companyInfo.email || '-';
   if (missionRead) missionRead.textContent = companyInfo.mission || '-';
   if (visionRead) visionRead.textContent = companyInfo.vision || '-';
+  
+  // Display contracts
+  displayContractsRead(contracts);
 }
 
 // Show edit mode
-function showEditMode(companyInfo) {
+async function showEditMode(companyInfo) {
   isEditMode = true;
   
   const readMode = document.getElementById('company-info-read-mode');
@@ -85,6 +92,11 @@ function showEditMode(companyInfo) {
   if (emailInput) emailInput.value = companyInfo.email || '';
   if (missionInput) missionInput.value = companyInfo.mission || '';
   if (visionInput) visionInput.value = companyInfo.vision || '';
+  
+  // Load contracts for editing
+  const contractsSnapshot = await getContractsRef().once('value');
+  const contracts = contractsSnapshot.val() || {};
+  displayContractsEdit(contracts);
 }
 
 // Edit button handler
@@ -107,9 +119,13 @@ const cancelEditCompanyInfoBtn = document.getElementById('cancel-edit-company-in
 if (cancelEditCompanyInfoBtn) {
   cancelEditCompanyInfoBtn.addEventListener('click', async () => {
     try {
-      const snapshot = await getCompanyInfo();
-      const companyInfo = snapshot.val() || {};
-      showReadMode(companyInfo);
+      const [companyInfoSnapshot, contractsSnapshot] = await Promise.all([
+        getCompanyInfo(),
+        getContractsRef().once('value')
+      ]);
+      const companyInfo = companyInfoSnapshot.val() || {};
+      const contracts = contractsSnapshot.val() || {};
+      showReadMode(companyInfo, contracts);
     } catch (error) {
       await showError('Error al cargar información: ' + error.message);
       console.error('Error loading company info:', error);
@@ -381,5 +397,341 @@ const printCompanyPdfBtn = document.getElementById('print-company-pdf-btn');
 if (printCompanyPdfBtn) {
   printCompanyPdfBtn.addEventListener('click', () => {
     generateCompanyPDF();
+  });
+}
+
+// ========== CONTRACTS AND PERMITS MANAGEMENT ==========
+
+// Display contracts in read mode
+function displayContractsRead(contracts) {
+  const contractsList = document.getElementById('contracts-list');
+  if (!contractsList) return;
+  
+  contractsList.innerHTML = '';
+  
+  if (Object.keys(contracts).length === 0) {
+    contractsList.innerHTML = '<p class="text-sm text-gray-500 italic">No hay contratos o habilitaciones registrados</p>';
+    return;
+  }
+  
+  Object.entries(contracts).forEach(([contractId, contract]) => {
+    const contractDiv = document.createElement('div');
+    contractDiv.className = 'border border-gray-200 p-4 sm:p-6';
+    contractDiv.innerHTML = `
+      <div class="flex justify-between items-start mb-3">
+        <h3 class="text-lg sm:text-xl font-light">${escapeHtml(contract.name || 'Sin nombre')}</h3>
+      </div>
+      ${contract.description ? `
+        <div class="mb-3">
+          <p class="text-sm sm:text-base text-gray-700 whitespace-pre-wrap">${escapeHtml(contract.description)}</p>
+        </div>
+      ` : ''}
+      ${contract.importantData && Object.keys(contract.importantData).length > 0 ? `
+        <div class="mb-3 pt-3 border-t border-gray-200">
+          <h4 class="text-sm uppercase tracking-wider text-gray-600 mb-2">Datos Importantes:</h4>
+          <div class="space-y-1">
+            ${Object.entries(contract.importantData).map(([key, value]) => `
+              <div class="flex text-sm">
+                <span class="font-medium text-gray-600 w-1/3">${escapeHtml(key)}:</span>
+                <span class="text-gray-800 flex-1">${escapeHtml(value)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+      ${contract.documents && contract.documents.length > 0 ? `
+        <div class="pt-3 border-t border-gray-200">
+          <h4 class="text-sm uppercase tracking-wider text-gray-600 mb-2">Documentos:</h4>
+          <div class="space-y-2">
+            ${contract.documents.map((doc, index) => `
+              <div class="flex items-center gap-2">
+                <a href="${doc.data}" download="${doc.name}" class="text-sm text-red-600 hover:text-red-700 underline">
+                  📄 ${escapeHtml(doc.name)}
+                </a>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+    `;
+    contractsList.appendChild(contractDiv);
+  });
+}
+
+// Display contracts in edit mode
+function displayContractsEdit(contracts) {
+  const contractsList = document.getElementById('contracts-list-edit');
+  if (!contractsList) return;
+  
+  contractsList.innerHTML = '';
+  
+  Object.entries(contracts).forEach(([contractId, contract]) => {
+    contractsList.appendChild(createContractEditItem(contractId, contract));
+  });
+}
+
+// Create contract edit item
+function createContractEditItem(contractId, contract = {}) {
+  const contractDiv = document.createElement('div');
+  contractDiv.className = 'border border-gray-200 p-4 sm:p-6';
+  contractDiv.dataset.contractId = contractId;
+  
+  const importantData = contract.importantData || {};
+  const documents = contract.documents || [];
+  
+  contractDiv.innerHTML = `
+    <div class="mb-4">
+      <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Nombre</label>
+      <input type="text" class="contract-name w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base" 
+        value="${escapeHtml(contract.name || '')}" placeholder="Nombre del contrato/habilitación">
+    </div>
+    <div class="mb-4">
+      <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Descripción</label>
+      <textarea class="contract-description w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base" 
+        rows="3" placeholder="Descripción...">${escapeHtml(contract.description || '')}</textarea>
+    </div>
+    <div class="mb-4">
+      <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Datos Importantes</label>
+      <div class="contract-important-data space-y-2">
+        ${Object.entries(importantData).map(([key, value], index) => `
+          <div class="flex gap-2 items-center">
+            <input type="text" class="data-key flex-1 px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-600 text-sm" 
+              value="${escapeHtml(key)}" placeholder="Clave">
+            <input type="text" class="data-value flex-1 px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-600 text-sm" 
+              value="${escapeHtml(value)}" placeholder="Valor">
+            <button type="button" class="remove-data-btn px-2 py-1 text-red-600 hover:text-red-700 text-sm" title="Eliminar">×</button>
+          </div>
+        `).join('')}
+      </div>
+      <button type="button" class="add-data-btn mt-2 px-3 py-1 text-xs border border-gray-300 hover:border-red-600 text-gray-600 hover:text-red-600">
+        + Agregar Dato
+      </button>
+    </div>
+    <div class="mb-4">
+      <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Documentos</label>
+      <div class="contract-documents space-y-2">
+        ${documents.map((doc, index) => `
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-700">📄 ${escapeHtml(doc.name)}</span>
+            <button type="button" class="remove-document-btn px-2 py-1 text-red-600 hover:text-red-700 text-sm" data-index="${index}">Eliminar</button>
+          </div>
+        `).join('')}
+      </div>
+      <input type="file" class="contract-file-input mt-2 text-sm" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+    </div>
+    <div class="flex gap-2 pt-2 border-t border-gray-200">
+      <button type="button" class="save-contract-btn flex-1 px-4 py-2 bg-green-600 text-white hover:bg-green-700 text-xs sm:text-sm">
+        Guardar
+      </button>
+      <button type="button" class="delete-contract-btn flex-1 px-4 py-2 bg-red-600 text-white hover:bg-red-700 text-xs sm:text-sm">
+        Eliminar
+      </button>
+    </div>
+  `;
+  
+  // Attach event listeners
+  const addDataBtn = contractDiv.querySelector('.add-data-btn');
+  const removeDataBtns = contractDiv.querySelectorAll('.remove-data-btn');
+  const fileInput = contractDiv.querySelector('.contract-file-input');
+  const removeDocumentBtns = contractDiv.querySelectorAll('.remove-document-btn');
+  const saveBtn = contractDiv.querySelector('.save-contract-btn');
+  const deleteBtn = contractDiv.querySelector('.delete-contract-btn');
+  
+  if (addDataBtn) {
+    addDataBtn.addEventListener('click', () => {
+      const dataContainer = contractDiv.querySelector('.contract-important-data');
+      const newDataDiv = document.createElement('div');
+      newDataDiv.className = 'flex gap-2 items-center';
+      newDataDiv.innerHTML = `
+        <input type="text" class="data-key flex-1 px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-600 text-sm" placeholder="Clave">
+        <input type="text" class="data-value flex-1 px-2 py-1 border border-gray-300 focus:outline-none focus:border-red-600 text-sm" placeholder="Valor">
+        <button type="button" class="remove-data-btn px-2 py-1 text-red-600 hover:text-red-700 text-sm" title="Eliminar">×</button>
+      `;
+      newDataDiv.querySelector('.remove-data-btn').addEventListener('click', () => {
+        newDataDiv.remove();
+      });
+      dataContainer.appendChild(newDataDiv);
+    });
+  }
+  
+  removeDataBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.closest('.flex').remove();
+    });
+  });
+  
+  if (fileInput) {
+    fileInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      for (const file of files) {
+        const base64 = await fileToBase64(file);
+        const documentsContainer = contractDiv.querySelector('.contract-documents');
+        const docDiv = document.createElement('div');
+        docDiv.className = 'flex items-center gap-2';
+        docDiv.innerHTML = `
+          <span class="text-sm text-gray-700">📄 ${escapeHtml(file.name)}</span>
+          <button type="button" class="remove-document-btn px-2 py-1 text-red-600 hover:text-red-700 text-sm" data-temp-index="${documents.length}">Eliminar</button>
+        `;
+        docDiv.querySelector('.remove-document-btn').addEventListener('click', function() {
+          docDiv.remove();
+        });
+        documentsContainer.appendChild(docDiv);
+        
+        // Store base64 in data attribute
+        docDiv.dataset.base64 = base64;
+        docDiv.dataset.fileName = file.name;
+      }
+      e.target.value = '';
+    });
+  }
+  
+  removeDocumentBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.closest('.flex').remove();
+    });
+  });
+  
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async () => {
+      await saveContract(contractDiv);
+    });
+  }
+  
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', async () => {
+      await deleteContractHandler(contractId);
+    });
+  }
+  
+  return contractDiv;
+}
+
+// Convert file to base64
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Save contract
+async function saveContract(contractDiv) {
+  const contractId = contractDiv.dataset.contractId;
+  const name = contractDiv.querySelector('.contract-name').value.trim();
+  const description = contractDiv.querySelector('.contract-description').value.trim();
+  
+  // Collect important data
+  const importantData = {};
+  contractDiv.querySelectorAll('.contract-important-data .flex').forEach(dataRow => {
+    const key = dataRow.querySelector('.data-key').value.trim();
+    const value = dataRow.querySelector('.data-value').value.trim();
+    if (key && value) {
+      importantData[key] = value;
+    }
+  });
+  
+  // Collect documents
+  const newDocuments = [];
+  const existingDocumentIndices = [];
+  
+  contractDiv.querySelectorAll('.contract-documents .flex').forEach(docDiv => {
+    if (docDiv.dataset.base64) {
+      // New document
+      newDocuments.push({
+        name: docDiv.dataset.fileName,
+        data: docDiv.dataset.base64
+      });
+    } else {
+      // Existing document - check if it has data-index
+      const removeBtn = docDiv.querySelector('.remove-document-btn');
+      if (removeBtn && removeBtn.dataset.index !== undefined) {
+        existingDocumentIndices.push(parseInt(removeBtn.dataset.index));
+      }
+    }
+  });
+  
+  if (!name) {
+    await showError('Por favor ingrese un nombre para el contrato/habilitación');
+    return;
+  }
+  
+  showSpinner('Guardando contrato/habilitación...');
+  try {
+    const contractData = {
+      name,
+      description: description || null,
+      importantData: Object.keys(importantData).length > 0 ? importantData : null,
+      documents: null
+    };
+    
+    if (contractId && contractId !== 'new') {
+      // Load existing documents and merge
+      const existingContract = await getContract(contractId);
+      const existing = existingContract.val();
+      if (existing && existing.documents) {
+        // Keep documents that weren't removed (preserve by index)
+        const existingDocs = existing.documents.filter((doc, index) => {
+          return existingDocumentIndices.includes(index);
+        });
+        contractData.documents = [...existingDocs, ...newDocuments];
+      } else {
+        contractData.documents = newDocuments.length > 0 ? newDocuments : null;
+      }
+      await updateContract(contractId, contractData);
+    } else {
+      contractData.documents = newDocuments.length > 0 ? newDocuments : null;
+      await createContract(contractData);
+    }
+    
+    hideSpinner();
+    await showSuccess('Contrato/habilitación guardado exitosamente');
+    
+    // Reload information
+    loadInformacion();
+  } catch (error) {
+    hideSpinner();
+    await showError('Error al guardar contrato/habilitación: ' + error.message);
+    console.error('Error saving contract:', error);
+  }
+}
+
+// Delete contract handler
+async function deleteContractHandler(contractId) {
+  const confirmed = await showConfirm('Eliminar Contrato/Habilitación', '¿Está seguro de eliminar este contrato/habilitación?');
+  if (!confirmed) return;
+  
+  showSpinner('Eliminando contrato/habilitación...');
+  try {
+    await deleteContract(contractId);
+    hideSpinner();
+    await showSuccess('Contrato/habilitación eliminado exitosamente');
+    loadInformacion();
+  } catch (error) {
+    hideSpinner();
+    await showError('Error al eliminar contrato/habilitación: ' + error.message);
+    console.error('Error deleting contract:', error);
+  }
+}
+
+// Add new contract button handlers
+const addContractBtn = document.getElementById('add-contract-btn');
+const addContractBtnEdit = document.getElementById('add-contract-btn-edit');
+
+if (addContractBtn) {
+  addContractBtn.addEventListener('click', () => {
+    showEditMode({});
+  });
+}
+
+if (addContractBtnEdit) {
+  addContractBtnEdit.addEventListener('click', () => {
+    const contractsList = document.getElementById('contracts-list-edit');
+    if (contractsList) {
+      const newContractDiv = createContractEditItem('new', {});
+      contractsList.appendChild(newContractDiv);
+      newContractDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   });
 }

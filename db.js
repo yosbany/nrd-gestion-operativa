@@ -169,3 +169,24 @@ function deleteIncident(incidentId) {
   return getIncidentsRef().child(incidentId).remove();
 }
 
+// Contracts and Permits
+function getContractsRef() {
+  return database.ref('contracts');
+}
+
+function getContract(contractId) {
+  return getContractsRef().child(contractId).once('value');
+}
+
+function createContract(contractData) {
+  return getContractsRef().push(contractData);
+}
+
+function updateContract(contractId, contractData) {
+  return getContractsRef().child(contractId).update(contractData);
+}
+
+function deleteContract(contractId) {
+  return getContractsRef().child(contractId).remove();
+}
+
