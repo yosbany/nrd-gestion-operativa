@@ -290,8 +290,6 @@ async function viewProcess(processId) {
               const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
               const roleName = roleNames.length > 0 ? roleNames.join(', ') : 'Sin rol';
               
-              const assignedEmployeeName = task.assignedEmployeeId ? (employeeMap[task.assignedEmployeeId] || 'Empleado desconocido') : null;
-              
               const taskTypeLabels = {
                 'with_role': 'Con rol',
                 'without_role': 'Sin rol',
@@ -311,7 +309,6 @@ async function viewProcess(processId) {
                     <span class="text-xs px-2 py-0.5 bg-gray-100 rounded">${taskTypeLabels[task.type] || task.type}</span>
                   </div>
                   ${roleNames.length > 0 ? `<div class="text-xs text-gray-600 ml-6">Roles: ${escapeHtml(roleName)}</div>` : ''}
-                  ${assignedEmployeeName ? `<div class="text-xs text-blue-600 ml-6 font-medium">Empleado: ${escapeHtml(assignedEmployeeName)}</div>` : ''}
                 </div>
               `;
             }).join('')}
@@ -550,7 +547,6 @@ function showProcessDiagram(processId, processName, activitiesWithTasks, roleMap
     const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
     const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
     const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
-    const assignedEmployeeName = task.assignedEmployeeId ? (employeeMap[task.assignedEmployeeId] || 'Empleado desconocido') : null;
     const taskTypeLabel = taskTypeLabels[task.type] || task.type;
     const taskTypeColor = taskTypeColors[task.type] || 'bg-gray-100 border-gray-300';
     
@@ -572,12 +568,6 @@ function showProcessDiagram(processId, processName, activitiesWithTasks, roleMap
             <div class="mt-2 pt-2 border-t border-gray-300">
               <span class="text-xs text-gray-600 uppercase tracking-wider">Roles:</span>
               <span class="text-sm font-light text-gray-800 ml-2">${escapeHtml(roleName)}</span>
-            </div>
-          ` : ''}
-          ${assignedEmployeeName ? `
-            <div class="mt-2 pt-2 border-t border-gray-300">
-              <span class="text-xs text-blue-600 uppercase tracking-wider font-medium">Empleado:</span>
-              <span class="text-sm font-light text-blue-800 ml-2">${escapeHtml(assignedEmployeeName)}</span>
             </div>
           ` : ''}
           ${task.description ? `
@@ -659,57 +649,29 @@ async function showProcessFlowEdit(processId, processName, activitiesWithTasks, 
               const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
               const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
               
-              // Filter employees that have any of the task's roles
-              let employeesWithRole = [];
-              if (taskRoleIds.length > 0) {
-                employeesWithRole = Object.entries(allEmployees)
-                  .filter(([id, employee]) => {
-                    const employeeRoleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
-                    return employeeRoleIds.some(empRoleId => taskRoleIds.includes(empRoleId));
-                  })
-                  .map(([id, employee]) => ({ id, name: employee.name }));
-              }
-              
-              const assignedEmployeeId = task.assignedEmployeeId || '';
-              
               return `
-                <div class="border border-gray-200 p-3 bg-gray-50" data-activity-index="${index}">
-                  <div class="flex items-center gap-3 mb-2">
-                    <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
+                <div class="border border-gray-200 p-2 bg-gray-50" data-activity-index="${index}">
+                  <div class="flex items-center gap-2 mb-1.5">
+                    <span class="text-xs font-medium text-gray-500 w-5">${index + 1}</span>
                     <div class="flex-1">
-                      <label class="block text-xs text-gray-600 mb-1">Nombre de la Actividad:</label>
-                      <input type="text" id="activity-name-${index}" value="${escapeHtml(activityData.activityName)}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityName(${index}, this.value)" />
+                      <label class="block text-xs text-gray-600 mb-0.5">Nombre de la Actividad:</label>
+                      <input type="text" id="activity-name-${index}" value="${escapeHtml(activityData.activityName)}" class="w-full px-2 py-0.5 text-xs border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityName(${index}, this.value)" />
                     </div>
-                    <div class="flex gap-1">
-                      <button onclick="moveActivityUp(${index})" ${index === 0 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
-                      <button onclick="moveActivityDown(${index})" ${index === activitiesInProcess.length - 1 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
-                      <button onclick="removeActivityFromProcess(${index})" class="px-2 py-1 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
+                    <div class="flex gap-0.5">
+                      <button onclick="moveActivityUp(${index})" ${index === 0 ? 'disabled' : ''} class="px-1.5 py-0.5 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
+                      <button onclick="moveActivityDown(${index})" ${index === activitiesInProcess.length - 1 ? 'disabled' : ''} class="px-1.5 py-0.5 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
+                      <button onclick="removeActivityFromProcess(${index})" class="px-1.5 py-0.5 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
                     </div>
                   </div>
-                  <div class="mt-2 pt-2 border-t border-gray-200">
-                    <label class="block text-xs text-gray-600 mb-1">Tarea asociada:</label>
-                    <select id="activity-task-${index}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityTask(${index}, this.value)">
+                  <div class="mt-1.5 pt-1.5 border-t border-gray-200">
+                    <label class="block text-xs text-gray-600 mb-0.5">Tarea asociada:</label>
+                    <select id="activity-task-${index}" class="w-full px-2 py-0.5 text-xs border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityTask(${index}, this.value)">
                       ${Object.entries(allTasks).map(([taskId, taskData]) => `
                         <option value="${taskId}" ${task.id === taskId ? 'selected' : ''}>${escapeHtml(taskData.name)}</option>
                       `).join('')}
                     </select>
-                    ${roleName ? `<div class="text-xs text-gray-600 mt-1">Roles: ${escapeHtml(roleName)}</div>` : ''}
+                    ${roleName ? `<div class="text-xs text-gray-600 mt-0.5">Roles: ${escapeHtml(roleName)}</div>` : ''}
                   </div>
-                  ${taskRoleIds.length > 0 && employeesWithRole.length > 0 ? `
-                  <div class="mt-2 pt-2 border-t border-gray-200">
-                    <label class="block text-xs text-gray-600 mb-1">Empleado asignado:</label>
-                    <select id="activity-employee-${index}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityEmployee(${index}, this.value)">
-                      <option value="">Sin asignar</option>
-                      ${employeesWithRole.map(emp => `
-                        <option value="${emp.id}" ${assignedEmployeeId === emp.id ? 'selected' : ''}>${escapeHtml(emp.name)}</option>
-                      `).join('')}
-                    </select>
-                  </div>
-                  ` : taskRoleIds.length > 0 ? `
-                  <div class="mt-2 pt-2 border-t border-gray-200">
-                    <span class="text-xs text-gray-500">No hay empleados con los roles requeridos</span>
-                  </div>
-                  ` : ''}
                 </div>
               `;
             }).join('')}
@@ -748,8 +710,7 @@ async function showProcessFlowEdit(processId, processName, activitiesWithTasks, 
       activities: activitiesInProcess.map(a => ({
         name: a.activityName,
         taskId: a.task.id,
-        order: a.order,
-        assignedEmployeeId: a.task.assignedEmployeeId || null
+        order: a.order
       }))
     };
     
@@ -775,12 +736,6 @@ function updateActivityTask(index, taskId) {
   }
 }
 
-// Update activity employee assignment
-function updateActivityEmployee(index, employeeId) {
-  if (window.currentProcessFlowEdit && window.currentProcessFlowEdit.activities[index]) {
-    window.currentProcessFlowEdit.activities[index].assignedEmployeeId = employeeId || null;
-  }
-}
 
 // Move activity up in process flow
 function moveActivityUp(index) {
@@ -814,8 +769,7 @@ function addActivityToProcess(taskId) {
   window.currentProcessFlowEdit.activities.push({
     name: task.name, // Use task name as default activity name
     taskId: taskId,
-    order: window.currentProcessFlowEdit.activities.length,
-    assignedEmployeeId: null
+    order: window.currentProcessFlowEdit.activities.length
   });
   updateProcessFlowDisplay();
 }
@@ -871,57 +825,29 @@ async function updateProcessFlowDisplay() {
             const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
             const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
             
-            // Filter employees that have any of the task's roles
-            let employeesWithRole = [];
-            if (taskRoleIds.length > 0) {
-              employeesWithRole = Object.entries(allEmployees)
-                .filter(([id, employee]) => {
-                  const employeeRoleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
-                  return employeeRoleIds.some(empRoleId => taskRoleIds.includes(empRoleId));
-                })
-                .map(([id, employee]) => ({ id, name: employee.name }));
-            }
-            
-            const assignedEmployeeId = activityData.assignedEmployeeId || '';
-            
             return `
-              <div class="border border-gray-200 p-3 bg-gray-50" data-activity-index="${index}">
-                <div class="flex items-center gap-3 mb-2">
-                  <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
+              <div class="border border-gray-200 p-2 bg-gray-50" data-activity-index="${index}">
+                <div class="flex items-center gap-2 mb-1.5">
+                  <span class="text-xs font-medium text-gray-500 w-5">${index + 1}</span>
                   <div class="flex-1">
-                    <label class="block text-xs text-gray-600 mb-1">Nombre de la Actividad:</label>
-                    <input type="text" id="activity-name-${index}" value="${escapeHtml(activityData.name)}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityName(${index}, this.value)" />
+                    <label class="block text-xs text-gray-600 mb-0.5">Nombre de la Actividad:</label>
+                    <input type="text" id="activity-name-${index}" value="${escapeHtml(activityData.name)}" class="w-full px-2 py-0.5 text-xs border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityName(${index}, this.value)" />
                   </div>
-                  <div class="flex gap-1">
-                    <button onclick="moveActivityUp(${index})" ${index === 0 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
-                    <button onclick="moveActivityDown(${index})" ${index === activitiesInProcess.length - 1 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
-                    <button onclick="removeActivityFromProcess(${index})" class="px-2 py-1 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
+                  <div class="flex gap-0.5">
+                    <button onclick="moveActivityUp(${index})" ${index === 0 ? 'disabled' : ''} class="px-1.5 py-0.5 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
+                    <button onclick="moveActivityDown(${index})" ${index === activitiesInProcess.length - 1 ? 'disabled' : ''} class="px-1.5 py-0.5 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
+                    <button onclick="removeActivityFromProcess(${index})" class="px-1.5 py-0.5 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
                   </div>
                 </div>
-                <div class="mt-2 pt-2 border-t border-gray-200">
-                  <label class="block text-xs text-gray-600 mb-1">Tarea asociada:</label>
-                  <select id="activity-task-${index}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityTask(${index}, this.value)">
+                <div class="mt-1.5 pt-1.5 border-t border-gray-200">
+                  <label class="block text-xs text-gray-600 mb-0.5">Tarea asociada:</label>
+                  <select id="activity-task-${index}" class="w-full px-2 py-0.5 text-xs border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityTask(${index}, this.value)">
                     ${Object.entries(allTasks).map(([taskId, taskData]) => `
                       <option value="${taskId}" ${task.id === taskId ? 'selected' : ''}>${escapeHtml(taskData.name)}</option>
                     `).join('')}
                   </select>
-                  ${roleName ? `<div class="text-xs text-gray-600 mt-1">Roles: ${escapeHtml(roleName)}</div>` : ''}
+                  ${roleName ? `<div class="text-xs text-gray-600 mt-0.5">Roles: ${escapeHtml(roleName)}</div>` : ''}
                 </div>
-                ${taskRoleIds.length > 0 && employeesWithRole.length > 0 ? `
-                <div class="mt-2 pt-2 border-t border-gray-200">
-                  <label class="block text-xs text-gray-600 mb-1">Empleado asignado:</label>
-                  <select id="activity-employee-${index}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityEmployee(${index}, this.value)">
-                    <option value="">Sin asignar</option>
-                    ${employeesWithRole.map(emp => `
-                      <option value="${emp.id}" ${assignedEmployeeId === emp.id ? 'selected' : ''}>${escapeHtml(emp.name)}</option>
-                    `).join('')}
-                  </select>
-                </div>
-                ` : taskRoleIds.length > 0 ? `
-                <div class="mt-2 pt-2 border-t border-gray-200">
-                  <span class="text-xs text-gray-500">No hay empleados con los roles requeridos</span>
-                </div>
-                ` : ''}
               </div>
             `;
           }).join('')}
@@ -958,8 +884,7 @@ async function updateProcessFlowDisplay() {
   window.currentProcessFlowEdit.activities = activitiesInProcess.map((a, index) => ({
     name: a.name,
     taskId: a.taskId,
-    order: index,
-    assignedEmployeeId: a.assignedEmployeeId || null
+    order: index
   }));
 }
 
@@ -974,13 +899,11 @@ async function saveProcessFlow() {
   const updatedActivities = activities.map((activity, index) => {
     const nameInput = document.getElementById(`activity-name-${index}`);
     const taskSelect = document.getElementById(`activity-task-${index}`);
-    const employeeSelect = document.getElementById(`activity-employee-${index}`);
     
     return {
       name: nameInput ? nameInput.value : activity.name,
       taskId: taskSelect ? taskSelect.value : activity.taskId,
-      order: index,
-      assignedEmployeeId: employeeSelect ? (employeeSelect.value || null) : (activity.assignedEmployeeId || null)
+      order: index
     };
   });
   
@@ -995,15 +918,6 @@ async function saveProcessFlow() {
     await updateProcess(processId, {
       activities: activitiesToSave
     });
-    
-    // Update assignedEmployeeId for each task
-    const updatePromises = updatedActivities.map(activity => {
-      return updateTask(activity.taskId, {
-        assignedEmployeeId: activity.assignedEmployeeId || null
-      });
-    });
-    
-    await Promise.all(updatePromises);
     
     hideSpinner();
     closeProcessFlowEdit();
@@ -1029,7 +943,6 @@ function closeProcessFlowEdit() {
 // Make functions available globally
 window.updateActivityName = updateActivityName;
 window.updateActivityTask = updateActivityTask;
-window.updateActivityEmployee = updateActivityEmployee;
 window.moveActivityUp = moveActivityUp;
 window.moveActivityDown = moveActivityDown;
 window.removeActivityFromProcess = removeActivityFromProcess;
