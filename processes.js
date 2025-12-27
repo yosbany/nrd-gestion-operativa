@@ -234,10 +234,43 @@ async function viewProcess(processId) {
       employeeMap[id] = employee.name;
     });
     
-    const processTasks = Object.entries(allTasks)
-      .filter(([id, task]) => task.processId === processId)
-      .map(([id, task]) => ({ id, ...task }))
-      .sort((a, b) => (a.order || 0) - (b.order || 0));
+    // Get tasks from process.taskIds (array) or from tasks with processId/processIds
+    const processTaskIds = process.taskIds || [];
+    const processTasks = [];
+    
+    // First, get tasks from process.taskIds
+    processTaskIds.forEach(taskId => {
+      if (allTasks[taskId]) {
+        processTasks.push({ id: taskId, ...allTasks[taskId] });
+      }
+    });
+    
+    // Also check for tasks that have this processId (for backward compatibility)
+    Object.entries(allTasks).forEach(([id, task]) => {
+      // Support both processId (singular) and processIds (array)
+      const taskProcessIds = task.processIds || (task.processId ? [task.processId] : []);
+      if (taskProcessIds.includes(processId) && !processTasks.find(t => t.id === id)) {
+        processTasks.push({ id, ...task });
+      }
+    });
+    
+    // Sort by order if available, otherwise maintain array order
+    processTasks.sort((a, b) => {
+      // If both have order, sort by order
+      if (a.order !== undefined && b.order !== undefined) {
+        return (a.order || 0) - (b.order || 0);
+      }
+      // If only one has order, prioritize it
+      if (a.order !== undefined) return -1;
+      if (b.order !== undefined) return 1;
+      // Otherwise maintain original order from taskIds array
+      const indexA = processTaskIds.indexOf(a.id);
+      const indexB = processTaskIds.indexOf(b.id);
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return 0;
+    });
 
     // Build flow visualization
     let flowHtml = '';
