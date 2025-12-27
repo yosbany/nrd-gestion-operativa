@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1766835131262">
+  <link rel="stylesheet" href="styles.css?v=1766835416154">
   <meta name="theme-color" content="#dc2626">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -381,12 +381,6 @@
                 <option value="exchange">Canje por beneficios</option>
               </select>
             </div>
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Proceso</label>
-              <select id="task-process-select" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
-                <option value="">Sin proceso</option>
-              </select>
-            </div>
             <div id="task-role-select-container" class="mb-4 sm:mb-6">
               <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Roles</label>
               <div id="task-roles-container" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 p-3">
@@ -404,10 +398,6 @@
             <div class="mb-4 sm:mb-6">
               <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Costo/Pago</label>
               <input type="number" id="task-cost" min="0" step="0.01" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base" placeholder="0.00">
-            </div>
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Orden</label>
-              <input type="number" id="task-order" min="0" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
             </div>
             <div class="mb-4 sm:mb-6">
               <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Pasos de Ejecución (uno por línea)</label>
@@ -614,10 +604,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1766835131262"></script>
-  <script src="modal.js?v=1766835131262"></script>
-  <script src="auth.js?v=1766835131262"></script>
-  <script src="db.js?v=1766835131262"></script>
+  <script src="firebase.js?v=1766835416154"></script>
+  <script src="modal.js?v=1766835416154"></script>
+  <script src="auth.js?v=1766835416154"></script>
+  <script src="db.js?v=1766835416154"></script>
   <script src="areas.js"></script>
   <script src="processes.js"></script>
   <script src="tasks.js"></script>
@@ -627,7 +617,7 @@
   <script src="inicio.js"></script>
   <script src="informacion.js"></script>
   <script src="organigrama.js"></script>
-  <script src="app.js?v=1766835131262"></script>
+  <script src="app.js?v=1766835416154"></script>
 
   <script>
     // Global error handler
@@ -678,7 +668,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1766835131262')
+        navigator.serviceWorker.register('service-worker.js?v=1766835416154')
           .then(reg => {
             console.log('Service Worker registered');
             

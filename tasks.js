@@ -157,26 +157,12 @@ function showTaskForm(taskId = null) {
     if (taskIdInput) taskIdInput.value = taskId || '';
   }
 
-  // Load processes and roles for selects
+  // Load roles for checkboxes
   Promise.all([
-    getProcessesRef().once('value'),
     getRolesRef().once('value'),
     taskId ? getTask(taskId) : Promise.resolve(null)
-  ]).then(([processesSnapshot, rolesSnapshot, taskSnapshot]) => {
-    const processes = processesSnapshot.val() || {};
+  ]).then(([rolesSnapshot, taskSnapshot]) => {
     const roles = rolesSnapshot.val() || {};
-    
-    // Process select
-    const processSelect = document.getElementById('task-process-select');
-    if (processSelect) {
-      processSelect.innerHTML = '<option value="">Sin proceso</option>';
-      Object.entries(processes).forEach(([id, process]) => {
-        const option = document.createElement('option');
-        option.value = id;
-        option.textContent = process.name;
-        processSelect.appendChild(option);
-      });
-    }
     
     // Roles checkboxes
     const rolesContainer = document.getElementById('task-roles-container');
@@ -219,11 +205,9 @@ function showTaskForm(taskId = null) {
         document.getElementById('task-name').value = task.name || '';
         document.getElementById('task-description').value = task.description || '';
         document.getElementById('task-type').value = task.type || 'with_role';
-        document.getElementById('task-process-select').value = task.processId || '';
         document.getElementById('task-frequency').value = task.frequency || '';
         document.getElementById('task-estimated-time').value = task.estimatedTime || '';
         document.getElementById('task-cost').value = task.cost || '';
-        document.getElementById('task-order').value = task.order || '';
         document.getElementById('task-execution-steps').value = task.executionSteps ? task.executionSteps.join('\n') : '';
         document.getElementById('task-success-criteria').value = task.successCriteria ? (Array.isArray(task.successCriteria) ? task.successCriteria.join('\n') : task.successCriteria) : '';
         document.getElementById('task-common-errors').value = task.commonErrors ? task.commonErrors.join('\n') : '';
@@ -501,11 +485,9 @@ if (taskFormElement) {
     const name = document.getElementById('task-name').value.trim();
     const description = document.getElementById('task-description').value.trim();
     const type = document.getElementById('task-type').value;
-    const processId = document.getElementById('task-process-select').value || null;
     const frequency = document.getElementById('task-frequency').value.trim() || null;
     const estimatedTime = parseInt(document.getElementById('task-estimated-time').value) || null;
     const cost = parseFloat(document.getElementById('task-cost').value) || null;
-    const order = parseInt(document.getElementById('task-order').value) || null;
     
     // Get selected roles
     const roleCheckboxes = document.querySelectorAll('#task-roles-container input[type="checkbox"]:checked');
@@ -539,11 +521,9 @@ if (taskFormElement) {
         name,
         description: description || null,
         type,
-        processId: processId || null,
         frequency,
         estimatedTime,
         cost: cost || null,
-        order,
         executionSteps,
         successCriteria,
         commonErrors
