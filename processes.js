@@ -246,6 +246,7 @@ async function viewProcess(processId) {
           activitiesWithTasks.push({
             activityName: activity.name,
             task: { id: taskId, ...allTasks[taskId] },
+            roleId: activity.roleId || null,
             order: index
           });
         }
@@ -286,9 +287,8 @@ async function viewProcess(processId) {
           <div class="space-y-2">
             ${activitiesWithTasks.map((activityData, index) => {
               const task = activityData.task;
-              const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-              const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
-              const roleName = roleNames.length > 0 ? roleNames.join(', ') : 'Sin rol';
+              const activityRoleId = activityData.roleId;
+              const activityRoleName = activityRoleId ? (roleMap[activityRoleId] || 'Rol desconocido') : null;
               
               const taskTypeLabels = {
                 'with_role': 'Con rol',
@@ -308,7 +308,7 @@ async function viewProcess(processId) {
                     </div>
                     <span class="text-xs px-2 py-0.5 bg-gray-100 rounded">${taskTypeLabels[task.type] || task.type}</span>
                   </div>
-                  ${roleNames.length > 0 ? `<div class="text-xs text-gray-600 ml-6">Roles: ${escapeHtml(roleName)}</div>` : ''}
+                  ${activityRoleName ? `<div class="text-xs text-gray-600 ml-6">Rol: ${escapeHtml(activityRoleName)}</div>` : ''}
                 </div>
               `;
             }).join('')}
@@ -613,15 +613,21 @@ async function showProcessFlowEdit(processId, processName, activitiesWithTasks, 
   
   title.textContent = `Editar Flujo: ${escapeHtml(processName)}`;
   
-  // Load all tasks and employees to show available tasks
-  showSpinner('Cargando tareas...');
+  // Load all tasks, roles, and employees to show available tasks
+  showSpinner('Cargando datos...');
   try {
-    const [allTasksSnapshot, employeesSnapshot] = await Promise.all([
+    const [allTasksSnapshot, rolesSnapshot, employeesSnapshot] = await Promise.all([
       getTasksRef().once('value'),
+      getRolesRef().once('value'),
       getEmployeesRef().once('value')
     ]);
     const allTasks = allTasksSnapshot.val() || {};
+    const allRoles = rolesSnapshot.val() || {};
     const allEmployees = employeesSnapshot.val() || {};
+    const roleMap = {};
+    Object.entries(allRoles).forEach(([id, role]) => {
+      roleMap[id] = role.name;
+    });
     
     // Get task IDs already in process
     const processTaskIds = new Set(activitiesWithTasks.map(a => a.task.id));
@@ -629,7 +635,8 @@ async function showProcessFlowEdit(processId, processName, activitiesWithTasks, 
     // Separate activities: in process and available tasks
     const activitiesInProcess = activitiesWithTasks.map((a, index) => ({
       ...a,
-      order: index
+      order: index,
+      roleId: a.roleId || null // Get roleId from activity if exists
     }));
     const availableTasks = Object.entries(allTasks)
       .filter(([id, task]) => !processTaskIds.has(id))
@@ -641,13 +648,14 @@ async function showProcessFlowEdit(processId, processName, activitiesWithTasks, 
     let flowEditHTML = `
       <div class="space-y-6">
         <div>
-          <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Actividades en el Proceso (Ordenadas)</h4>
+          <div class="flex justify-between items-center mb-3">
+            <h4 class="text-sm sm:text-base font-light uppercase tracking-wider text-gray-600">Actividades en el Proceso (Ordenadas)</h4>
+            <button onclick="addNewActivity()" class="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors" title="Agregar nueva actividad">+ Nueva Actividad</button>
+          </div>
           <div id="process-activities-list" class="space-y-2">
             ${activitiesInProcess.map((activityData, index) => {
               const task = activityData.task;
-              const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-              const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
-              const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
+              const currentRoleId = activityData.roleId || '';
               
               return `
                 <div class="border border-gray-200 p-2 bg-gray-50" data-activity-index="${index}">
@@ -666,11 +674,20 @@ async function showProcessFlowEdit(processId, processName, activitiesWithTasks, 
                   <div class="mt-1.5 pt-1.5 border-t border-gray-200">
                     <label class="block text-xs text-gray-600 mb-0.5">Tarea asociada:</label>
                     <select id="activity-task-${index}" class="w-full px-2 py-0.5 text-xs border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityTask(${index}, this.value)">
+                      <option value="">Seleccionar tarea...</option>
                       ${Object.entries(allTasks).map(([taskId, taskData]) => `
                         <option value="${taskId}" ${task.id === taskId ? 'selected' : ''}>${escapeHtml(taskData.name)}</option>
                       `).join('')}
                     </select>
-                    ${roleName ? `<div class="text-xs text-gray-600 mt-0.5">Roles: ${escapeHtml(roleName)}</div>` : ''}
+                  </div>
+                  <div class="mt-1.5 pt-1.5 border-t border-gray-200">
+                    <label class="block text-xs text-gray-600 mb-0.5">Rol asociado:</label>
+                    <select id="activity-role-${index}" class="w-full px-2 py-0.5 text-xs border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityRole(${index}, this.value)">
+                      <option value="">Seleccionar rol...</option>
+                      ${Object.entries(allRoles).map(([roleId, roleData]) => `
+                        <option value="${roleId}" ${currentRoleId === roleId ? 'selected' : ''}>${escapeHtml(roleData.name)}</option>
+                      `).join('')}
+                    </select>
                   </div>
                 </div>
               `;
@@ -678,40 +695,22 @@ async function showProcessFlowEdit(processId, processName, activitiesWithTasks, 
             ${activitiesInProcess.length === 0 ? '<p class="text-sm text-gray-600 text-center py-4">No hay actividades en el proceso</p>' : ''}
           </div>
         </div>
-        
-        <div>
-          <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas Disponibles (Agregar como Nueva Actividad)</h4>
-          <div id="available-tasks-list" class="space-y-2">
-            ${availableTasks.map(task => {
-              const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-              const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
-              const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
-              return `
-                <div class="border border-gray-200 p-3 flex items-center gap-3">
-                  <div class="flex-1">
-                    <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
-                    ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
-                  </div>
-                  <button onclick="addActivityToProcess('${task.id}')" class="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors" title="Agregar como actividad">+ Agregar</button>
-                </div>
-              `;
-            }).join('')}
-            ${availableTasks.length === 0 ? '<p class="text-sm text-gray-600 text-center py-4">No hay tareas disponibles</p>' : ''}
-          </div>
-        </div>
       </div>
     `;
     
     content.innerHTML = flowEditHTML;
     
-    // Store current state with activities
+    // Store current state with activities and roles
     window.currentProcessFlowEdit = {
       processId,
       activities: activitiesInProcess.map(a => ({
         name: a.activityName,
         taskId: a.task.id,
+        roleId: a.roleId || null,
         order: a.order
-      }))
+      })),
+      allRoles: allRoles,
+      allTasks: allTasks
     };
     
     modal.classList.remove('hidden');
@@ -734,6 +733,26 @@ function updateActivityTask(index, taskId) {
     window.currentProcessFlowEdit.activities[index].taskId = taskId;
     updateProcessFlowDisplay();
   }
+}
+
+// Update activity role
+function updateActivityRole(index, roleId) {
+  if (window.currentProcessFlowEdit && window.currentProcessFlowEdit.activities[index]) {
+    window.currentProcessFlowEdit.activities[index].roleId = roleId || null;
+  }
+}
+
+// Add new empty activity
+function addNewActivity() {
+  if (!window.currentProcessFlowEdit) return;
+  
+  window.currentProcessFlowEdit.activities.push({
+    name: '',
+    taskId: '',
+    roleId: null,
+    order: window.currentProcessFlowEdit.activities.length
+  });
+  updateProcessFlowDisplay();
 }
 
 
@@ -761,7 +780,7 @@ function removeActivityFromProcess(index) {
   updateProcessFlowDisplay();
 }
 
-// Add activity to process
+// Add activity to process (from available tasks list)
 function addActivityToProcess(taskId) {
   const task = Object.values(window.allTasksForFlowEdit || {}).find(t => t.id === taskId);
   if (!task) return;
@@ -769,6 +788,7 @@ function addActivityToProcess(taskId) {
   window.currentProcessFlowEdit.activities.push({
     name: task.name, // Use task name as default activity name
     taskId: taskId,
+    roleId: null,
     order: window.currentProcessFlowEdit.activities.length
   });
   updateProcessFlowDisplay();
@@ -800,14 +820,14 @@ async function updateProcessFlowDisplay() {
   // Get task IDs already in process
   const processTaskIds = new Set(activities.map(a => a.taskId));
   
-  // Build activities with task data
+  // Build activities with task data (handle activities without taskId)
   const activitiesInProcess = activities.map((activity, index) => {
-    const task = allTasks[activity.taskId];
-    return task ? {
+    const task = activity.taskId ? allTasks[activity.taskId] : null;
+    return {
       ...activity,
-      task: { id: activity.taskId, ...task }
-    } : null;
-  }).filter(a => a !== null);
+      task: task ? { id: activity.taskId, ...task } : null
+    };
+  });
   
   const availableTasks = Object.entries(allTasks)
     .filter(([id, task]) => !processTaskIds.has(id))
@@ -817,13 +837,14 @@ async function updateProcessFlowDisplay() {
   let flowEditHTML = `
     <div class="space-y-6">
       <div>
-        <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Actividades en el Proceso (Ordenadas)</h4>
+        <div class="flex justify-between items-center mb-3">
+          <h4 class="text-sm sm:text-base font-light uppercase tracking-wider text-gray-600">Actividades en el Proceso (Ordenadas)</h4>
+          <button onclick="addNewActivity()" class="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors" title="Agregar nueva actividad">+ Nueva Actividad</button>
+        </div>
         <div id="process-activities-list" class="space-y-2">
           ${activitiesInProcess.map((activityData, index) => {
-            const task = activityData.task;
-            const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-            const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
-            const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
+            const task = activityData.task || null;
+            const currentRoleId = activityData.roleId || '';
             
             return `
               <div class="border border-gray-200 p-2 bg-gray-50" data-activity-index="${index}">
@@ -831,7 +852,7 @@ async function updateProcessFlowDisplay() {
                   <span class="text-xs font-medium text-gray-500 w-5">${index + 1}</span>
                   <div class="flex-1">
                     <label class="block text-xs text-gray-600 mb-0.5">Nombre de la Actividad:</label>
-                    <input type="text" id="activity-name-${index}" value="${escapeHtml(activityData.name)}" class="w-full px-2 py-0.5 text-xs border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityName(${index}, this.value)" />
+                    <input type="text" id="activity-name-${index}" value="${escapeHtml(activityData.name || '')}" class="w-full px-2 py-0.5 text-xs border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityName(${index}, this.value)" />
                   </div>
                   <div class="flex gap-0.5">
                     <button onclick="moveActivityUp(${index})" ${index === 0 ? 'disabled' : ''} class="px-1.5 py-0.5 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
@@ -842,37 +863,25 @@ async function updateProcessFlowDisplay() {
                 <div class="mt-1.5 pt-1.5 border-t border-gray-200">
                   <label class="block text-xs text-gray-600 mb-0.5">Tarea asociada:</label>
                   <select id="activity-task-${index}" class="w-full px-2 py-0.5 text-xs border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityTask(${index}, this.value)">
+                    <option value="">Seleccionar tarea...</option>
                     ${Object.entries(allTasks).map(([taskId, taskData]) => `
-                      <option value="${taskId}" ${task.id === taskId ? 'selected' : ''}>${escapeHtml(taskData.name)}</option>
+                      <option value="${taskId}" ${task && task.id === taskId ? 'selected' : ''}>${escapeHtml(taskData.name)}</option>
                     `).join('')}
                   </select>
-                  ${roleName ? `<div class="text-xs text-gray-600 mt-0.5">Roles: ${escapeHtml(roleName)}</div>` : ''}
+                </div>
+                <div class="mt-1.5 pt-1.5 border-t border-gray-200">
+                  <label class="block text-xs text-gray-600 mb-0.5">Rol asociado:</label>
+                  <select id="activity-role-${index}" class="w-full px-2 py-0.5 text-xs border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityRole(${index}, this.value)">
+                    <option value="">Seleccionar rol...</option>
+                    ${Object.entries(allRoles).map(([roleId, roleData]) => `
+                      <option value="${roleId}" ${currentRoleId === roleId ? 'selected' : ''}>${escapeHtml(roleData.name)}</option>
+                    `).join('')}
+                  </select>
                 </div>
               </div>
             `;
           }).join('')}
           ${activitiesInProcess.length === 0 ? '<p class="text-sm text-gray-600 text-center py-4">No hay actividades en el proceso</p>' : ''}
-        </div>
-      </div>
-      
-      <div>
-        <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas Disponibles (Agregar como Nueva Actividad)</h4>
-        <div id="available-tasks-list" class="space-y-2">
-          ${availableTasks.map(task => {
-            const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-            const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
-            const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
-            return `
-              <div class="border border-gray-200 p-3 flex items-center gap-3">
-                <div class="flex-1">
-                  <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
-                  ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
-                </div>
-                <button onclick="addActivityToProcess('${task.id}')" class="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors" title="Agregar como actividad">+ Agregar</button>
-              </div>
-            `;
-          }).join('')}
-          ${availableTasks.length === 0 ? '<p class="text-sm text-gray-600 text-center py-4">No hay tareas disponibles</p>' : ''}
         </div>
       </div>
     </div>
@@ -881,9 +890,10 @@ async function updateProcessFlowDisplay() {
   content.innerHTML = flowEditHTML;
   
   // Update stored activities with current order
-  window.currentProcessFlowEdit.activities = activitiesInProcess.map((a, index) => ({
-    name: a.name,
-    taskId: a.taskId,
+  window.currentProcessFlowEdit.activities = activities.map((a, index) => ({
+    name: a.name || '',
+    taskId: a.taskId || '',
+    roleId: a.roleId || null,
     order: index
   }));
 }
@@ -899,10 +909,12 @@ async function saveProcessFlow() {
   const updatedActivities = activities.map((activity, index) => {
     const nameInput = document.getElementById(`activity-name-${index}`);
     const taskSelect = document.getElementById(`activity-task-${index}`);
+    const roleSelect = document.getElementById(`activity-role-${index}`);
     
     return {
       name: nameInput ? nameInput.value : activity.name,
       taskId: taskSelect ? taskSelect.value : activity.taskId,
+      roleId: roleSelect ? (roleSelect.value || null) : (activity.roleId || null),
       order: index
     };
   });
@@ -912,7 +924,8 @@ async function saveProcessFlow() {
     // Update process with activities array
     const activitiesToSave = updatedActivities.map(a => ({
       name: a.name,
-      taskId: a.taskId
+      taskId: a.taskId,
+      roleId: a.roleId
     }));
     
     await updateProcess(processId, {
@@ -943,6 +956,8 @@ function closeProcessFlowEdit() {
 // Make functions available globally
 window.updateActivityName = updateActivityName;
 window.updateActivityTask = updateActivityTask;
+window.updateActivityRole = updateActivityRole;
+window.addNewActivity = addNewActivity;
 window.moveActivityUp = moveActivityUp;
 window.moveActivityDown = moveActivityDown;
 window.removeActivityFromProcess = removeActivityFromProcess;

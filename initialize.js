@@ -37,7 +37,9 @@ const initialData = {
     { name: 'Anisley', roleNames: ['Encargado de Turno / Cajero'] },
     { name: 'Yuneisis', roleNames: ['Confitero / Repostero', 'Cocinero / Rotisería'] },
     { name: 'Yamilka', roleNames: ['Limpieza'] },
-    { name: 'Félix Manuel', roleNames: ['Empleado de Mostrador / Vendedor'] }
+    { name: 'Félix Manuel', roleNames: ['Empleado de Mostrador / Vendedor'] },
+    { name: 'Yosbany', roleNames: ['Administrador'] },
+    { name: 'Manuel', roleNames: ['Administrador'] }
   ],
   tasks: [
     {
@@ -1004,15 +1006,28 @@ async function initializeSystem() {
           continue;
         }
         
-        // Get activities with task IDs
+        // Get activities with task IDs and role IDs
         const activities = [];
         if (processData.activities && Array.isArray(processData.activities)) {
           processData.activities.forEach(activity => {
             const taskId = taskNameToId[activity.taskName];
             if (taskId) {
+              // Get task data to find its roles
+              const taskData = initialData.tasks.find(t => t.name === activity.taskName);
+              let roleId = null;
+              
+              // If activity specifies a roleName, use it; otherwise use first role from task
+              if (activity.roleName) {
+                roleId = roleNameToId[activity.roleName] || null;
+              } else if (taskData && taskData.roleNames && taskData.roleNames.length > 0) {
+                // Use first role from task as default
+                roleId = roleNameToId[taskData.roleNames[0]] || null;
+              }
+              
               activities.push({
                 name: activity.name,
-                taskId: taskId
+                taskId: taskId,
+                roleId: roleId
               });
             }
           });
@@ -1021,9 +1036,19 @@ async function initializeSystem() {
           processData.taskNames.forEach((taskName, index) => {
             const taskId = taskNameToId[taskName];
             if (taskId) {
+              // Get task data to find its roles
+              const taskData = initialData.tasks.find(t => t.name === taskName);
+              let roleId = null;
+              
+              if (taskData && taskData.roleNames && taskData.roleNames.length > 0) {
+                // Use first role from task as default
+                roleId = roleNameToId[taskData.roleNames[0]] || null;
+              }
+              
               activities.push({
                 name: taskName, // Use task name as activity name for backward compatibility
-                taskId: taskId
+                taskId: taskId,
+                roleId: roleId
               });
             }
           });
