@@ -234,52 +234,58 @@ async function viewProcess(processId) {
       employeeMap[id] = employee.name;
     });
     
-    // Get tasks from process.taskIds (array) or from tasks with processId/processIds
-    const processTaskIds = process.taskIds || [];
-    const processTasks = [];
+    // Get activities from process.activities (new structure) or from process.taskIds (backward compatibility)
+    const processActivities = process.activities || [];
+    const activitiesWithTasks = [];
     
-    // First, get tasks from process.taskIds
-    processTaskIds.forEach(taskId => {
-      if (allTasks[taskId]) {
-        processTasks.push({ id: taskId, ...allTasks[taskId] });
-      }
-    });
-    
-    // Also check for tasks that have this processId (for backward compatibility)
-    Object.entries(allTasks).forEach(([id, task]) => {
-      // Support both processId (singular) and processIds (array)
-      const taskProcessIds = task.processIds || (task.processId ? [task.processId] : []);
-      if (taskProcessIds.includes(processId) && !processTasks.find(t => t.id === id)) {
-        processTasks.push({ id, ...task });
-      }
-    });
-    
-    // Sort by order if available, otherwise maintain array order
-    processTasks.sort((a, b) => {
-      // If both have order, sort by order
-      if (a.order !== undefined && b.order !== undefined) {
-        return (a.order || 0) - (b.order || 0);
-      }
-      // If only one has order, prioritize it
-      if (a.order !== undefined) return -1;
-      if (b.order !== undefined) return 1;
-      // Otherwise maintain original order from taskIds array
-      const indexA = processTaskIds.indexOf(a.id);
-      const indexB = processTaskIds.indexOf(b.id);
-      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-      if (indexA !== -1) return -1;
-      if (indexB !== -1) return 1;
-      return 0;
-    });
+    // Process activities (new structure)
+    if (processActivities.length > 0) {
+      processActivities.forEach((activity, index) => {
+        const taskId = activity.taskId;
+        if (taskId && allTasks[taskId]) {
+          activitiesWithTasks.push({
+            activityName: activity.name,
+            task: { id: taskId, ...allTasks[taskId] },
+            order: index
+          });
+        }
+      });
+    } else {
+      // Backward compatibility: use process.taskIds
+      const processTaskIds = process.taskIds || [];
+      processTaskIds.forEach((taskId, index) => {
+        if (allTasks[taskId]) {
+          activitiesWithTasks.push({
+            activityName: allTasks[taskId].name, // Use task name as activity name for backward compatibility
+            task: { id: taskId, ...allTasks[taskId] },
+            order: index
+          });
+        }
+      });
+      
+      // Also check for tasks that have this processId (for backward compatibility)
+      Object.entries(allTasks).forEach(([id, task]) => {
+        // Support both processId (singular) and processIds (array)
+        const taskProcessIds = task.processIds || (task.processId ? [task.processId] : []);
+        if (taskProcessIds.includes(processId) && !activitiesWithTasks.find(a => a.task.id === id)) {
+          activitiesWithTasks.push({
+            activityName: task.name,
+            task: { id, ...task },
+            order: activitiesWithTasks.length
+          });
+        }
+      });
+    }
 
     // Build flow visualization
     let flowHtml = '';
-    if (processTasks.length > 0) {
+    if (activitiesWithTasks.length > 0) {
       flowHtml = `
         <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-          <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Flujo del Proceso (${processTasks.length} ${processTasks.length === 1 ? 'tarea' : 'tareas'}):</h4>
+          <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Flujo del Proceso (${activitiesWithTasks.length} ${activitiesWithTasks.length === 1 ? 'actividad' : 'actividades'}):</h4>
           <div class="space-y-2">
-            ${processTasks.map((task, index) => {
+            ${activitiesWithTasks.map((activityData, index) => {
+              const task = activityData.task;
               const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
               const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
               const roleName = roleNames.length > 0 ? roleNames.join(', ') : 'Sin rol';
@@ -295,10 +301,13 @@ async function viewProcess(processId) {
               };
               
               return `
-                <div class="border border-gray-200 p-2 sm:p-3 hover:border-red-600 transition-colors cursor-pointer" onclick="viewTask('${task.id}')">
+                <div class="border border-gray-200 p-2 sm:p-3 hover:border-red-600 transition-colors">
                   <div class="flex items-center gap-2 mb-1">
                     <span class="text-xs font-medium text-gray-500">${index + 1}</span>
-                    <span class="font-light text-sm sm:text-base flex-1">${escapeHtml(task.name)}</span>
+                    <div class="flex-1">
+                      <div class="font-medium text-sm sm:text-base text-gray-800">${escapeHtml(activityData.activityName)}</div>
+                      <div class="text-xs text-gray-500 mt-0.5 cursor-pointer hover:text-red-600" onclick="viewTask('${task.id}')">Tarea: ${escapeHtml(task.name)}</div>
+                    </div>
                     <span class="text-xs px-2 py-0.5 bg-gray-100 rounded">${taskTypeLabels[task.type] || task.type}</span>
                   </div>
                   ${roleNames.length > 0 ? `<div class="text-xs text-gray-600 ml-6">Roles: ${escapeHtml(roleName)}</div>` : ''}
@@ -350,13 +359,13 @@ async function viewProcess(processId) {
     
     if (diagramBtn) {
       diagramBtn.onclick = () => {
-        showProcessDiagram(processId, process.name, processTasks, roleMap, employeeMap);
+        showProcessDiagram(processId, process.name, activitiesWithTasks, roleMap, employeeMap);
       };
     }
     
     if (flowEditBtn) {
       flowEditBtn.onclick = () => {
-        showProcessFlowEdit(processId, process.name, processTasks, roleMap, employeeMap);
+        showProcessFlowEdit(processId, process.name, activitiesWithTasks, roleMap, employeeMap);
       };
     }
   } catch (error) {
@@ -503,7 +512,7 @@ if (closeProcessFlowEditBtn) {
 }
 
 // Show process diagram
-function showProcessDiagram(processId, processName, processTasks, roleMap, employeeMap = {}) {
+function showProcessDiagram(processId, processName, activitiesWithTasks, roleMap, employeeMap = {}) {
   const modal = document.getElementById('process-diagram-modal');
   const title = document.getElementById('process-diagram-title');
   const content = document.getElementById('process-diagram-content');
@@ -512,8 +521,8 @@ function showProcessDiagram(processId, processName, processTasks, roleMap, emplo
   
   title.textContent = `Diagrama: ${escapeHtml(processName)}`;
   
-  if (!processTasks || processTasks.length === 0) {
-    content.innerHTML = '<p class="text-center text-gray-600 py-8">No hay tareas en este proceso</p>';
+  if (!activitiesWithTasks || activitiesWithTasks.length === 0) {
+    content.innerHTML = '<p class="text-center text-gray-600 py-8">No hay actividades en este proceso</p>';
     modal.classList.remove('hidden');
     return;
   }
@@ -536,7 +545,8 @@ function showProcessDiagram(processId, processName, processTasks, roleMap, emplo
   
   let diagramHTML = '<div class="flex flex-col items-center space-y-4">';
   
-  processTasks.forEach((task, index) => {
+  activitiesWithTasks.forEach((activityData, index) => {
+    const task = activityData.task;
     const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
     const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
     const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
@@ -544,14 +554,17 @@ function showProcessDiagram(processId, processName, processTasks, roleMap, emplo
     const taskTypeLabel = taskTypeLabels[task.type] || task.type;
     const taskTypeColor = taskTypeColors[task.type] || 'bg-gray-100 border-gray-300';
     
-    // Task card
+    // Activity card
     diagramHTML += `
       <div class="w-full max-w-md">
-        <div class="border-2 ${taskTypeColor} rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onclick="closeProcessDiagram(); setTimeout(() => viewTask('${task.id}'), 100);">
+        <div class="border-2 ${taskTypeColor} rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
           <div class="flex items-start justify-between mb-2">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-1">
               <span class="text-lg font-medium text-gray-700 bg-white rounded-full w-8 h-8 flex items-center justify-center border-2 border-gray-400">${index + 1}</span>
-              <h4 class="text-base sm:text-lg font-light text-gray-800">${escapeHtml(task.name)}</h4>
+              <div class="flex-1">
+                <h4 class="text-base sm:text-lg font-medium text-gray-800">${escapeHtml(activityData.activityName)}</h4>
+                <p class="text-xs text-gray-500 mt-0.5 cursor-pointer hover:text-red-600" onclick="closeProcessDiagram(); setTimeout(() => viewTask('${task.id}'), 100);">Tarea: ${escapeHtml(task.name)}</p>
+              </div>
             </div>
             <span class="text-xs px-2 py-1 bg-white rounded border border-gray-300 text-gray-700 whitespace-nowrap">${taskTypeLabel}</span>
           </div>
@@ -574,8 +587,8 @@ function showProcessDiagram(processId, processName, processTasks, roleMap, emplo
       </div>
     `;
     
-    // Arrow connector (except for last task)
-    if (index < processTasks.length - 1) {
+    // Arrow connector (except for last activity)
+    if (index < activitiesWithTasks.length - 1) {
       diagramHTML += `
         <div class="flex items-center justify-center">
           <svg class="w-6 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -601,7 +614,7 @@ function closeProcessDiagram() {
 }
 
 // Show process flow edit modal
-async function showProcessFlowEdit(processId, processName, processTasks, roleMap, employeeMap = {}) {
+async function showProcessFlowEdit(processId, processName, activitiesWithTasks, roleMap, employeeMap = {}) {
   const modal = document.getElementById('process-flow-edit-modal');
   const title = document.getElementById('process-flow-edit-title');
   const content = document.getElementById('process-flow-edit-content');
@@ -621,10 +634,13 @@ async function showProcessFlowEdit(processId, processName, processTasks, roleMap
     const allEmployees = employeesSnapshot.val() || {};
     
     // Get task IDs already in process
-    const processTaskIds = new Set(processTasks.map(t => t.id));
+    const processTaskIds = new Set(activitiesWithTasks.map(a => a.task.id));
     
-    // Separate tasks: in process and available
-    const tasksInProcess = [...processTasks].sort((a, b) => (a.order || 0) - (b.order || 0));
+    // Separate activities: in process and available tasks
+    const activitiesInProcess = activitiesWithTasks.map((a, index) => ({
+      ...a,
+      order: index
+    }));
     const availableTasks = Object.entries(allTasks)
       .filter(([id, task]) => !processTaskIds.has(id))
       .map(([id, task]) => ({ id, ...task }));
@@ -635,9 +651,10 @@ async function showProcessFlowEdit(processId, processName, processTasks, roleMap
     let flowEditHTML = `
       <div class="space-y-6">
         <div>
-          <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas en el Proceso (Ordenadas)</h4>
-          <div id="process-tasks-list" class="space-y-2">
-            ${tasksInProcess.map((task, index) => {
+          <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Actividades en el Proceso (Ordenadas)</h4>
+          <div id="process-activities-list" class="space-y-2">
+            ${activitiesInProcess.map((activityData, index) => {
+              const task = activityData.task;
               const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
               const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
               const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
@@ -656,25 +673,32 @@ async function showProcessFlowEdit(processId, processName, processTasks, roleMap
               const assignedEmployeeId = task.assignedEmployeeId || '';
               
               return `
-                <div class="border border-gray-200 p-3 bg-gray-50" data-task-id="${task.id}">
+                <div class="border border-gray-200 p-3 bg-gray-50" data-activity-index="${index}">
                   <div class="flex items-center gap-3 mb-2">
-                    <div class="flex items-center gap-2 flex-1">
-                      <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
-                      <div class="flex-1">
-                        <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
-                        ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
-                      </div>
+                    <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
+                    <div class="flex-1">
+                      <label class="block text-xs text-gray-600 mb-1">Nombre de la Actividad:</label>
+                      <input type="text" id="activity-name-${index}" value="${escapeHtml(activityData.activityName)}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityName(${index}, this.value)" />
                     </div>
                     <div class="flex gap-1">
-                      <button onclick="moveTaskUp('${task.id}')" ${index === 0 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
-                      <button onclick="moveTaskDown('${task.id}')" ${index === tasksInProcess.length - 1 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
-                      <button onclick="removeTaskFromProcess('${task.id}')" class="px-2 py-1 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
+                      <button onclick="moveActivityUp(${index})" ${index === 0 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
+                      <button onclick="moveActivityDown(${index})" ${index === activitiesInProcess.length - 1 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
+                      <button onclick="removeActivityFromProcess(${index})" class="px-2 py-1 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
                     </div>
+                  </div>
+                  <div class="mt-2 pt-2 border-t border-gray-200">
+                    <label class="block text-xs text-gray-600 mb-1">Tarea asociada:</label>
+                    <select id="activity-task-${index}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityTask(${index}, this.value)">
+                      ${Object.entries(allTasks).map(([taskId, taskData]) => `
+                        <option value="${taskId}" ${task.id === taskId ? 'selected' : ''}>${escapeHtml(taskData.name)}</option>
+                      `).join('')}
+                    </select>
+                    ${roleName ? `<div class="text-xs text-gray-600 mt-1">Roles: ${escapeHtml(roleName)}</div>` : ''}
                   </div>
                   ${taskRoleIds.length > 0 && employeesWithRole.length > 0 ? `
                   <div class="mt-2 pt-2 border-t border-gray-200">
                     <label class="block text-xs text-gray-600 mb-1">Empleado asignado:</label>
-                    <select id="task-employee-${task.id}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateTaskEmployee('${task.id}', this.value)">
+                    <select id="activity-employee-${index}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityEmployee(${index}, this.value)">
                       <option value="">Sin asignar</option>
                       ${employeesWithRole.map(emp => `
                         <option value="${emp.id}" ${assignedEmployeeId === emp.id ? 'selected' : ''}>${escapeHtml(emp.name)}</option>
@@ -689,12 +713,12 @@ async function showProcessFlowEdit(processId, processName, processTasks, roleMap
                 </div>
               `;
             }).join('')}
-            ${tasksInProcess.length === 0 ? '<p class="text-sm text-gray-600 text-center py-4">No hay tareas en el proceso</p>' : ''}
+            ${activitiesInProcess.length === 0 ? '<p class="text-sm text-gray-600 text-center py-4">No hay actividades en el proceso</p>' : ''}
           </div>
         </div>
         
         <div>
-          <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas Disponibles (Agregar al Proceso)</h4>
+          <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas Disponibles (Agregar como Nueva Actividad)</h4>
           <div id="available-tasks-list" class="space-y-2">
             ${availableTasks.map(task => {
               const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
@@ -706,7 +730,7 @@ async function showProcessFlowEdit(processId, processName, processTasks, roleMap
                     <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
                     ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
                   </div>
-                  <button onclick="addTaskToProcess('${task.id}')" class="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors" title="Agregar al proceso">+ Agregar</button>
+                  <button onclick="addActivityToProcess('${task.id}')" class="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors" title="Agregar como actividad">+ Agregar</button>
                 </div>
               `;
             }).join('')}
@@ -718,13 +742,14 @@ async function showProcessFlowEdit(processId, processName, processTasks, roleMap
     
     content.innerHTML = flowEditHTML;
     
-    // Store current state with assigned employees
+    // Store current state with activities
     window.currentProcessFlowEdit = {
       processId,
-      tasks: tasksInProcess.map(t => ({ 
-        id: t.id, 
-        order: t.order || 0,
-        assignedEmployeeId: t.assignedEmployeeId || null
+      activities: activitiesInProcess.map(a => ({
+        name: a.activityName,
+        taskId: a.task.id,
+        order: a.order,
+        assignedEmployeeId: a.task.assignedEmployeeId || null
       }))
     };
     
@@ -735,48 +760,61 @@ async function showProcessFlowEdit(processId, processName, processTasks, roleMap
   }
 }
 
-// Update task employee assignment
-function updateTaskEmployee(taskId, employeeId) {
-  const task = window.currentProcessFlowEdit.tasks.find(t => t.id === taskId);
-  if (task) {
-    task.assignedEmployeeId = employeeId || null;
+// Update activity name
+function updateActivityName(index, name) {
+  if (window.currentProcessFlowEdit && window.currentProcessFlowEdit.activities[index]) {
+    window.currentProcessFlowEdit.activities[index].name = name;
   }
 }
 
-// Move task up in process flow
-function moveTaskUp(taskId) {
-  const tasks = window.currentProcessFlowEdit.tasks;
-  const index = tasks.findIndex(t => t.id === taskId);
+// Update activity task
+function updateActivityTask(index, taskId) {
+  if (window.currentProcessFlowEdit && window.currentProcessFlowEdit.activities[index]) {
+    window.currentProcessFlowEdit.activities[index].taskId = taskId;
+    updateProcessFlowDisplay();
+  }
+}
+
+// Update activity employee assignment
+function updateActivityEmployee(index, employeeId) {
+  if (window.currentProcessFlowEdit && window.currentProcessFlowEdit.activities[index]) {
+    window.currentProcessFlowEdit.activities[index].assignedEmployeeId = employeeId || null;
+  }
+}
+
+// Move activity up in process flow
+function moveActivityUp(index) {
+  const activities = window.currentProcessFlowEdit.activities;
   if (index > 0) {
-    [tasks[index], tasks[index - 1]] = [tasks[index - 1], tasks[index]];
+    [activities[index], activities[index - 1]] = [activities[index - 1], activities[index]];
     updateProcessFlowDisplay();
   }
 }
 
-// Move task down in process flow
-function moveTaskDown(taskId) {
-  const tasks = window.currentProcessFlowEdit.tasks;
-  const index = tasks.findIndex(t => t.id === taskId);
-  if (index < tasks.length - 1) {
-    [tasks[index], tasks[index + 1]] = [tasks[index + 1], tasks[index]];
+// Move activity down in process flow
+function moveActivityDown(index) {
+  const activities = window.currentProcessFlowEdit.activities;
+  if (index < activities.length - 1) {
+    [activities[index], activities[index + 1]] = [activities[index + 1], activities[index]];
     updateProcessFlowDisplay();
   }
 }
 
-// Remove task from process
-function removeTaskFromProcess(taskId) {
-  window.currentProcessFlowEdit.tasks = window.currentProcessFlowEdit.tasks.filter(t => t.id !== taskId);
+// Remove activity from process
+function removeActivityFromProcess(index) {
+  window.currentProcessFlowEdit.activities.splice(index, 1);
   updateProcessFlowDisplay();
 }
 
-// Add task to process
-function addTaskToProcess(taskId) {
-  const maxOrder = window.currentProcessFlowEdit.tasks.length > 0 
-    ? Math.max(...window.currentProcessFlowEdit.tasks.map(t => t.order || 0))
-    : -1;
-  window.currentProcessFlowEdit.tasks.push({ 
-    id: taskId, 
-    order: maxOrder + 1,
+// Add activity to process
+function addActivityToProcess(taskId) {
+  const task = Object.values(window.allTasksForFlowEdit || {}).find(t => t.id === taskId);
+  if (!task) return;
+  
+  window.currentProcessFlowEdit.activities.push({
+    name: task.name, // Use task name as default activity name
+    taskId: taskId,
+    order: window.currentProcessFlowEdit.activities.length,
     assignedEmployeeId: null
   });
   updateProcessFlowDisplay();
@@ -787,7 +825,7 @@ async function updateProcessFlowDisplay() {
   const content = document.getElementById('process-flow-edit-content');
   if (!content || !window.currentProcessFlowEdit) return;
   
-  const { tasks } = window.currentProcessFlowEdit;
+  const { activities } = window.currentProcessFlowEdit;
   
   // Load all tasks, roles, and employees
   const [allTasksSnapshot, rolesSnapshot, employeesSnapshot] = await Promise.all([
@@ -797,6 +835,7 @@ async function updateProcessFlowDisplay() {
   ]);
   
   const allTasks = allTasksSnapshot.val() || {};
+  window.allTasksForFlowEdit = allTasks; // Store for addActivityToProcess
   const allRoles = rolesSnapshot.val() || {};
   const allEmployees = employeesSnapshot.val() || {};
   const roleMap = {};
@@ -804,14 +843,17 @@ async function updateProcessFlowDisplay() {
     roleMap[id] = role.name;
   });
   
-  // Get task IDs in process
-  const processTaskIds = new Set(tasks.map(t => t.id));
+  // Get task IDs already in process
+  const processTaskIds = new Set(activities.map(a => a.taskId));
   
-  // Separate tasks (preserve assignedEmployeeId from current state)
-  const tasksInProcess = tasks.map(({ id, order, assignedEmployeeId }) => {
-    const task = allTasks[id];
-    return task ? { id, order, assignedEmployeeId: assignedEmployeeId || null, ...task } : null;
-  }).filter(t => t !== null);
+  // Build activities with task data
+  const activitiesInProcess = activities.map((activity, index) => {
+    const task = allTasks[activity.taskId];
+    return task ? {
+      ...activity,
+      task: { id: activity.taskId, ...task }
+    } : null;
+  }).filter(a => a !== null);
   
   const availableTasks = Object.entries(allTasks)
     .filter(([id, task]) => !processTaskIds.has(id))
@@ -821,9 +863,10 @@ async function updateProcessFlowDisplay() {
   let flowEditHTML = `
     <div class="space-y-6">
       <div>
-        <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas en el Proceso (Ordenadas)</h4>
-        <div id="process-tasks-list" class="space-y-2">
-          ${tasksInProcess.map((task, index) => {
+        <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Actividades en el Proceso (Ordenadas)</h4>
+        <div id="process-activities-list" class="space-y-2">
+          ${activitiesInProcess.map((activityData, index) => {
+            const task = activityData.task;
             const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
             const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
             const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
@@ -839,28 +882,35 @@ async function updateProcessFlowDisplay() {
                 .map(([id, employee]) => ({ id, name: employee.name }));
             }
             
-            const assignedEmployeeId = task.assignedEmployeeId || '';
+            const assignedEmployeeId = activityData.assignedEmployeeId || '';
             
             return `
-              <div class="border border-gray-200 p-3 bg-gray-50" data-task-id="${task.id}">
+              <div class="border border-gray-200 p-3 bg-gray-50" data-activity-index="${index}">
                 <div class="flex items-center gap-3 mb-2">
-                  <div class="flex items-center gap-2 flex-1">
-                    <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
-                    <div class="flex-1">
-                      <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
-                      ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
-                    </div>
+                  <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
+                  <div class="flex-1">
+                    <label class="block text-xs text-gray-600 mb-1">Nombre de la Actividad:</label>
+                    <input type="text" id="activity-name-${index}" value="${escapeHtml(activityData.name)}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityName(${index}, this.value)" />
                   </div>
                   <div class="flex gap-1">
-                    <button onclick="moveTaskUp('${task.id}')" ${index === 0 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
-                    <button onclick="moveTaskDown('${task.id}')" ${index === tasksInProcess.length - 1 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
-                    <button onclick="removeTaskFromProcess('${task.id}')" class="px-2 py-1 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
+                    <button onclick="moveActivityUp(${index})" ${index === 0 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
+                    <button onclick="moveActivityDown(${index})" ${index === activitiesInProcess.length - 1 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
+                    <button onclick="removeActivityFromProcess(${index})" class="px-2 py-1 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
                   </div>
+                </div>
+                <div class="mt-2 pt-2 border-t border-gray-200">
+                  <label class="block text-xs text-gray-600 mb-1">Tarea asociada:</label>
+                  <select id="activity-task-${index}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityTask(${index}, this.value)">
+                    ${Object.entries(allTasks).map(([taskId, taskData]) => `
+                      <option value="${taskId}" ${task.id === taskId ? 'selected' : ''}>${escapeHtml(taskData.name)}</option>
+                    `).join('')}
+                  </select>
+                  ${roleName ? `<div class="text-xs text-gray-600 mt-1">Roles: ${escapeHtml(roleName)}</div>` : ''}
                 </div>
                 ${taskRoleIds.length > 0 && employeesWithRole.length > 0 ? `
                 <div class="mt-2 pt-2 border-t border-gray-200">
                   <label class="block text-xs text-gray-600 mb-1">Empleado asignado:</label>
-                  <select id="task-employee-${task.id}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateTaskEmployee('${task.id}', this.value)">
+                  <select id="activity-employee-${index}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateActivityEmployee(${index}, this.value)">
                     <option value="">Sin asignar</option>
                     ${employeesWithRole.map(emp => `
                       <option value="${emp.id}" ${assignedEmployeeId === emp.id ? 'selected' : ''}>${escapeHtml(emp.name)}</option>
@@ -875,24 +925,24 @@ async function updateProcessFlowDisplay() {
               </div>
             `;
           }).join('')}
-          ${tasksInProcess.length === 0 ? '<p class="text-sm text-gray-600 text-center py-4">No hay tareas en el proceso</p>' : ''}
+          ${activitiesInProcess.length === 0 ? '<p class="text-sm text-gray-600 text-center py-4">No hay actividades en el proceso</p>' : ''}
         </div>
       </div>
       
       <div>
-        <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas Disponibles (Agregar al Proceso)</h4>
+        <h4 class="text-sm sm:text-base font-light mb-3 uppercase tracking-wider text-gray-600">Tareas Disponibles (Agregar como Nueva Actividad)</h4>
         <div id="available-tasks-list" class="space-y-2">
           ${availableTasks.map(task => {
             const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
             const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
             const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
             return `
-                <div class="border border-gray-200 p-3 flex items-center gap-3">
-                  <div class="flex-1">
-                    <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
-                    ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
-                  </div>
-                <button onclick="addTaskToProcess('${task.id}')" class="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors" title="Agregar al proceso">+ Agregar</button>
+              <div class="border border-gray-200 p-3 flex items-center gap-3">
+                <div class="flex-1">
+                  <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
+                  ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
+                </div>
+                <button onclick="addActivityToProcess('${task.id}')" class="px-3 py-1 text-xs bg-green-600 text-white hover:bg-green-700 transition-colors" title="Agregar como actividad">+ Agregar</button>
               </div>
             `;
           }).join('')}
@@ -903,52 +953,57 @@ async function updateProcessFlowDisplay() {
   `;
   
   content.innerHTML = flowEditHTML;
+  
+  // Update stored activities with current order
+  window.currentProcessFlowEdit.activities = activitiesInProcess.map((a, index) => ({
+    name: a.name,
+    taskId: a.taskId,
+    order: index,
+    assignedEmployeeId: a.assignedEmployeeId || null
+  }));
 }
 
 // Save process flow changes
 async function saveProcessFlow() {
   if (!window.currentProcessFlowEdit) return;
   
-  // Get current employee assignments from select elements
-  const { processId, tasks } = window.currentProcessFlowEdit;
+  // Get current employee assignments and activity names from form elements
+  const { processId, activities } = window.currentProcessFlowEdit;
   
-  // Update assignedEmployeeId from select elements before saving
-  tasks.forEach(taskData => {
-    const selectElement = document.getElementById(`task-employee-${taskData.id}`);
-    if (selectElement) {
-      taskData.assignedEmployeeId = selectElement.value || null;
-    }
+  // Update activities from form elements before saving
+  const updatedActivities = activities.map((activity, index) => {
+    const nameInput = document.getElementById(`activity-name-${index}`);
+    const taskSelect = document.getElementById(`activity-task-${index}`);
+    const employeeSelect = document.getElementById(`activity-employee-${index}`);
+    
+    return {
+      name: nameInput ? nameInput.value : activity.name,
+      taskId: taskSelect ? taskSelect.value : activity.taskId,
+      order: index,
+      assignedEmployeeId: employeeSelect ? (employeeSelect.value || null) : (activity.assignedEmployeeId || null)
+    };
   });
   
   showSpinner('Guardando cambios...');
   try {
-    // Update each task's processId, order, and assignedEmployeeId
-    const updatePromises = tasks.map((task, index) => {
-      return updateTask(task.id, {
-        processId: processId,
-        order: index,
-        assignedEmployeeId: task.assignedEmployeeId || null
+    // Update process with activities array
+    const activitiesToSave = updatedActivities.map(a => ({
+      name: a.name,
+      taskId: a.taskId
+    }));
+    
+    await updateProcess(processId, {
+      activities: activitiesToSave
+    });
+    
+    // Update assignedEmployeeId for each task
+    const updatePromises = updatedActivities.map(activity => {
+      return updateTask(activity.taskId, {
+        assignedEmployeeId: activity.assignedEmployeeId || null
       });
     });
     
-    // Remove processId from tasks that were removed
-    const allTasksSnapshot = await getTasksRef().once('value');
-    const allTasks = allTasksSnapshot.val() || {};
-    const currentTaskIds = new Set(tasks.map(t => t.id));
-    
-    const removePromises = [];
-    Object.entries(allTasks).forEach(([id, task]) => {
-      if (task.processId === processId && !currentTaskIds.has(id)) {
-        removePromises.push(updateTask(id, {
-          processId: null,
-          order: null,
-          assignedEmployeeId: null
-        }));
-      }
-    });
-    
-    // Apply all updates
-    await Promise.all([...updatePromises, ...removePromises]);
+    await Promise.all(updatePromises);
     
     hideSpinner();
     closeProcessFlowEdit();
@@ -972,11 +1027,13 @@ function closeProcessFlowEdit() {
 }
 
 // Make functions available globally
-window.updateTaskEmployee = updateTaskEmployee;
-window.moveTaskUp = moveTaskUp;
-window.moveTaskDown = moveTaskDown;
-window.removeTaskFromProcess = removeTaskFromProcess;
-window.addTaskToProcess = addTaskToProcess;
+window.updateActivityName = updateActivityName;
+window.updateActivityTask = updateActivityTask;
+window.updateActivityEmployee = updateActivityEmployee;
+window.moveActivityUp = moveActivityUp;
+window.moveActivityDown = moveActivityDown;
+window.removeActivityFromProcess = removeActivityFromProcess;
+window.addActivityToProcess = addActivityToProcess;
 
 // Make functions available globally
 window.viewProcess = viewProcess;

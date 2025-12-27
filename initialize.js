@@ -700,12 +700,12 @@ const initialData = {
       name: 'Producción de Panadería',
       areaName: 'Producción',
       objective: 'Elaborar productos de panadería (panes, facturas, bizcochos, etc.) según el Plan de Producción, cumpliendo con estándares de calidad, textura, sabor y presentación.',
-      taskNames: [
-        'Analizar o Conformar Plan de Producción',
-        'Revisar Insumos Necesarios para la Producción',
-        'Preparación de Subproductos (Mise en Place)',
-        'Producir Productos del Proceso',
-        'Ordenar y Limpiar Área de Trabajo'
+      activities: [
+        { name: 'Analizar Plan de Producción', taskName: 'Analizar o Conformar Plan de Producción' },
+        { name: 'Revisar Insumos', taskName: 'Revisar Insumos Necesarios para la Producción' },
+        { name: 'Preparar Subproductos', taskName: 'Preparación de Subproductos (Mise en Place)' },
+        { name: 'Producir Productos', taskName: 'Producir Productos del Proceso' },
+        { name: 'Ordenar y Limpiar', taskName: 'Ordenar y Limpiar Área de Trabajo' }
       ],
       employeeNames: ['Jorge']
     },
@@ -713,14 +713,14 @@ const initialData = {
       name: 'Producción de Sándwiches y Productos Afines',
       areaName: 'Producción',
       objective: 'Elaborar sándwiches y productos afines según el Plan de Producción, asegurando calidad, presentación y disponibilidad para la venta.',
-      taskNames: [
-        'Analizar o Conformar Plan de Producción',
-        'Revisar Insumos Necesarios para la Producción',
-        'Preparación de Subproductos (Mise en Place)',
-        'Producir Productos del Proceso',
-        'Empaquetar Productos Producidos',
-        'Trasladar Productos al Área de Ventas',
-        'Ordenar y Limpiar Área de Trabajo'
+      activities: [
+        { name: 'Analizar Plan de Producción', taskName: 'Analizar o Conformar Plan de Producción' },
+        { name: 'Revisar Insumos', taskName: 'Revisar Insumos Necesarios para la Producción' },
+        { name: 'Preparar Subproductos', taskName: 'Preparación de Subproductos (Mise en Place)' },
+        { name: 'Producir Productos', taskName: 'Producir Productos del Proceso' },
+        { name: 'Empaquetar Productos', taskName: 'Empaquetar Productos Producidos' },
+        { name: 'Trasladar a Ventas', taskName: 'Trasladar Productos al Área de Ventas' },
+        { name: 'Ordenar y Limpiar', taskName: 'Ordenar y Limpiar Área de Trabajo' }
       ],
       employeeNames: ['Marbelis']
     },
@@ -728,14 +728,14 @@ const initialData = {
       name: 'Producción de Rotisería Tradicional',
       areaName: 'Producción',
       objective: 'Elaborar productos de rotisería tradicional según el Plan de Producción, asegurando calidad, presentación y disponibilidad para la venta.',
-      taskNames: [
-        'Analizar o Conformar Plan de Producción',
-        'Revisar Insumos Necesarios para la Producción',
-        'Preparación de Subproductos (Mise en Place)',
-        'Producir Productos del Proceso',
-        'Empaquetar Productos Producidos',
-        'Trasladar Productos al Área de Ventas',
-        'Ordenar y Limpiar Área de Trabajo'
+      activities: [
+        { name: 'Analizar Plan de Producción', taskName: 'Analizar o Conformar Plan de Producción' },
+        { name: 'Revisar Insumos', taskName: 'Revisar Insumos Necesarios para la Producción' },
+        { name: 'Preparar Subproductos', taskName: 'Preparación de Subproductos (Mise en Place)' },
+        { name: 'Producir Productos', taskName: 'Producir Productos del Proceso' },
+        { name: 'Empaquetar Productos', taskName: 'Empaquetar Productos Producidos' },
+        { name: 'Trasladar a Ventas', taskName: 'Trasladar Productos al Área de Ventas' },
+        { name: 'Ordenar y Limpiar', taskName: 'Ordenar y Limpiar Área de Trabajo' }
       ],
       employeeNames: ['Marcelo', 'Yuneisis']
     },
@@ -743,14 +743,14 @@ const initialData = {
       name: 'Producción de Menús y Platos Variables',
       areaName: 'Producción',
       objective: 'Elaborar menús y platos variables según el Plan de Producción, asegurando calidad, presentación y disponibilidad para la venta.',
-      taskNames: [
-        'Analizar o Conformar Plan de Producción',
-        'Revisar Insumos Necesarios para la Producción',
-        'Preparación de Subproductos (Mise en Place)',
-        'Producir Productos del Proceso',
-        'Empaquetar Productos Producidos',
-        'Trasladar Productos al Área de Ventas',
-        'Ordenar y Limpiar Área de Trabajo'
+      activities: [
+        { name: 'Analizar Plan de Producción', taskName: 'Analizar o Conformar Plan de Producción' },
+        { name: 'Revisar Insumos', taskName: 'Revisar Insumos Necesarios para la Producción' },
+        { name: 'Preparar Subproductos', taskName: 'Preparación de Subproductos (Mise en Place)' },
+        { name: 'Producir Productos', taskName: 'Producir Productos del Proceso' },
+        { name: 'Empaquetar Productos', taskName: 'Empaquetar Productos Producidos' },
+        { name: 'Trasladar a Ventas', taskName: 'Trasladar Productos al Área de Ventas' },
+        { name: 'Ordenar y Limpiar', taskName: 'Ordenar y Limpiar Área de Trabajo' }
       ],
       employeeNames: ['Marcelo', 'Yuneisis']
     },
@@ -758,77 +758,101 @@ const initialData = {
       name: 'Apertura de Caja',
       areaName: 'Ventas y Atención al Cliente',
       objective: 'Preparar el sistema de punto de venta y caja para iniciar operaciones, verificando que todos los elementos necesarios estén disponibles y funcionando correctamente.',
-      taskNames: ['Apertura de Caja'],
+      activities: [
+        { name: 'Apertura de Caja', taskName: 'Apertura de Caja' }
+      ],
       employeeNames: ['Marlenis', 'Anisley']
     },
     {
       name: 'Atención a Clientes por Plataformas en Línea y Venta',
       areaName: 'Ventas y Atención al Cliente',
       objective: 'Atender pedidos recibidos a través de plataformas en línea, procesar las ventas, coordinar la preparación y entrega de productos.',
-      taskNames: ['Atención de Pedidos por Plataformas en Línea'],
+      activities: [
+        { name: 'Atender Pedidos en Línea', taskName: 'Atención de Pedidos por Plataformas en Línea' }
+      ],
       employeeNames: ['Marlenis', 'Anisley', 'Félix Manuel']
     },
     {
       name: 'Reposición de Vitrinas',
       areaName: 'Ventas y Atención al Cliente',
       objective: 'Reponer productos en las vitrinas del local de venta, asegurando disponibilidad y presentación adecuada.',
-      taskNames: ['Revisar Vitrinas del Local de Venta', 'Limpieza de Área de Ventas'],
+      activities: [
+        { name: 'Revisar Vitrinas', taskName: 'Revisar Vitrinas del Local de Venta' },
+        { name: 'Limpiar Área de Ventas', taskName: 'Limpieza de Área de Ventas' }
+      ],
       employeeNames: ['Marlenis', 'Anisley', 'Félix Manuel']
     },
     {
       name: 'Atención al Cliente y Venta',
       areaName: 'Ventas y Atención al Cliente',
       objective: 'Atender a los clientes y procesar ventas.',
-      taskNames: ['Atención al Cliente y Venta', 'Limpieza de Área de Ventas'],
+      activities: [
+        { name: 'Atender Clientes', taskName: 'Atención al Cliente y Venta' },
+        { name: 'Limpiar Área de Ventas', taskName: 'Limpieza de Área de Ventas' }
+      ],
       employeeNames: ['Marlenis', 'Anisley', 'Félix Manuel']
     },
     {
       name: 'Cierre de Caja',
       areaName: 'Ventas y Atención al Cliente',
       objective: 'Cerrar el sistema de punto de venta y caja al finalizar operaciones.',
-      taskNames: ['Cierre de Caja'],
+      activities: [
+        { name: 'Cierre de Caja', taskName: 'Cierre de Caja' }
+      ],
       employeeNames: ['Marlenis', 'Anisley']
     },
     {
       name: 'Compra',
       areaName: 'Administración y Gestión',
       objective: 'Adquirir insumos, materias primas, materiales para producción y productos para reventa.',
-      taskNames: ['Compra de Insumos y Productos'],
+      activities: [
+        { name: 'Comprar Insumos y Productos', taskName: 'Compra de Insumos y Productos' }
+      ],
       employeeNames: [] // Tarea con rol "Administrador" - no hay empleado con ese rol específico
     },
     {
       name: 'Contabilidad',
       areaName: 'Administración y Gestión',
       objective: 'Llevar la contabilidad del negocio, registrando operaciones financieras y cumpliendo obligaciones fiscales.',
-      taskNames: ['Contabilidad'],
+      activities: [
+        { name: 'Contabilidad', taskName: 'Contabilidad' }
+      ],
       employeeNames: ['Salvador']
     },
     {
       name: 'Limpieza General',
       areaName: 'Administración y Gestión',
       objective: 'Mantener limpias y en condiciones adecuadas las áreas comunes del negocio (baños, pisos, pasillos y otros espacios compartidos), asegurando condiciones de higiene y orden para el funcionamiento general del negocio.',
-      taskNames: ['Limpieza General de Áreas Comunes'],
+      activities: [
+        { name: 'Limpieza de Áreas Comunes', taskName: 'Limpieza General de Áreas Comunes' }
+      ],
       employeeNames: ['Yamilka']
     },
     {
       name: 'Mantenimiento Básico',
       areaName: 'Administración y Gestión',
       objective: 'Realizar mantenimiento básico de equipos, instalaciones y sistemas.',
-      taskNames: ['Mantenimiento Básico de Equipos e Instalaciones'],
+      activities: [
+        { name: 'Mantenimiento de Equipos', taskName: 'Mantenimiento Básico de Equipos e Instalaciones' }
+      ],
       employeeNames: [] // Pendiente de definir empleados específicos
     },
     {
       name: 'Preparación de Insumos y Tareas Periódicas',
       areaName: 'Administración y Gestión',
       objective: 'Tareas periódicas de preparación que no forman parte de procesos diarios.',
-      taskNames: ['Rallar Pan'],
+      activities: [
+        { name: 'Rallar Pan', taskName: 'Rallar Pan' }
+      ],
       employeeNames: ['Salvador'] // Tarea con rol "Encargado Contable"
     },
     {
       name: 'Planificación de Producción',
       areaName: 'Administración y Gestión',
       objective: 'Definir qué productos producir, en qué cantidades y según qué especificaciones.',
-      taskNames: ['Planificación de Producción'],
+      activities: [
+        { name: 'Planificar Producción', taskName: 'Planificación de Producción' }
+      ],
       employeeNames: [] // Tarea con rol "Administrador" - no hay empleado con ese rol específico
     }
   ]
@@ -980,16 +1004,36 @@ async function initializeSystem() {
           continue;
         }
         
-        // Get task IDs in order
-        const taskIds = processData.taskNames
-          .map(tn => taskNameToId[tn])
-          .filter(Boolean);
+        // Get activities with task IDs
+        const activities = [];
+        if (processData.activities && Array.isArray(processData.activities)) {
+          processData.activities.forEach(activity => {
+            const taskId = taskNameToId[activity.taskName];
+            if (taskId) {
+              activities.push({
+                name: activity.name,
+                taskId: taskId
+              });
+            }
+          });
+        } else if (processData.taskNames) {
+          // Backward compatibility: convert old taskNames to activities
+          processData.taskNames.forEach((taskName, index) => {
+            const taskId = taskNameToId[taskName];
+            if (taskId) {
+              activities.push({
+                name: taskName, // Use task name as activity name for backward compatibility
+                taskId: taskId
+              });
+            }
+          });
+        }
         
         const processToCreate = {
           name: processData.name,
           areaId: areaId,
           objective: processData.objective || null,
-          taskIds: taskIds.length > 0 ? taskIds : null
+          activities: activities.length > 0 ? activities : null
         };
         
         await createProcess(processToCreate);

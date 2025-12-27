@@ -40,7 +40,37 @@ async function loadOrganigrama(editMode = false) {
     const tasks = tasksSnapshot.val() || {};
 
     // Map roles to areas through processes and tasks
-    // Support both processId (singular) and processIds (array) for tasks in multiple processes
+    // First, map through processes' activities (new structure)
+    Object.entries(processes).forEach(([processId, process]) => {
+      if (process.areaId && process.activities && Array.isArray(process.activities)) {
+        process.activities.forEach(activity => {
+          const task = tasks[activity.taskId];
+          if (task) {
+            const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+            if (taskRoleIds.length > 0) {
+              const areaId = process.areaId;
+              if (!organigramaStructure[areaId]) {
+                organigramaStructure[areaId] = {
+                  area: areas[areaId] || { name: 'Área desconocida' },
+                  roles: {}
+                };
+              }
+              
+              taskRoleIds.forEach(roleId => {
+                if (!organigramaStructure[areaId].roles[roleId]) {
+                  organigramaStructure[areaId].roles[roleId] = {
+                    role: roles[roleId] || { name: 'Rol desconocido' },
+                    employees: []
+                  };
+                }
+              });
+            }
+          }
+        });
+      }
+    });
+    
+    // Also support backward compatibility: tasks with processId/processIds
     Object.entries(tasks).forEach(([taskId, task]) => {
       const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
       
@@ -107,8 +137,19 @@ async function loadOrganigrama(editMode = false) {
       // Find areas where these employees work (through assigned tasks in processes)
       const areasForRole = new Set();
       employeesWithRole.forEach(employeeId => {
-        // Find tasks assigned to this employee
-        // Support both processId (singular) and processIds (array) for tasks in multiple processes
+        // First, find through processes' activities (new structure)
+        Object.entries(processes).forEach(([processId, process]) => {
+          if (process.activities && Array.isArray(process.activities)) {
+            process.activities.forEach(activity => {
+              const task = tasks[activity.taskId];
+              if (task && task.assignedEmployeeId === employeeId && process.areaId) {
+                areasForRole.add(process.areaId);
+              }
+            });
+          }
+        });
+        
+        // Also support backward compatibility: tasks with processId/processIds
         Object.entries(tasks).forEach(([taskId, task]) => {
           if (task.assignedEmployeeId === employeeId) {
             const taskProcessIds = task.processIds || (task.processId ? [task.processId] : []);
