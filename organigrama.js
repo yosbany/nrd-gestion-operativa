@@ -40,12 +40,16 @@ async function loadOrganigrama(editMode = false) {
     const tasks = tasksSnapshot.val() || {};
 
     // Map roles to areas through processes and tasks
+    // Support both processId (singular) and processIds (array) for tasks in multiple processes
     Object.entries(tasks).forEach(([taskId, task]) => {
-      if (task.processId) {
-        const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+      const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+      
+      if (taskRoleIds.length > 0) {
+        // Get all process IDs for this task (support both singular and plural)
+        const taskProcessIds = task.processIds || (task.processId ? [task.processId] : []);
         
-        if (taskRoleIds.length > 0) {
-          const process = processes[task.processId];
+        taskProcessIds.forEach(processId => {
+          const process = processes[processId];
           if (process && process.areaId) {
             const areaId = process.areaId;
             if (!organigramaStructure[areaId]) {
@@ -64,7 +68,7 @@ async function loadOrganigrama(editMode = false) {
               }
             });
           }
-        }
+        });
       }
     });
 
@@ -104,12 +108,16 @@ async function loadOrganigrama(editMode = false) {
       const areasForRole = new Set();
       employeesWithRole.forEach(employeeId => {
         // Find tasks assigned to this employee
+        // Support both processId (singular) and processIds (array) for tasks in multiple processes
         Object.entries(tasks).forEach(([taskId, task]) => {
-          if (task.assignedEmployeeId === employeeId && task.processId) {
-            const process = processes[task.processId];
-            if (process && process.areaId) {
-              areasForRole.add(process.areaId);
-            }
+          if (task.assignedEmployeeId === employeeId) {
+            const taskProcessIds = task.processIds || (task.processId ? [task.processId] : []);
+            taskProcessIds.forEach(processId => {
+              const process = processes[processId];
+              if (process && process.areaId) {
+                areasForRole.add(process.areaId);
+              }
+            });
           }
         });
       });
