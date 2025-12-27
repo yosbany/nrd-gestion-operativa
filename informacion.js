@@ -519,12 +519,12 @@ function createContractEditItem(contractId, contract = {}) {
       </div>
       <input type="file" class="contract-file-input mt-2 text-sm" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
     </div>
-    <div class="flex gap-2 pt-2 border-t border-gray-200">
-      <button type="button" class="save-contract-btn flex-1 px-4 py-2 bg-green-600 text-white hover:bg-green-700 text-xs sm:text-sm">
-        Guardar
-      </button>
-      <button type="button" class="delete-contract-btn flex-1 px-4 py-2 bg-red-600 text-white hover:bg-red-700 text-xs sm:text-sm">
+    <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
+      <button type="button" class="delete-contract-btn flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
         Eliminar
+      </button>
+      <button type="button" class="save-contract-btn flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+        Guardar
       </button>
     </div>
   `;
