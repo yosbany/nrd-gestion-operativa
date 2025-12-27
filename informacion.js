@@ -341,8 +341,15 @@ async function generateCompanyPDF() {
           });
         }
         
-        if (task.successCriteria) {
-          addText('Criterios de éxito: ' + task.successCriteria, 9, false);
+        if (task.successCriteria && (Array.isArray(task.successCriteria) ? task.successCriteria.length > 0 : task.successCriteria)) {
+          addText('Criterios de éxito:', 9, true);
+          if (Array.isArray(task.successCriteria)) {
+            task.successCriteria.forEach((criterion, idx) => {
+              addText(`${idx + 1}. ${criterion}`, 8, false);
+            });
+          } else {
+            addText('• ' + task.successCriteria, 8, false);
+          }
         }
         
         if (task.commonErrors && task.commonErrors.length > 0) {

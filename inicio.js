@@ -27,10 +27,12 @@ async function calculateDocumentationHealth() {
     Object.values(tasks).forEach(task => {
       if (task.description) tasksWithDescription++;
       if (task.executionSteps && task.executionSteps.length > 0) tasksWithSteps++;
-      if (task.successCriteria) tasksWithCriteria++;
+      const hasSuccessCriteria = task.successCriteria && (Array.isArray(task.successCriteria) ? task.successCriteria.length > 0 : task.successCriteria);
+      if (hasSuccessCriteria) tasksWithCriteria++;
       if (task.commonErrors && task.commonErrors.length > 0) tasksWithErrors++;
+      const hasSuccessCriteria = task.successCriteria && (Array.isArray(task.successCriteria) ? task.successCriteria.length > 0 : task.successCriteria);
       if (task.description && task.executionSteps && task.executionSteps.length > 0 && 
-          task.successCriteria && task.commonErrors && task.commonErrors.length > 0) {
+          hasSuccessCriteria && task.commonErrors && task.commonErrors.length > 0) {
         tasksFullyDocumented++;
       }
     });

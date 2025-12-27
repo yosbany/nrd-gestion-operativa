@@ -88,11 +88,13 @@ function showRoleForm(roleId = null) {
   const detail = document.getElementById('role-detail');
   const title = document.getElementById('role-form-title');
   const formElement = document.getElementById('role-form-element');
+  const searchContainer = document.querySelector('#roles-search')?.parentElement;
   
   if (form) form.classList.remove('hidden');
   if (list) list.style.display = 'none';
   if (header) header.style.display = 'none';
   if (detail) detail.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'none';
   
   if (formElement) {
     formElement.reset();
@@ -122,11 +124,13 @@ function hideRoleForm() {
   const list = document.getElementById('roles-list');
   const header = document.querySelector('#roles-view .flex.flex-col');
   const detail = document.getElementById('role-detail');
+  const searchContainer = document.querySelector('#roles-search')?.parentElement;
   
   if (form) form.classList.add('hidden');
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'block';
 }
 
 // Save role
@@ -156,10 +160,13 @@ async function viewRole(roleId) {
     const detail = document.getElementById('role-detail');
     const detailContent = document.getElementById('role-detail-content');
     
+    const searchContainer = document.querySelector('#roles-search')?.parentElement;
+    
     if (list) list.style.display = 'none';
     if (header) header.style.display = 'none';
     if (form) form.classList.add('hidden');
     if (detail) detail.classList.remove('hidden');
+    if (searchContainer) searchContainer.style.display = 'none';
 
     // Load tasks for this role
     const tasksSnapshot = await getTasksRef().once('value');
@@ -230,11 +237,13 @@ function backToRoles() {
   const header = document.querySelector('#roles-view .flex.flex-col');
   const detail = document.getElementById('role-detail');
   const form = document.getElementById('role-form');
+  const searchContainer = document.querySelector('#roles-search')?.parentElement;
   
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
   if (form) form.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'block';
 }
 
 // Delete role handler

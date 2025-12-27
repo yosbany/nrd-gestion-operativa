@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1766791875553">
+  <link rel="stylesheet" href="styles.css?v=1766792119286">
   <meta name="theme-color" content="#dc2626">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -84,6 +84,7 @@
     <nav class="bg-white border-b border-gray-200 flex overflow-x-auto sticky top-[45px] sm:top-[53px] z-10 bg-white">
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-red-600 text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="inicio">Inicio</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="informacion">Información</button>
+      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="organigrama">Organigrama</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="areas">Áreas</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="processes">Procesos</button>
       <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="tasks">Tareas</button>
@@ -194,6 +195,18 @@
               <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- Organigrama View -->
+      <div id="organigrama-view" class="view space-y-3 sm:space-y-4 hidden">
+        <div class="border border-gray-200 p-3 sm:p-4 md:p-6">
+          <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
+            <h3 class="text-lg sm:text-xl font-light tracking-tight">Organigrama de la Empresa</h3>
+          </div>
+          <div id="organigrama-content" class="py-4">
+            <!-- Organigrama content will be inserted here -->
+          </div>
         </div>
       </div>
 
@@ -585,10 +598,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1766791875553"></script>
-  <script src="modal.js?v=1766791875553"></script>
-  <script src="auth.js?v=1766791875553"></script>
-  <script src="db.js?v=1766791875553"></script>
+  <script src="firebase.js?v=1766792119286"></script>
+  <script src="modal.js?v=1766792119286"></script>
+  <script src="auth.js?v=1766792119286"></script>
+  <script src="db.js?v=1766792119286"></script>
   <script src="areas.js"></script>
   <script src="processes.js"></script>
   <script src="tasks.js"></script>
@@ -597,7 +610,8 @@
   <script src="analytics.js"></script>
   <script src="inicio.js"></script>
   <script src="informacion.js"></script>
-  <script src="app.js?v=1766791875553"></script>
+  <script src="organigrama.js"></script>
+  <script src="app.js?v=1766792119286"></script>
 
   <script>
     // Global error handler
@@ -648,7 +662,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1766791875553')
+        navigator.serviceWorker.register('service-worker.js?v=1766792119286')
           .then(reg => {
             console.log('Service Worker registered');
             

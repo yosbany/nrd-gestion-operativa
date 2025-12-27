@@ -120,11 +120,13 @@ function showEmployeeForm(employeeId = null) {
   const detail = document.getElementById('employee-detail');
   const title = document.getElementById('employee-form-title');
   const formElement = document.getElementById('employee-form-element');
+  const searchContainer = document.querySelector('#employees-search')?.parentElement;
   
   if (form) form.classList.remove('hidden');
   if (list) list.style.display = 'none';
   if (header) header.style.display = 'none';
   if (detail) detail.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'none';
   
   if (formElement) {
     formElement.reset();
@@ -195,11 +197,13 @@ function hideEmployeeForm() {
   const list = document.getElementById('employees-list');
   const header = document.querySelector('#employees-view .flex.flex-col');
   const detail = document.getElementById('employee-detail');
+  const searchContainer = document.querySelector('#employees-search')?.parentElement;
   
   if (form) form.classList.add('hidden');
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'block';
 }
 
 // Save employee
@@ -229,10 +233,13 @@ async function viewEmployee(employeeId) {
     const detail = document.getElementById('employee-detail');
     const detailContent = document.getElementById('employee-detail-content');
     
+    const searchContainer = document.querySelector('#employees-search')?.parentElement;
+    
     if (list) list.style.display = 'none';
     if (header) header.style.display = 'none';
     if (form) form.classList.add('hidden');
     if (detail) detail.classList.remove('hidden');
+    if (searchContainer) searchContainer.style.display = 'none';
 
     // Get role names (support both old roleId and new roleIds)
     const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
@@ -305,11 +312,13 @@ function backToEmployees() {
   const header = document.querySelector('#employees-view .flex.flex-col');
   const detail = document.getElementById('employee-detail');
   const form = document.getElementById('employee-form');
+  const searchContainer = document.querySelector('#employees-search')?.parentElement;
   
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
   if (form) form.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'block';
 }
 
 // Delete employee handler

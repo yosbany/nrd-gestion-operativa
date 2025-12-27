@@ -105,11 +105,13 @@ function showProcessForm(processId = null) {
   const detail = document.getElementById('process-detail');
   const title = document.getElementById('process-form-title');
   const formElement = document.getElementById('process-form-element');
+  const searchContainer = document.querySelector('#processes-search')?.parentElement;
   
   if (form) form.classList.remove('hidden');
   if (list) list.style.display = 'none';
   if (header) header.style.display = 'none';
   if (detail) detail.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'none';
   
   if (formElement) {
     formElement.reset();
@@ -158,11 +160,13 @@ function hideProcessForm() {
   const list = document.getElementById('processes-list');
   const header = document.querySelector('#processes-view .flex.flex-col');
   const detail = document.getElementById('process-detail');
+  const searchContainer = document.querySelector('#processes-search')?.parentElement;
   
   if (form) form.classList.add('hidden');
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'block';
 }
 
 // Save process
@@ -192,10 +196,13 @@ async function viewProcess(processId) {
     const detail = document.getElementById('process-detail');
     const detailContent = document.getElementById('process-detail-content');
     
+    const searchContainer = document.querySelector('#processes-search')?.parentElement;
+    
     if (list) list.style.display = 'none';
     if (header) header.style.display = 'none';
     if (form) form.classList.add('hidden');
     if (detail) detail.classList.remove('hidden');
+    if (searchContainer) searchContainer.style.display = 'none';
 
     // Get area name
     let areaName = 'Sin área';
@@ -205,19 +212,26 @@ async function viewProcess(processId) {
       if (area) areaName = area.name;
     }
 
-    // Load tasks and roles for this process
-    const [tasksSnapshot, rolesSnapshot] = await Promise.all([
+    // Load tasks, roles, and employees for this process
+    const [tasksSnapshot, rolesSnapshot, employeesSnapshot] = await Promise.all([
       getTasksRef().once('value'),
-      getRolesRef().once('value')
+      getRolesRef().once('value'),
+      getEmployeesRef().once('value')
     ]);
     
     const allTasks = tasksSnapshot.val() || {};
     const allRoles = rolesSnapshot.val() || {};
+    const allEmployees = employeesSnapshot.val() || {};
     
-    // Create role map
+    // Create role map and employee map
     const roleMap = {};
     Object.entries(allRoles).forEach(([id, role]) => {
       roleMap[id] = role.name;
+    });
+    
+    const employeeMap = {};
+    Object.entries(allEmployees).forEach(([id, employee]) => {
+      employeeMap[id] = employee.name;
     });
     
     const processTasks = Object.entries(allTasks)
@@ -237,6 +251,8 @@ async function viewProcess(processId) {
               const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
               const roleName = roleNames.length > 0 ? roleNames.join(', ') : 'Sin rol';
               
+              const assignedEmployeeName = task.assignedEmployeeId ? (employeeMap[task.assignedEmployeeId] || 'Empleado desconocido') : null;
+              
               const taskTypeLabels = {
                 'with_role': 'Con rol',
                 'without_role': 'Sin rol',
@@ -253,6 +269,7 @@ async function viewProcess(processId) {
                     <span class="text-xs px-2 py-0.5 bg-gray-100 rounded">${taskTypeLabels[task.type] || task.type}</span>
                   </div>
                   ${roleNames.length > 0 ? `<div class="text-xs text-gray-600 ml-6">Roles: ${escapeHtml(roleName)}</div>` : ''}
+                  ${assignedEmployeeName ? `<div class="text-xs text-blue-600 ml-6 font-medium">Empleado: ${escapeHtml(assignedEmployeeName)}</div>` : ''}
                 </div>
               `;
             }).join('')}
@@ -316,13 +333,13 @@ async function viewProcess(processId) {
     
     if (diagramBtn) {
       diagramBtn.onclick = () => {
-        showProcessDiagram(processId, process.name, processTasks, roleMap);
+        showProcessDiagram(processId, process.name, processTasks, roleMap, employeeMap);
       };
     }
     
     if (flowEditBtn) {
       flowEditBtn.onclick = () => {
-        showProcessFlowEdit(processId, process.name, processTasks, roleMap);
+        showProcessFlowEdit(processId, process.name, processTasks, roleMap, employeeMap);
       };
     }
   } catch (error) {
@@ -337,11 +354,13 @@ function backToProcesses() {
   const header = document.querySelector('#processes-view .flex.flex-col');
   const detail = document.getElementById('process-detail');
   const form = document.getElementById('process-form');
+  const searchContainer = document.querySelector('#processes-search')?.parentElement;
   
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
   if (form) form.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'block';
 }
 
 // Delete process handler
@@ -467,7 +486,7 @@ if (closeProcessFlowEditBtn) {
 }
 
 // Show process diagram
-function showProcessDiagram(processId, processName, processTasks, roleMap) {
+function showProcessDiagram(processId, processName, processTasks, roleMap, employeeMap = {}) {
   const modal = document.getElementById('process-diagram-modal');
   const title = document.getElementById('process-diagram-title');
   const content = document.getElementById('process-diagram-content');
@@ -504,6 +523,7 @@ function showProcessDiagram(processId, processName, processTasks, roleMap) {
     const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
     const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
     const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
+    const assignedEmployeeName = task.assignedEmployeeId ? (employeeMap[task.assignedEmployeeId] || 'Empleado desconocido') : null;
     const taskTypeLabel = taskTypeLabels[task.type] || task.type;
     const taskTypeColor = taskTypeColors[task.type] || 'bg-gray-100 border-gray-300';
     
@@ -522,6 +542,12 @@ function showProcessDiagram(processId, processName, processTasks, roleMap) {
             <div class="mt-2 pt-2 border-t border-gray-300">
               <span class="text-xs text-gray-600 uppercase tracking-wider">Roles:</span>
               <span class="text-sm font-light text-gray-800 ml-2">${escapeHtml(roleName)}</span>
+            </div>
+          ` : ''}
+          ${assignedEmployeeName ? `
+            <div class="mt-2 pt-2 border-t border-gray-300">
+              <span class="text-xs text-blue-600 uppercase tracking-wider font-medium">Empleado:</span>
+              <span class="text-sm font-light text-blue-800 ml-2">${escapeHtml(assignedEmployeeName)}</span>
             </div>
           ` : ''}
           ${task.description ? `
@@ -558,7 +584,7 @@ function closeProcessDiagram() {
 }
 
 // Show process flow edit modal
-async function showProcessFlowEdit(processId, processName, processTasks, roleMap) {
+async function showProcessFlowEdit(processId, processName, processTasks, roleMap, employeeMap = {}) {
   const modal = document.getElementById('process-flow-edit-modal');
   const title = document.getElementById('process-flow-edit-title');
   const content = document.getElementById('process-flow-edit-content');
@@ -567,11 +593,15 @@ async function showProcessFlowEdit(processId, processName, processTasks, roleMap
   
   title.textContent = `Editar Flujo: ${escapeHtml(processName)}`;
   
-  // Load all tasks to show available tasks
+  // Load all tasks and employees to show available tasks
   showSpinner('Cargando tareas...');
   try {
-    const allTasksSnapshot = await getTasksRef().once('value');
+    const [allTasksSnapshot, employeesSnapshot] = await Promise.all([
+      getTasksRef().once('value'),
+      getEmployeesRef().once('value')
+    ]);
     const allTasks = allTasksSnapshot.val() || {};
+    const allEmployees = employeesSnapshot.val() || {};
     
     // Get task IDs already in process
     const processTaskIds = new Set(processTasks.map(t => t.id));
@@ -594,20 +624,51 @@ async function showProcessFlowEdit(processId, processName, processTasks, roleMap
               const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
               const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
               const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
+              
+              // Filter employees that have any of the task's roles
+              let employeesWithRole = [];
+              if (taskRoleIds.length > 0) {
+                employeesWithRole = Object.entries(allEmployees)
+                  .filter(([id, employee]) => {
+                    const employeeRoleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+                    return employeeRoleIds.some(empRoleId => taskRoleIds.includes(empRoleId));
+                  })
+                  .map(([id, employee]) => ({ id, name: employee.name }));
+              }
+              
+              const assignedEmployeeId = task.assignedEmployeeId || '';
+              
               return `
-                <div class="border border-gray-200 p-3 flex items-center gap-3 bg-gray-50" data-task-id="${task.id}">
-                  <div class="flex items-center gap-2 flex-1">
-                    <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
-                    <div class="flex-1">
-                      <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
-                      ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
+                <div class="border border-gray-200 p-3 bg-gray-50" data-task-id="${task.id}">
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="flex items-center gap-2 flex-1">
+                      <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
+                      <div class="flex-1">
+                        <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
+                        ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
+                      </div>
+                    </div>
+                    <div class="flex gap-1">
+                      <button onclick="moveTaskUp('${task.id}')" ${index === 0 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
+                      <button onclick="moveTaskDown('${task.id}')" ${index === tasksInProcess.length - 1 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
+                      <button onclick="removeTaskFromProcess('${task.id}')" class="px-2 py-1 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
                     </div>
                   </div>
-                  <div class="flex gap-1">
-                    <button onclick="moveTaskUp('${task.id}')" ${index === 0 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
-                    <button onclick="moveTaskDown('${task.id}')" ${index === tasksInProcess.length - 1 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
-                    <button onclick="removeTaskFromProcess('${task.id}')" class="px-2 py-1 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
+                  ${taskRoleIds.length > 0 && employeesWithRole.length > 0 ? `
+                  <div class="mt-2 pt-2 border-t border-gray-200">
+                    <label class="block text-xs text-gray-600 mb-1">Empleado asignado:</label>
+                    <select id="task-employee-${task.id}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateTaskEmployee('${task.id}', this.value)">
+                      <option value="">Sin asignar</option>
+                      ${employeesWithRole.map(emp => `
+                        <option value="${emp.id}" ${assignedEmployeeId === emp.id ? 'selected' : ''}>${escapeHtml(emp.name)}</option>
+                      `).join('')}
+                    </select>
                   </div>
+                  ` : taskRoleIds.length > 0 ? `
+                  <div class="mt-2 pt-2 border-t border-gray-200">
+                    <span class="text-xs text-gray-500">No hay empleados con los roles requeridos</span>
+                  </div>
+                  ` : ''}
                 </div>
               `;
             }).join('')}
@@ -640,16 +701,28 @@ async function showProcessFlowEdit(processId, processName, processTasks, roleMap
     
     content.innerHTML = flowEditHTML;
     
-    // Store current state
+    // Store current state with assigned employees
     window.currentProcessFlowEdit = {
       processId,
-      tasks: tasksInProcess.map(t => ({ id: t.id, order: t.order || 0 }))
+      tasks: tasksInProcess.map(t => ({ 
+        id: t.id, 
+        order: t.order || 0,
+        assignedEmployeeId: t.assignedEmployeeId || null
+      }))
     };
     
     modal.classList.remove('hidden');
   } catch (error) {
     hideSpinner();
     await showError('Error al cargar tareas: ' + error.message);
+  }
+}
+
+// Update task employee assignment
+function updateTaskEmployee(taskId, employeeId) {
+  const task = window.currentProcessFlowEdit.tasks.find(t => t.id === taskId);
+  if (task) {
+    task.assignedEmployeeId = employeeId || null;
   }
 }
 
@@ -684,7 +757,11 @@ function addTaskToProcess(taskId) {
   const maxOrder = window.currentProcessFlowEdit.tasks.length > 0 
     ? Math.max(...window.currentProcessFlowEdit.tasks.map(t => t.order || 0))
     : -1;
-  window.currentProcessFlowEdit.tasks.push({ id: taskId, order: maxOrder + 1 });
+  window.currentProcessFlowEdit.tasks.push({ 
+    id: taskId, 
+    order: maxOrder + 1,
+    assignedEmployeeId: null
+  });
   updateProcessFlowDisplay();
 }
 
@@ -695,14 +772,16 @@ async function updateProcessFlowDisplay() {
   
   const { tasks } = window.currentProcessFlowEdit;
   
-  // Load all tasks and roles
-  const [allTasksSnapshot, rolesSnapshot] = await Promise.all([
+  // Load all tasks, roles, and employees
+  const [allTasksSnapshot, rolesSnapshot, employeesSnapshot] = await Promise.all([
     getTasksRef().once('value'),
-    getRolesRef().once('value')
+    getRolesRef().once('value'),
+    getEmployeesRef().once('value')
   ]);
   
   const allTasks = allTasksSnapshot.val() || {};
   const allRoles = rolesSnapshot.val() || {};
+  const allEmployees = employeesSnapshot.val() || {};
   const roleMap = {};
   Object.entries(allRoles).forEach(([id, role]) => {
     roleMap[id] = role.name;
@@ -711,10 +790,10 @@ async function updateProcessFlowDisplay() {
   // Get task IDs in process
   const processTaskIds = new Set(tasks.map(t => t.id));
   
-  // Separate tasks
-  const tasksInProcess = tasks.map(({ id, order }) => {
+  // Separate tasks (preserve assignedEmployeeId from current state)
+  const tasksInProcess = tasks.map(({ id, order, assignedEmployeeId }) => {
     const task = allTasks[id];
-    return task ? { id, order, ...task } : null;
+    return task ? { id, order, assignedEmployeeId: assignedEmployeeId || null, ...task } : null;
   }).filter(t => t !== null);
   
   const availableTasks = Object.entries(allTasks)
@@ -731,20 +810,51 @@ async function updateProcessFlowDisplay() {
             const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
             const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
             const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
+            
+            // Filter employees that have any of the task's roles
+            let employeesWithRole = [];
+            if (taskRoleIds.length > 0) {
+              employeesWithRole = Object.entries(allEmployees)
+                .filter(([id, employee]) => {
+                  const employeeRoleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+                  return employeeRoleIds.some(empRoleId => taskRoleIds.includes(empRoleId));
+                })
+                .map(([id, employee]) => ({ id, name: employee.name }));
+            }
+            
+            const assignedEmployeeId = task.assignedEmployeeId || '';
+            
             return `
-              <div class="border border-gray-200 p-3 flex items-center gap-3 bg-gray-50" data-task-id="${task.id}">
-                <div class="flex items-center gap-2 flex-1">
-                  <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
-                  <div class="flex-1">
-                    <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
-                    ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
+              <div class="border border-gray-200 p-3 bg-gray-50" data-task-id="${task.id}">
+                <div class="flex items-center gap-3 mb-2">
+                  <div class="flex items-center gap-2 flex-1">
+                    <span class="text-sm font-medium text-gray-500 w-6">${index + 1}</span>
+                    <div class="flex-1">
+                      <div class="font-light text-sm sm:text-base">${escapeHtml(task.name)}</div>
+                      ${roleName ? `<div class="text-xs text-gray-600">Roles: ${escapeHtml(roleName)}</div>` : ''}
+                    </div>
+                  </div>
+                  <div class="flex gap-1">
+                    <button onclick="moveTaskUp('${task.id}')" ${index === 0 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
+                    <button onclick="moveTaskDown('${task.id}')" ${index === tasksInProcess.length - 1 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
+                    <button onclick="removeTaskFromProcess('${task.id}')" class="px-2 py-1 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
                   </div>
                 </div>
-                <div class="flex gap-1">
-                  <button onclick="moveTaskUp('${task.id}')" ${index === 0 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover arriba">↑</button>
-                  <button onclick="moveTaskDown('${task.id}')" ${index === tasksInProcess.length - 1 ? 'disabled' : ''} class="px-2 py-1 text-xs border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="Mover abajo">↓</button>
-                  <button onclick="removeTaskFromProcess('${task.id}')" class="px-2 py-1 text-xs border border-red-300 text-red-600 hover:bg-red-50 transition-colors" title="Quitar del proceso">×</button>
+                ${taskRoleIds.length > 0 && employeesWithRole.length > 0 ? `
+                <div class="mt-2 pt-2 border-t border-gray-200">
+                  <label class="block text-xs text-gray-600 mb-1">Empleado asignado:</label>
+                  <select id="task-employee-${task.id}" class="w-full px-2 py-1 text-xs sm:text-sm border border-gray-300 focus:outline-none focus:border-red-600 bg-white" onchange="updateTaskEmployee('${task.id}', this.value)">
+                    <option value="">Sin asignar</option>
+                    ${employeesWithRole.map(emp => `
+                      <option value="${emp.id}" ${assignedEmployeeId === emp.id ? 'selected' : ''}>${escapeHtml(emp.name)}</option>
+                    `).join('')}
+                  </select>
                 </div>
+                ` : taskRoleIds.length > 0 ? `
+                <div class="mt-2 pt-2 border-t border-gray-200">
+                  <span class="text-xs text-gray-500">No hay empleados con los roles requeridos</span>
+                </div>
+                ` : ''}
               </div>
             `;
           }).join('')}
@@ -782,15 +892,25 @@ async function updateProcessFlowDisplay() {
 async function saveProcessFlow() {
   if (!window.currentProcessFlowEdit) return;
   
+  // Get current employee assignments from select elements
   const { processId, tasks } = window.currentProcessFlowEdit;
+  
+  // Update assignedEmployeeId from select elements before saving
+  tasks.forEach(taskData => {
+    const selectElement = document.getElementById(`task-employee-${taskData.id}`);
+    if (selectElement) {
+      taskData.assignedEmployeeId = selectElement.value || null;
+    }
+  });
   
   showSpinner('Guardando cambios...');
   try {
-    // Update each task's processId and order
+    // Update each task's processId, order, and assignedEmployeeId
     const updatePromises = tasks.map((task, index) => {
       return updateTask(task.id, {
         processId: processId,
-        order: index
+        order: index,
+        assignedEmployeeId: task.assignedEmployeeId || null
       });
     });
     
@@ -804,7 +924,8 @@ async function saveProcessFlow() {
       if (task.processId === processId && !currentTaskIds.has(id)) {
         removePromises.push(updateTask(id, {
           processId: null,
-          order: null
+          order: null,
+          assignedEmployeeId: null
         }));
       }
     });
@@ -834,6 +955,7 @@ function closeProcessFlowEdit() {
 }
 
 // Make functions available globally
+window.updateTaskEmployee = updateTaskEmployee;
 window.moveTaskUp = moveTaskUp;
 window.moveTaskDown = moveTaskDown;
 window.removeTaskFromProcess = removeTaskFromProcess;

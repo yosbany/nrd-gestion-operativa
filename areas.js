@@ -88,11 +88,13 @@ function showAreaForm(areaId = null) {
   const detail = document.getElementById('area-detail');
   const title = document.getElementById('area-form-title');
   const formElement = document.getElementById('area-form-element');
+  const searchContainer = document.querySelector('#areas-search')?.parentElement;
   
   if (form) form.classList.remove('hidden');
   if (list) list.style.display = 'none';
   if (header) header.style.display = 'none';
   if (detail) detail.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'none';
   
   if (formElement) {
     formElement.reset();
@@ -122,11 +124,13 @@ function hideAreaForm() {
   const list = document.getElementById('areas-list');
   const header = document.querySelector('#areas-view .flex.flex-col');
   const detail = document.getElementById('area-detail');
+  const searchContainer = document.querySelector('#areas-search')?.parentElement;
   
   if (form) form.classList.add('hidden');
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'block';
 }
 
 // Save area
@@ -156,10 +160,13 @@ async function viewArea(areaId) {
     const detail = document.getElementById('area-detail');
     const detailContent = document.getElementById('area-detail-content');
     
+    const searchContainer = document.querySelector('#areas-search')?.parentElement;
+    
     if (list) list.style.display = 'none';
     if (header) header.style.display = 'none';
     if (form) form.classList.add('hidden');
     if (detail) detail.classList.remove('hidden');
+    if (searchContainer) searchContainer.style.display = 'none';
 
     // Load processes for this area
     const processesSnapshot = await getProcessesRef().once('value');
@@ -225,11 +232,13 @@ function backToAreas() {
   const header = document.querySelector('#areas-view .flex.flex-col');
   const detail = document.getElementById('area-detail');
   const form = document.getElementById('area-form');
+  const searchContainer = document.querySelector('#areas-search')?.parentElement;
   
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
   if (form) form.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'block';
 }
 
 // Delete area handler

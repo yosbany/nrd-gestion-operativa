@@ -176,11 +176,13 @@ function showTaskForm(taskId = null) {
   const detail = document.getElementById('task-detail');
   const title = document.getElementById('task-form-title');
   const formElement = document.getElementById('task-form-element');
+  const searchContainer = document.querySelector('#tasks-search')?.parentElement;
   
   if (form) form.classList.remove('hidden');
   if (list) list.style.display = 'none';
   if (header) header.style.display = 'none';
   if (detail) detail.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'none';
   
   if (formElement) {
     formElement.reset();
@@ -256,7 +258,7 @@ function showTaskForm(taskId = null) {
         document.getElementById('task-cost').value = task.cost || '';
         document.getElementById('task-order').value = task.order || '';
         document.getElementById('task-execution-steps').value = task.executionSteps ? task.executionSteps.join('\n') : '';
-        document.getElementById('task-success-criteria').value = task.successCriteria || '';
+        document.getElementById('task-success-criteria').value = task.successCriteria ? (Array.isArray(task.successCriteria) ? task.successCriteria.join('\n') : task.successCriteria) : '';
         document.getElementById('task-common-errors').value = task.commonErrors ? task.commonErrors.join('\n') : '';
         
         // Set checked roles (support both old roleId and new roleIds)
@@ -306,11 +308,13 @@ function hideTaskForm() {
   const list = document.getElementById('tasks-list');
   const header = document.querySelector('#tasks-view .flex.flex-col');
   const detail = document.getElementById('task-detail');
+  const searchContainer = document.querySelector('#tasks-search')?.parentElement;
   
   if (form) form.classList.add('hidden');
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'block';
 }
 
 // Save task
@@ -340,10 +344,13 @@ async function viewTask(taskId) {
     const detail = document.getElementById('task-detail');
     const detailContent = document.getElementById('task-detail-content');
     
+    const searchContainer = document.querySelector('#tasks-search')?.parentElement;
+    
     if (list) list.style.display = 'none';
     if (header) header.style.display = 'none';
     if (form) form.classList.add('hidden');
     if (detail) detail.classList.remove('hidden');
+    if (searchContainer) searchContainer.style.display = 'none';
 
     // Get process and role names
     let processName = 'Sin proceso';
@@ -434,10 +441,16 @@ async function viewTask(taskId) {
         </ol>
       </div>
       ` : ''}
-      ${task.successCriteria ? `
+      ${task.successCriteria && (Array.isArray(task.successCriteria) ? task.successCriteria.length > 0 : task.successCriteria) ? `
       <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
         <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Criterios de Ejecución Correcta:</h4>
+        ${Array.isArray(task.successCriteria) ? `
+        <ul class="list-disc list-inside space-y-2">
+          ${task.successCriteria.map(criterion => `<li class="text-sm sm:text-base font-light">${escapeHtml(criterion)}</li>`).join('')}
+        </ul>
+        ` : `
         <p class="text-sm sm:text-base font-light">${escapeHtml(task.successCriteria)}</p>
+        `}
       </div>
       ` : ''}
       ${task.commonErrors && task.commonErrors.length > 0 ? `
@@ -476,11 +489,13 @@ function backToTasks() {
   const header = document.querySelector('#tasks-view .flex.flex-col');
   const detail = document.getElementById('task-detail');
   const form = document.getElementById('task-form');
+  const searchContainer = document.querySelector('#tasks-search')?.parentElement;
   
   if (list) list.style.display = 'block';
   if (header) header.style.display = 'flex';
   if (detail) detail.classList.add('hidden');
   if (form) form.classList.add('hidden');
+  if (searchContainer) searchContainer.style.display = 'block';
 }
 
 // Delete task handler
@@ -533,7 +548,9 @@ if (taskFormElement) {
     const executionStepsText = document.getElementById('task-execution-steps').value.trim();
     const executionSteps = executionStepsText ? executionStepsText.split('\n').filter(s => s.trim()) : null;
     
-    const successCriteria = document.getElementById('task-success-criteria').value.trim() || null;
+    // Parse success criteria (one per line)
+    const successCriteriaText = document.getElementById('task-success-criteria').value.trim();
+    const successCriteria = successCriteriaText ? successCriteriaText.split('\n').filter(s => s.trim()) : null;
     
     // Parse common errors (one per line)
     const commonErrorsText = document.getElementById('task-common-errors').value.trim();
