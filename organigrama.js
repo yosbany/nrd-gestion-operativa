@@ -77,8 +77,8 @@ async function loadOrganigrama(editMode = false) {
       });
     });
 
-    // Add roles that have employees but are not yet in any area
-    // These roles will be added to all areas so they can be mapped
+    // For roles that have employees but are not yet in any area,
+    // deduce the area by finding processes where employees with that role are assigned to tasks
     const rolesNotInOrganigrama = new Set();
     rolesWithEmployees.forEach(roleId => {
       let roleInAnyArea = false;
@@ -92,9 +92,36 @@ async function loadOrganigrama(editMode = false) {
       }
     });
 
-    // Add unmapped roles to all areas so they appear in the organigrama
+    // Deduce area for unmapped roles by finding processes where employees with that role work
     rolesNotInOrganigrama.forEach(roleId => {
-      Object.keys(organigramaStructure).forEach(areaId => {
+      // Find employees with this role
+      const employeesWithRole = Object.entries(employees).filter(([employeeId, employee]) => {
+        const employeeRoleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+        return employeeRoleIds.includes(roleId);
+      }).map(([employeeId]) => employeeId);
+
+      // Find areas where these employees work (through assigned tasks in processes)
+      const areasForRole = new Set();
+      employeesWithRole.forEach(employeeId => {
+        // Find tasks assigned to this employee
+        Object.entries(tasks).forEach(([taskId, task]) => {
+          if (task.assignedEmployeeId === employeeId && task.processId) {
+            const process = processes[task.processId];
+            if (process && process.areaId) {
+              areasForRole.add(process.areaId);
+            }
+          }
+        });
+      });
+
+      // Add role to the deduced areas
+      areasForRole.forEach(areaId => {
+        if (!organigramaStructure[areaId]) {
+          organigramaStructure[areaId] = {
+            area: areas[areaId] || { name: 'Área desconocida' },
+            roles: {}
+          };
+        }
         if (!organigramaStructure[areaId].roles[roleId]) {
           organigramaStructure[areaId].roles[roleId] = {
             role: roles[roleId] || { name: 'Rol desconocido' },
