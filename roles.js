@@ -240,10 +240,6 @@ async function viewRole(roleId) {
         </div>
         ` : ''}
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
-          <span class="text-gray-600 font-light text-sm sm:text-base">Tareas asignadas:</span>
-          <span class="font-light text-sm sm:text-base">${roleTasks.length}</span>
-        </div>
-        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
           <span class="text-gray-600 font-light text-sm sm:text-base">Empleados:</span>
           <span class="font-light text-sm sm:text-base">${roleEmployees.length}</span>
         </div>
