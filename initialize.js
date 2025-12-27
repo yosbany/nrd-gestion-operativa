@@ -45,7 +45,7 @@ const initialData = {
       description: 'Revisar el Plan de Producción del día o período correspondiente para entender qué productos deben elaborarse, en qué cantidades y según qué especificaciones. Si el plan no existe o está incompleto, colaborar en su conformación con el área administrativa o supervisor.',
       roleNames: ['Encargado de Turno / Cajero', 'Maestro Panadero', 'Confitero / Repostero', 'Cocinero / Rotisería', 'Sándwichero'],
       frequency: null, // Pendiente de definición
-      estimatedTime: null, // Pendiente de definición
+      estimatedTime: 15, // Minutos
       cost: null, // Pendiente de definición
       type: 'with_role',
       executionSteps: [
@@ -76,31 +76,68 @@ const initialData = {
       description: 'Verificar disponibilidad y estado de los insumos, materias primas y materiales necesarios para la producción según el Plan de Producción.',
       roleNames: ['Encargado de Turno / Cajero', 'Maestro Panadero', 'Confitero / Repostero', 'Cocinero / Rotisería', 'Sándwichero'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 20,
       cost: null,
       type: 'with_role',
-      executionSteps: null, // Pendiente de definir
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Revisar el Plan de Producción para identificar insumos necesarios',
+        'Verificar disponibilidad de insumos en almacén o área de almacenamiento',
+        'Revisar estado y calidad de los insumos disponibles',
+        'Identificar insumos faltantes o insuficientes',
+        'Comunicar necesidades de insumos si corresponde',
+        'Confirmar que los insumos necesarios están disponibles antes de iniciar producción'
+      ],
+      successCriteria: [
+        'Se identificaron todos los insumos necesarios según el Plan de Producción',
+        'Se verificó disponibilidad y estado de los insumos',
+        'Los insumos necesarios están disponibles o se comunicó la necesidad',
+        'No se inicia producción sin insumos necesarios'
+      ],
+      commonErrors: [
+        'No revisar el Plan de Producción antes de verificar insumos',
+        'Asumir que los insumos están disponibles sin verificar',
+        'No identificar insumos faltantes antes de iniciar producción',
+        'No comunicar necesidades de insumos cuando faltan',
+        'Iniciar producción sin insumos necesarios'
+      ]
     },
     {
       name: 'Preparación de Subproductos (Mise en Place)',
       description: 'Preparar y disponer todos los subproductos, ingredientes y elementos necesarios para la producción, organizándolos de manera que faciliten el proceso de elaboración.',
       roleNames: ['Maestro Panadero', 'Confitero / Repostero', 'Cocinero / Rotisería', 'Sándwichero'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 30,
       cost: null,
       type: 'with_role',
-      executionSteps: null,
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Identificar subproductos e ingredientes necesarios según el Plan de Producción',
+        'Preparar y procesar ingredientes según corresponda (cortar, mezclar, pre-cocinar, etc.)',
+        'Organizar ingredientes y subproductos en el área de trabajo',
+        'Disponer herramientas y utensilios necesarios',
+        'Verificar que todos los elementos estén listos antes de iniciar producción',
+        'Mantener organización y limpieza durante la preparación'
+      ],
+      successCriteria: [
+        'Todos los subproductos e ingredientes necesarios están preparados',
+        'Los elementos están organizados y accesibles en el área de trabajo',
+        'Las herramientas y utensilios están disponibles',
+        'La preparación está completa antes de iniciar producción',
+        'El área de trabajo está organizada y limpia'
+      ],
+      commonErrors: [
+        'No preparar todos los subproductos necesarios antes de iniciar',
+        'No organizar ingredientes, generando interrupciones durante la producción',
+        'No disponer herramientas necesarias, retrasando el proceso',
+        'Iniciar producción sin tener la preparación completa',
+        'No mantener organización durante la preparación'
+      ]
     },
     {
       name: 'Producir Productos del Proceso',
       description: 'Ejecutar la elaboración de los productos indicados en el Plan de Producción, siguiendo las especificaciones, recetas y procedimientos técnicos correspondientes, asegurando calidad, presentación y cumplimiento de normas de seguridad alimentaria.',
       roleNames: ['Maestro Panadero', 'Confitero / Repostero', 'Cocinero / Rotisería', 'Sándwichero'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 120,
       cost: null,
       type: 'with_role',
       executionSteps: [
@@ -135,67 +172,168 @@ const initialData = {
       description: 'Empaquetar los productos producidos según especificaciones y estándares establecidos, asegurando presentación adecuada para la venta.',
       roleNames: ['Maestro Panadero', 'Confitero / Repostero', 'Cocinero / Rotisería', 'Sándwichero'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 30,
       cost: null,
       type: 'with_role',
-      executionSteps: null,
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Verificar que los productos estén listos para empaquetar',
+        'Seleccionar empaque adecuado según tipo de producto',
+        'Empaquetar productos según especificaciones y estándares',
+        'Verificar presentación y etiquetado si corresponde',
+        'Disponer productos empaquetados para traslado o exhibición',
+        'Registrar productos empaquetados si corresponde'
+      ],
+      successCriteria: [
+        'Todos los productos fueron empaquetados correctamente',
+        'El empaque cumple con especificaciones y estándares',
+        'La presentación es adecuada para la venta',
+        'Los productos están listos para traslado o exhibición',
+        'Se registró la información si corresponde'
+      ],
+      commonErrors: [
+        'Empaquetar productos que no están completamente listos',
+        'Usar empaque inadecuado para el tipo de producto',
+        'No seguir especificaciones de empaque establecidas',
+        'Empaquetar con presentación deficiente',
+        'No verificar etiquetado o información del producto',
+        'No disponer productos empaquetados correctamente'
+      ]
     },
     {
       name: 'Trasladar Productos al Área de Ventas',
       description: 'Trasladar los productos producidos y empaquetados al área de ventas, disponiéndolos en vitrinas o áreas de exhibición según corresponda.',
       roleNames: ['Encargado de Turno / Cajero', 'Maestro Panadero', 'Confitero / Repostero', 'Cocinero / Rotisería', 'Sándwichero'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 15,
       cost: null,
       type: 'with_role',
-      executionSteps: null,
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Verificar que los productos estén listos para traslado',
+        'Preparar productos para traslado de manera segura',
+        'Trasladar productos al área de ventas',
+        'Disponer productos en vitrinas o áreas de exhibición según corresponda',
+        'Verificar presentación y organización en el área de ventas',
+        'Comunicar disponibilidad de productos si corresponde'
+      ],
+      successCriteria: [
+        'Los productos fueron trasladados correctamente',
+        'Los productos están disponibles en el área de ventas',
+        'La presentación en vitrinas o exhibición es adecuada',
+        'Los productos están organizados y accesibles',
+        'Se comunicó la disponibilidad si corresponde'
+      ],
+      commonErrors: [
+        'Trasladar productos sin verificar que estén listos',
+        'No proteger productos durante el traslado, afectando calidad',
+        'No disponer productos correctamente en vitrinas',
+        'No organizar productos en el área de ventas',
+        'No comunicar disponibilidad de nuevos productos'
+      ]
     },
     {
       name: 'Ordenar y Limpiar Área de Trabajo',
       description: 'Ordenar y limpiar el área de trabajo después de la producción, dejándola lista para el siguiente turno o proceso.',
       roleNames: ['Maestro Panadero', 'Confitero / Repostero', 'Cocinero / Rotisería', 'Sándwichero'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 20,
       cost: null,
       type: 'with_role',
-      executionSteps: null,
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Recoger y organizar herramientas y utensilios utilizados',
+        'Limpiar superficies de trabajo',
+        'Limpiar equipos utilizados según corresponda',
+        'Disponer residuos y desechos correctamente',
+        'Organizar insumos y materiales restantes',
+        'Verificar que el área quede ordenada y limpia',
+        'Guardar herramientas y materiales en sus ubicaciones designadas'
+      ],
+      successCriteria: [
+        'El área de trabajo está ordenada y limpia',
+        'Las herramientas y utensilios están guardados correctamente',
+        'Los equipos están limpios y en condiciones adecuadas',
+        'Los residuos fueron dispuestos correctamente',
+        'El área está lista para el siguiente turno o proceso'
+      ],
+      commonErrors: [
+        'No limpiar el área de trabajo después de usar',
+        'Dejar herramientas y utensilios sin organizar',
+        'No limpiar equipos, afectando su funcionamiento',
+        'No disponer residuos correctamente',
+        'Dejar el área desordenada para el siguiente turno',
+        'No guardar herramientas en sus ubicaciones designadas'
+      ]
     },
     {
       name: 'Revisar Vitrinas del Local de Venta',
       description: 'Revisar el estado de las vitrinas del local de venta, verificando disponibilidad de productos, presentación y condiciones adecuadas para la venta.',
       roleNames: ['Encargado de Turno / Cajero', 'Empleado de Mostrador / Vendedor'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 10,
       cost: null,
       type: 'with_role',
-      executionSteps: null,
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Revisar disponibilidad de productos en vitrinas',
+        'Verificar presentación y organización de productos',
+        'Identificar productos faltantes o con baja disponibilidad',
+        'Verificar condiciones de conservación y temperatura si corresponde',
+        'Identificar necesidades de reposición',
+        'Comunicar necesidades de reposición si corresponde',
+        'Registrar observaciones si corresponde'
+      ],
+      successCriteria: [
+        'Se revisó el estado de todas las vitrinas',
+        'Se identificó disponibilidad de productos',
+        'Se verificó presentación y organización',
+        'Se identificaron necesidades de reposición',
+        'Se comunicaron necesidades si corresponde'
+      ],
+      commonErrors: [
+        'No revisar todas las vitrinas sistemáticamente',
+        'No identificar productos faltantes o con baja disponibilidad',
+        'No verificar condiciones de conservación',
+        'No comunicar necesidades de reposición',
+        'No mantener presentación adecuada de productos'
+      ]
     },
     {
       name: 'Limpieza de Área de Ventas',
       description: 'Realizar limpieza del área de ventas incluyendo cola, mostrador y área de atención al cliente.',
       roleNames: ['Encargado de Turno / Cajero', 'Empleado de Mostrador / Vendedor'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 15,
       cost: null,
       type: 'with_role',
-      executionSteps: null,
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Identificar áreas a limpiar (cola, mostrador, área de atención)',
+        'Disponer herramientas y productos de limpieza necesarios',
+        'Limpiar mostrador y superficies de trabajo',
+        'Limpiar área de cola y espera',
+        'Limpiar área de atención al cliente',
+        'Organizar y ordenar elementos del área',
+        'Verificar que el área quede limpia y ordenada',
+        'Guardar herramientas de limpieza'
+      ],
+      successCriteria: [
+        'El área de ventas está limpia y ordenada',
+        'El mostrador está limpio y organizado',
+        'El área de cola y atención está limpia',
+        'Los elementos están organizados correctamente',
+        'El área está lista para atención al cliente'
+      ],
+      commonErrors: [
+        'No limpiar todas las áreas sistemáticamente',
+        'Dejar el mostrador desordenado o sucio',
+        'No limpiar área de cola o espera',
+        'No organizar elementos del área',
+        'Dejar herramientas de limpieza sin guardar'
+      ]
     },
     {
       name: 'Limpieza General de Áreas Comunes',
       description: 'Realizar limpieza y mantenimiento de áreas comunes del negocio como baños, pisos, pasillos y otros espacios compartidos, asegurando condiciones de higiene y orden para el funcionamiento del negocio.',
       roleNames: ['Limpieza'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 60,
       cost: null,
       type: 'with_role',
       executionSteps: [
@@ -238,7 +376,7 @@ const initialData = {
       description: 'Preparar pan rallado a partir de pan, rallándolo para obtener el producto necesario para uso en producción u otros fines del negocio.',
       roleNames: ['Encargado Contable'],
       frequency: 'Mensual',
-      estimatedTime: null,
+      estimatedTime: 45,
       cost: null, // Sin remuneración
       type: 'unpaid',
       executionSteps: [
@@ -274,7 +412,7 @@ const initialData = {
       description: 'Preparar el sistema de punto de venta y caja para iniciar operaciones del día, verificando que todos los elementos necesarios estén disponibles, funcionando correctamente y listos para la atención al cliente.',
       roleNames: ['Encargado de Turno / Cajero', 'Encargada de Ventas'],
       frequency: 'Diaria',
-      estimatedTime: null,
+      estimatedTime: 20,
       cost: null,
       type: 'with_role',
       executionSteps: [
@@ -309,85 +447,252 @@ const initialData = {
       name: 'Cierre de Caja',
       description: 'Cerrar el sistema de punto de venta y caja al finalizar operaciones del día, realizando conciliación y cierre correspondiente.',
       roleNames: ['Encargado de Turno / Cajero', 'Encargada de Ventas'],
-      frequency: null,
-      estimatedTime: null,
+      frequency: 'Diaria',
+      estimatedTime: 30,
       cost: null,
       type: 'with_role',
-      executionSteps: null,
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Verificar que no haya clientes pendientes de atender',
+        'Realizar corte de caja en el sistema de punto de venta',
+        'Contar efectivo disponible en caja',
+        'Conciliar efectivo con ventas registradas',
+        'Verificar pagos con tarjeta y otros métodos',
+        'Registrar diferencias si las hay',
+        'Preparar efectivo para depósito o entrega',
+        'Cerrar sistema de punto de venta',
+        'Documentar cierre de caja según protocolo establecido'
+      ],
+      successCriteria: [
+        'Se realizó el corte de caja correctamente',
+        'Se contó y concilió el efectivo',
+        'Se verificaron todos los métodos de pago',
+        'Se registraron diferencias si las hubo',
+        'El sistema fue cerrado correctamente',
+        'Se documentó el cierre según protocolo'
+      ],
+      commonErrors: [
+        'Cerrar caja con clientes pendientes de atender',
+        'No contar efectivo correctamente',
+        'No conciliar efectivo con ventas registradas',
+        'No verificar todos los métodos de pago',
+        'No registrar diferencias cuando las hay',
+        'No documentar el cierre correctamente',
+        'Cerrar sistema sin completar todas las verificaciones'
+      ]
     },
     {
       name: 'Atención al Cliente y Venta',
       description: 'Atender a los clientes, procesar ventas y proporcionar servicio al cliente.',
       roleNames: ['Encargado de Turno / Cajero', 'Encargada de Ventas', 'Empleado de Mostrador / Vendedor'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 5,
       cost: null,
       type: 'with_role',
-      executionSteps: null,
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Recibir y saludar al cliente',
+        'Identificar necesidades del cliente',
+        'Mostrar y ofrecer productos disponibles',
+        'Proporcionar información sobre productos si corresponde',
+        'Procesar la venta en el sistema de punto de venta',
+        'Cobrar y procesar el pago',
+        'Empaquetar productos vendidos',
+        'Entregar productos y despedir al cliente',
+        'Registrar la venta si corresponde'
+      ],
+      successCriteria: [
+        'El cliente fue atendido de manera cordial y profesional',
+        'Se identificaron y satisfacieron las necesidades del cliente',
+        'La venta fue procesada correctamente',
+        'El pago fue procesado sin errores',
+        'Los productos fueron entregados correctamente',
+        'La venta fue registrada si corresponde'
+      ],
+      commonErrors: [
+        'No atender al cliente de manera cordial',
+        'No identificar necesidades del cliente',
+        'Procesar venta incorrectamente en el sistema',
+        'Cometer errores en el cobro o cambio',
+        'No empaquetar productos correctamente',
+        'No entregar productos al cliente',
+        'No registrar la venta cuando corresponde'
+      ]
     },
     {
       name: 'Atención de Pedidos por Plataformas en Línea',
       description: 'Atender pedidos recibidos a través de plataformas en línea, procesar las ventas y coordinar la preparación y entrega de productos.',
       roleNames: ['Encargado de Turno / Cajero', 'Encargada de Ventas', 'Empleado de Mostrador / Vendedor'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 10,
       cost: null,
       type: 'with_role',
-      executionSteps: null,
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Revisar pedidos recibidos en plataformas en línea',
+        'Verificar disponibilidad de productos solicitados',
+        'Confirmar pedido con el cliente si corresponde',
+        'Procesar el pedido en el sistema',
+        'Coordinar preparación de productos si corresponde',
+        'Verificar que los productos estén listos',
+        'Preparar pedido para entrega o retiro',
+        'Procesar pago según método establecido',
+        'Registrar la venta y entrega del pedido'
+      ],
+      successCriteria: [
+        'Se revisaron todos los pedidos recibidos',
+        'Se verificó disponibilidad de productos',
+        'El pedido fue procesado correctamente',
+        'Se coordinó la preparación si corresponde',
+        'El pedido fue entregado o está listo para retiro',
+        'El pago fue procesado correctamente',
+        'La venta fue registrada'
+      ],
+      commonErrors: [
+        'No revisar pedidos de manera oportuna',
+        'No verificar disponibilidad antes de confirmar',
+        'Procesar pedido sin productos disponibles',
+        'No coordinar preparación de productos',
+        'No verificar que productos estén listos',
+        'No procesar pago correctamente',
+        'No registrar la venta del pedido'
+      ]
     },
     {
       name: 'Compra de Insumos y Productos',
       description: 'Adquirir insumos, materias primas, materiales para producción y productos para reventa.',
       roleNames: ['Administrador'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 60,
       cost: null,
       type: 'with_role',
-      executionSteps: null,
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Identificar necesidades de compra según planificación',
+        'Revisar proveedores y opciones disponibles',
+        'Solicitar cotizaciones si corresponde',
+        'Evaluar opciones y seleccionar proveedor',
+        'Realizar pedido o compra',
+        'Verificar recepción de productos',
+        'Verificar calidad y cantidad de productos recibidos',
+        'Registrar compra en sistema si corresponde',
+        'Almacenar productos según corresponda'
+      ],
+      successCriteria: [
+        'Se identificaron todas las necesidades de compra',
+        'Se evaluaron opciones y se seleccionó proveedor adecuado',
+        'La compra fue realizada correctamente',
+        'Los productos fueron recibidos y verificados',
+        'La compra fue registrada si corresponde',
+        'Los productos fueron almacenados correctamente'
+      ],
+      commonErrors: [
+        'No identificar todas las necesidades de compra',
+        'No evaluar opciones de proveedores',
+        'Comprar sin verificar disponibilidad de presupuesto',
+        'No verificar calidad de productos recibidos',
+        'No registrar la compra',
+        'No almacenar productos correctamente'
+      ]
     },
     {
       name: 'Contabilidad',
       description: 'Llevar la contabilidad del negocio, registrando operaciones financieras y cumpliendo obligaciones fiscales.',
       roleNames: ['Encargado Contable'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 120,
       cost: null,
       type: 'with_role',
-      executionSteps: null,
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Recopilar documentos contables (facturas, recibos, comprobantes)',
+        'Registrar operaciones financieras en sistema contable',
+        'Clasificar operaciones según corresponda',
+        'Realizar conciliaciones bancarias',
+        'Preparar reportes contables periódicos',
+        'Cumplir con obligaciones fiscales y tributarias',
+        'Archivar documentos contables',
+        'Mantener registros actualizados'
+      ],
+      successCriteria: [
+        'Todas las operaciones fueron registradas',
+        'Los registros están actualizados y organizados',
+        'Se realizaron conciliaciones correctamente',
+        'Se cumplieron obligaciones fiscales',
+        'Los documentos están archivados correctamente',
+        'Los reportes son precisos y oportunos'
+      ],
+      commonErrors: [
+        'No registrar operaciones de manera oportuna',
+        'Registrar operaciones incorrectamente',
+        'No realizar conciliaciones bancarias',
+        'No cumplir con obligaciones fiscales',
+        'No archivar documentos correctamente',
+        'Mantener registros desactualizados'
+      ]
     },
     {
       name: 'Mantenimiento Básico de Equipos e Instalaciones',
       description: 'Realizar mantenimiento básico de equipos, instalaciones y sistemas.',
       roleNames: [], // Pendiente de definir
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 45,
       cost: null,
       type: 'without_role',
-      executionSteps: null,
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Identificar equipos e instalaciones que requieren mantenimiento',
+        'Revisar estado y funcionamiento de equipos',
+        'Realizar limpieza y mantenimiento básico',
+        'Verificar funcionamiento después del mantenimiento',
+        'Documentar mantenimiento realizado',
+        'Identificar necesidades de mantenimiento especializado si corresponde',
+        'Coordinar mantenimiento especializado si es necesario'
+      ],
+      successCriteria: [
+        'Se identificaron equipos que requieren mantenimiento',
+        'Se realizó mantenimiento básico correctamente',
+        'Los equipos funcionan correctamente después del mantenimiento',
+        'Se documentó el mantenimiento realizado',
+        'Se identificaron necesidades de mantenimiento especializado si corresponde'
+      ],
+      commonErrors: [
+        'No realizar mantenimiento de manera periódica',
+        'No verificar funcionamiento después del mantenimiento',
+        'No documentar mantenimiento realizado',
+        'No identificar necesidades de mantenimiento especializado',
+        'Intentar reparaciones complejas sin conocimiento adecuado'
+      ]
     },
     {
       name: 'Planificación de Producción',
       description: 'Definir qué productos producir, en qué cantidades y según qué especificaciones.',
       roleNames: ['Administrador'],
       frequency: null,
-      estimatedTime: null,
+      estimatedTime: 90,
       cost: null,
       type: 'with_role',
-      executionSteps: null,
-      successCriteria: null,
-      commonErrors: null
+      executionSteps: [
+        'Analizar demanda y ventas previas',
+        'Considerar estacionalidad y tendencias',
+        'Revisar disponibilidad de insumos',
+        'Definir productos a producir',
+        'Definir cantidades para cada producto',
+        'Especificar características y especificaciones',
+        'Asignar productos a procesos correspondientes',
+        'Documentar plan de producción',
+        'Comunicar plan a áreas correspondientes'
+      ],
+      successCriteria: [
+        'El plan considera demanda y ventas previas',
+        'Se definieron productos y cantidades',
+        'Se especificaron características de productos',
+        'El plan está documentado',
+        'El plan fue comunicado a áreas correspondientes',
+        'El plan es realista y factible'
+      ],
+      commonErrors: [
+        'No considerar demanda real al planificar',
+        'Planificar cantidades sin considerar insumos disponibles',
+        'No especificar características de productos',
+        'No documentar el plan de producción',
+        'No comunicar el plan a áreas correspondientes',
+        'Planificar sin considerar capacidad de producción'
+      ]
     }
   ],
   processes: [
@@ -460,8 +765,8 @@ const initialData = {
       name: 'Atención a Clientes por Plataformas en Línea y Venta',
       areaName: 'Ventas y Atención al Cliente',
       objective: 'Atender pedidos recibidos a través de plataformas en línea, procesar las ventas, coordinar la preparación y entrega de productos.',
-      taskNames: [], // Pendiente de definir
-      employeeNames: [] // Pendiente de definir
+      taskNames: ['Atención de Pedidos por Plataformas en Línea'],
+      employeeNames: ['Marlenis', 'Anisley', 'Félix Manuel']
     },
     {
       name: 'Reposición de Vitrinas',
@@ -488,14 +793,14 @@ const initialData = {
       name: 'Compra',
       areaName: 'Administración y Gestión',
       objective: 'Adquirir insumos, materias primas, materiales para producción y productos para reventa.',
-      taskNames: [], // Pendiente de definir
-      employeeNames: [] // Pendiente de definir
+      taskNames: ['Compra de Insumos y Productos'],
+      employeeNames: [] // Tarea con rol "Administrador" - no hay empleado con ese rol específico
     },
     {
       name: 'Contabilidad',
       areaName: 'Administración y Gestión',
       objective: 'Llevar la contabilidad del negocio, registrando operaciones financieras y cumpliendo obligaciones fiscales.',
-      taskNames: [], // Pendiente de definir
+      taskNames: ['Contabilidad'],
       employeeNames: ['Salvador']
     },
     {
@@ -509,22 +814,22 @@ const initialData = {
       name: 'Mantenimiento Básico',
       areaName: 'Administración y Gestión',
       objective: 'Realizar mantenimiento básico de equipos, instalaciones y sistemas.',
-      taskNames: [], // Pendiente de definir
-      employeeNames: [] // Pendiente de definir
+      taskNames: ['Mantenimiento Básico de Equipos e Instalaciones'],
+      employeeNames: [] // Pendiente de definir empleados específicos
     },
     {
       name: 'Preparación de Insumos y Tareas Periódicas',
       areaName: 'Administración y Gestión',
       objective: 'Tareas periódicas de preparación que no forman parte de procesos diarios.',
       taskNames: ['Rallar Pan'],
-      employeeNames: ['Salvador']
+      employeeNames: ['Salvador'] // Tarea con rol "Encargado Contable"
     },
     {
       name: 'Planificación de Producción',
       areaName: 'Administración y Gestión',
       objective: 'Definir qué productos producir, en qué cantidades y según qué especificaciones.',
-      taskNames: [], // Pendiente de definir
-      employeeNames: [] // Pendiente de definir
+      taskNames: ['Planificación de Producción'],
+      employeeNames: [] // Tarea con rol "Administrador" - no hay empleado con ese rol específico
     }
   ]
 };
@@ -646,7 +951,8 @@ async function initializeSystem() {
           type: taskData.type,
           frequency: taskData.frequency || null,
           estimatedTime: taskData.estimatedTime || null,
-          cost: taskData.cost || null,
+          // Cost is calculated automatically based on roles and employee salaries, not stored
+          cost: null,
           executionSteps: taskData.executionSteps || null,
           successCriteria: taskData.successCriteria || null,
           commonErrors: taskData.commonErrors || null,

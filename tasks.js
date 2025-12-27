@@ -5,6 +5,79 @@ let allTasks = {}; // Store all tasks for filtering
 let taskProcessMap = {}; // Store process names for tasks
 let taskRoleMap = {}; // Store role names for tasks
 
+// Calculate task cost based on roles and employees
+// Cost is calculated as: average monthly salary of employees with task roles / minutes per month * estimated time
+// Assumes 160 working hours per month = 9600 minutes
+async function calculateTaskCost(task) {
+  try {
+    // Only calculate cost for tasks with roles
+    if (task.type !== 'with_role') {
+      return null;
+    }
+    
+    const roleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+    if (!roleIds || roleIds.length === 0) {
+      return null;
+    }
+    
+    // Get estimated time
+    const estimatedTime = task.estimatedTime || 0;
+    if (estimatedTime === 0) {
+      return null;
+    }
+    
+    // Load all employees
+    const employeesSnapshot = await getEmployeesRef().once('value');
+    const allEmployees = employeesSnapshot.val() || {};
+    
+    // For each role, get employees with that role and their salaries
+    const roleCosts = [];
+    
+    for (const roleId of roleIds) {
+      const employeesWithRole = Object.values(allEmployees).filter(emp => {
+        const empRoleIds = emp.roleIds || (emp.roleId ? [emp.roleId] : []);
+        return empRoleIds.includes(roleId);
+      });
+      
+      if (employeesWithRole.length === 0) {
+        continue;
+      }
+      
+      // Get salaries (only employees with salary)
+      const salaries = employeesWithRole
+        .map(emp => emp.salary ? parseFloat(emp.salary) : null)
+        .filter(s => s !== null && s > 0);
+      
+      if (salaries.length === 0) {
+        continue;
+      }
+      
+      // Calculate average salary for this role
+      const avgSalary = salaries.reduce((sum, s) => sum + s, 0) / salaries.length;
+      
+      // Convert monthly salary to cost per minute
+      // Assuming 160 working hours per month = 9600 minutes
+      const costPerMinute = avgSalary / 9600;
+      
+      // Calculate cost for this role
+      const roleCost = costPerMinute * estimatedTime;
+      roleCosts.push(roleCost);
+    }
+    
+    if (roleCosts.length === 0) {
+      return null;
+    }
+    
+    // Calculate average cost across all roles
+    const avgCost = roleCosts.reduce((sum, c) => sum + c, 0) / roleCosts.length;
+    
+    return avgCost;
+  } catch (error) {
+    console.error('Error calculating task cost:', error);
+    return null;
+  }
+}
+
 const taskTypeLabels = {
   'with_role': 'Con rol',
   'without_role': 'Sin rol',
@@ -55,11 +128,16 @@ async function filterAndDisplayTasks(searchTerm = '') {
     return;
   }
 
-  filteredTasks.forEach(([id, task]) => {
+  // Calculate costs for all tasks
+  const costPromises = filteredTasks.map(([id, task]) => calculateTaskCost(task));
+  const calculatedCosts = await Promise.all(costPromises);
+  
+  filteredTasks.forEach(([id, task], index) => {
     const item = document.createElement('div');
     item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
     item.dataset.taskId = id;
     const processName = task.processId ? (taskProcessMap[task.processId] || 'Proceso desconocido') : 'Sin proceso';
+    const calculatedCost = calculatedCosts[index];
     
     // Get role names (support both old roleId and new roleIds)
     const roleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
@@ -70,7 +148,7 @@ async function filterAndDisplayTasks(searchTerm = '') {
       <div class="flex justify-between items-center mb-2 sm:mb-3">
         <div class="text-base sm:text-lg font-light">${escapeHtml(task.name)}</div>
         <div class="flex items-center gap-2">
-          ${task.cost ? `<span class="text-xs sm:text-sm text-gray-600">$${parseFloat(task.cost).toFixed(2)}</span>` : ''}
+          ${calculatedCost !== null ? `<span class="text-xs sm:text-sm text-gray-600">$${calculatedCost.toFixed(2)}</span>` : ''}
           <span class="text-xs px-2 py-0.5 bg-gray-100 rounded">${taskTypeLabels[task.type] || task.type || 'Sin tipo'}</span>
         </div>
       </div>
@@ -136,7 +214,7 @@ function loadTasks() {
 }
 
 // Show task form
-function showTaskForm(taskId = null) {
+async function showTaskForm(taskId = null) {
   const form = document.getElementById('task-form');
   const list = document.getElementById('tasks-list');
   const header = document.querySelector('#tasks-view .flex.flex-col');
@@ -161,8 +239,23 @@ function showTaskForm(taskId = null) {
   Promise.all([
     getRolesRef().once('value'),
     taskId ? getTask(taskId) : Promise.resolve(null)
-  ]).then(([rolesSnapshot, taskSnapshot]) => {
+  ]).then(async ([rolesSnapshot, taskSnapshot]) => {
     const roles = rolesSnapshot.val() || {};
+    const task = taskSnapshot && taskSnapshot.val() ? taskSnapshot.val() : null;
+    
+    // Calculate and display cost if editing
+    if (task) {
+      const calculatedCost = await calculateTaskCost(task);
+      const costInput = document.getElementById('task-cost');
+      if (costInput) {
+        costInput.value = calculatedCost !== null ? `$${calculatedCost.toFixed(2)} (calculado)` : 'No calculable';
+      }
+    } else {
+      const costInput = document.getElementById('task-cost');
+      if (costInput) {
+        costInput.value = 'Se calculará automáticamente al guardar';
+      }
+    }
     
     // Roles checkboxes
     const rolesContainer = document.getElementById('task-roles-container');
@@ -172,8 +265,8 @@ function showTaskForm(taskId = null) {
         rolesContainer.innerHTML = '<p class="text-sm text-gray-500">No hay roles disponibles</p>';
       } else {
         // Get task roleIds if editing
-        const roleIds = taskSnapshot && taskSnapshot.val() 
-          ? (taskSnapshot.val().roleIds || (taskSnapshot.val().roleId ? [taskSnapshot.val().roleId] : []))
+        const roleIds = task
+          ? (task.roleIds || (task.roleId ? [task.roleId] : []))
           : [];
         
         Object.entries(roles).forEach(([roleId, role]) => {
@@ -199,7 +292,7 @@ function showTaskForm(taskId = null) {
 
   if (taskId) {
     if (title) title.textContent = 'Editar Tarea';
-    getTask(taskId).then(snapshot => {
+    getTask(taskId).then(async snapshot => {
       const task = snapshot.val();
       if (task) {
         document.getElementById('task-name').value = task.name || '';
@@ -207,7 +300,9 @@ function showTaskForm(taskId = null) {
         document.getElementById('task-type').value = task.type || 'with_role';
         document.getElementById('task-frequency').value = task.frequency || '';
         document.getElementById('task-estimated-time').value = task.estimatedTime || '';
-        document.getElementById('task-cost').value = task.cost || '';
+        // Calculate and display cost
+        const calculatedCost = await calculateTaskCost(task);
+        document.getElementById('task-cost').value = calculatedCost !== null ? `$${calculatedCost.toFixed(2)} (calculado)` : 'No calculable';
         document.getElementById('task-execution-steps').value = task.executionSteps ? task.executionSteps.join('\n') : '';
         document.getElementById('task-success-criteria').value = task.successCriteria ? (Array.isArray(task.successCriteria) ? task.successCriteria.join('\n') : task.successCriteria) : '';
         document.getElementById('task-common-errors').value = task.commonErrors ? task.commonErrors.join('\n') : '';
@@ -227,6 +322,10 @@ function showTaskForm(taskId = null) {
     if (title) title.textContent = 'Nueva Tarea';
     document.getElementById('task-type').value = 'with_role';
     updateRoleSelectVisibility('with_role');
+    const costInput = document.getElementById('task-cost');
+    if (costInput) {
+      costInput.value = 'Se calculará automáticamente al guardar';
+    }
   }
   
   // Add event listener for type change
@@ -333,6 +432,9 @@ async function viewTask(taskId) {
       'exchange': 'Canje por beneficios'
     };
 
+    // Calculate task cost
+    const calculatedCost = await calculateTaskCost(task);
+
     detailContent.innerHTML = `
       <div class="space-y-3 sm:space-y-4">
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
@@ -371,10 +473,10 @@ async function viewTask(taskId) {
           <span class="font-light text-sm sm:text-base">${task.estimatedTime} minutos</span>
         </div>
         ` : ''}
-        ${task.cost ? `
+        ${calculatedCost !== null ? `
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
-          <span class="text-gray-600 font-light text-sm sm:text-base">Costo/Pago:</span>
-          <span class="font-light text-sm sm:text-base">$${parseFloat(task.cost).toFixed(2)}</span>
+          <span class="text-gray-600 font-light text-sm sm:text-base">Costo calculado:</span>
+          <span class="font-light text-sm sm:text-base">$${calculatedCost.toFixed(2)}</span>
         </div>
         ` : ''}
         ${task.order ? `
@@ -487,7 +589,7 @@ if (taskFormElement) {
     const type = document.getElementById('task-type').value;
     const frequency = document.getElementById('task-frequency').value.trim() || null;
     const estimatedTime = parseInt(document.getElementById('task-estimated-time').value) || null;
-    const cost = parseFloat(document.getElementById('task-cost').value) || null;
+    // Cost is calculated automatically, not stored
     
     // Get selected roles
     const roleCheckboxes = document.querySelectorAll('#task-roles-container input[type="checkbox"]:checked');
@@ -523,7 +625,8 @@ if (taskFormElement) {
         type,
         frequency,
         estimatedTime,
-        cost: cost || null,
+        // Cost is calculated automatically, not stored
+        cost: null,
         executionSteps,
         successCriteria,
         commonErrors
