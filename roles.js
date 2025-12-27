@@ -204,7 +204,7 @@ async function viewRole(roleId) {
     if (roleTasks.length > 0) {
       tasksListHTML = `
         <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-          <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Tareas Asociadas:</h4>
+          <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Tareas Asociadas: ${roleTasks.length}</h4>
           <div class="space-y-2">
             ${roleTasks.map(task => {
               // Get process names (support both processId and processIds)
