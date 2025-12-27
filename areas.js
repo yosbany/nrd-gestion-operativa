@@ -102,20 +102,36 @@ function showAreaForm(areaId = null) {
     if (areaIdInput) areaIdInput.value = areaId || '';
   }
 
-  if (areaId) {
-    if (title) title.textContent = 'Editar Área';
-    getArea(areaId).then(snapshot => {
-      const area = snapshot.val();
-      if (area) {
-        const nameInput = document.getElementById('area-name');
-        const descInput = document.getElementById('area-description');
-        if (nameInput) nameInput.value = area.name || '';
-        if (descInput) descInput.value = area.description || '';
+  // Load employees for manager select
+  loadEmployeesForSelect().then(employees => {
+    const managerSelect = document.getElementById('area-manager-select');
+    if (managerSelect) {
+      managerSelect.innerHTML = '<option value="">Sin encargado</option>';
+      employees.forEach(employee => {
+        const option = document.createElement('option');
+        option.value = employee.id;
+        option.textContent = employee.name;
+        managerSelect.appendChild(option);
+      });
+      
+      // Load area data if editing
+      if (areaId) {
+        if (title) title.textContent = 'Editar Área';
+        getArea(areaId).then(snapshot => {
+          const area = snapshot.val();
+          if (area) {
+            const nameInput = document.getElementById('area-name');
+            const descInput = document.getElementById('area-description');
+            if (nameInput) nameInput.value = area.name || '';
+            if (descInput) descInput.value = area.description || '';
+            if (managerSelect) managerSelect.value = area.managerEmployeeId || '';
+          }
+        });
+      } else {
+        if (title) title.textContent = 'Nueva Área';
       }
-    });
-  } else {
-    if (title) title.textContent = 'Nueva Área';
-  }
+    }
+  });
 }
 
 // Hide area form
@@ -146,8 +162,12 @@ function saveArea(areaId, areaData) {
 async function viewArea(areaId) {
   showSpinner('Cargando área...');
   try {
-    const snapshot = await getArea(areaId);
-    const area = snapshot.val();
+    const [areaSnapshot, processesSnapshot, employeesSnapshot] = await Promise.all([
+      getArea(areaId),
+      getProcessesRef().once('value'),
+      getEmployeesRef().once('value')
+    ]);
+    const area = areaSnapshot.val();
     hideSpinner();
     if (!area) {
       await showError('Área no encontrada');
@@ -169,11 +189,17 @@ async function viewArea(areaId) {
     if (searchContainer) searchContainer.style.display = 'none';
 
     // Load processes for this area
-    const processesSnapshot = await getProcessesRef().once('value');
     const allProcesses = processesSnapshot.val() || {};
     const areaProcesses = Object.entries(allProcesses)
       .filter(([id, process]) => process.areaId === areaId)
       .map(([id, process]) => ({ id, ...process }));
+
+    // Get manager name
+    const allEmployees = employeesSnapshot.val() || {};
+    let managerName = 'Sin encargado';
+    if (area.managerEmployeeId && allEmployees[area.managerEmployeeId]) {
+      managerName = allEmployees[area.managerEmployeeId].name;
+    }
 
     detailContent.innerHTML = `
       <div class="space-y-3 sm:space-y-4">
@@ -187,6 +213,10 @@ async function viewArea(areaId) {
           <span class="font-light text-sm sm:text-base text-right">${escapeHtml(area.description)}</span>
         </div>
         ` : ''}
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Empleado Encargado:</span>
+          <span class="font-light text-sm sm:text-base">${escapeHtml(managerName)}</span>
+        </div>
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
           <span class="text-gray-600 font-light text-sm sm:text-base">Procesos:</span>
           <span class="font-light text-sm sm:text-base">${areaProcesses.length}</span>
@@ -276,6 +306,7 @@ if (areaFormElement) {
     const areaId = document.getElementById('area-id').value;
     const name = document.getElementById('area-name').value.trim();
     const description = document.getElementById('area-description').value.trim();
+    const managerEmployeeId = document.getElementById('area-manager-select').value || null;
 
     if (!name) {
       await showError('Por favor complete el nombre del área');
@@ -284,7 +315,11 @@ if (areaFormElement) {
 
     showSpinner('Guardando área...');
     try {
-      await saveArea(areaId || null, { name, description: description || null });
+      await saveArea(areaId || null, { 
+        name, 
+        description: description || null,
+        managerEmployeeId: managerEmployeeId || null
+      });
       hideSpinner();
       hideAreaForm();
       await showSuccess('Área guardada exitosamente');

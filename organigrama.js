@@ -196,6 +196,12 @@ async function loadOrganigrama(editMode = false) {
           return nameA.localeCompare(nameB);
         });
 
+        // Get manager name if exists
+        let managerName = '';
+        if (area.managerEmployeeId && employees[area.managerEmployeeId]) {
+          managerName = employees[area.managerEmployeeId].name;
+        }
+        
         organigramaHTML += `
           <div class="organigrama-area-section mb-8">
             <!-- Level 1: Area (Top level - Red like the app theme) -->
@@ -204,6 +210,7 @@ async function loadOrganigrama(editMode = false) {
                 <div class="bg-red-600 text-white px-8 py-4 rounded-lg shadow-lg min-w-[250px] text-center">
                   <div class="font-medium text-base sm:text-lg">${escapeHtml(area.name || 'Área sin nombre')}</div>
                   ${area.description ? `<div class="text-red-100 text-xs mt-1 font-light">${escapeHtml(area.description)}</div>` : ''}
+                  ${managerName ? `<div class="text-red-100 text-xs mt-2 font-light border-t border-red-500 pt-2">Encargado: ${escapeHtml(managerName)}</div>` : ''}
                 </div>
               </div>
             </div>

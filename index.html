@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1766835982465">
+  <link rel="stylesheet" href="styles.css?v=1766836156228">
   <meta name="theme-color" content="#dc2626">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -270,6 +270,12 @@
             <div class="mb-4 sm:mb-6">
               <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Descripción</label>
               <textarea id="area-description" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Empleado Encargado</label>
+              <select id="area-manager-select" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+                <option value="">Sin encargado</option>
+              </select>
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
               <button type="button" id="cancel-area-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
@@ -604,10 +610,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
   <!-- App Scripts -->
-  <script src="firebase.js?v=1766835982465"></script>
-  <script src="modal.js?v=1766835982465"></script>
-  <script src="auth.js?v=1766835982465"></script>
-  <script src="db.js?v=1766835982465"></script>
+  <script src="firebase.js?v=1766836156228"></script>
+  <script src="modal.js?v=1766836156228"></script>
+  <script src="auth.js?v=1766836156228"></script>
+  <script src="db.js?v=1766836156228"></script>
   <script src="areas.js"></script>
   <script src="processes.js"></script>
   <script src="tasks.js"></script>
@@ -617,7 +623,7 @@
   <script src="inicio.js"></script>
   <script src="informacion.js"></script>
   <script src="organigrama.js"></script>
-  <script src="app.js?v=1766835982465"></script>
+  <script src="app.js?v=1766836156228"></script>
 
   <script>
     // Global error handler
@@ -668,7 +674,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1766835982465')
+        navigator.serviceWorker.register('service-worker.js?v=1766836156228')
           .then(reg => {
             console.log('Service Worker registered');
             
