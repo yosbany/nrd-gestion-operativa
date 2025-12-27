@@ -171,11 +171,6 @@ async function loadOrganigrama(editMode = false) {
 
     // Generate HTML with hierarchical chart design
     let organigramaHTML = `
-      <div class="mb-4 flex justify-end">
-        <button id="toggle-organigrama-edit-btn" class="px-4 sm:px-6 py-2 ${editMode ? 'bg-gray-600 text-white border border-gray-600 hover:bg-gray-700' : 'border border-gray-300 hover:border-gray-400'} transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
-          ${editMode ? 'Cancelar Edición' : 'Editar Organigrama'}
-        </button>
-      </div>
       <div class="organigrama-container">
     `;
     
@@ -355,15 +350,8 @@ async function loadOrganigrama(editMode = false) {
     
     // Attach event listeners
     if (editMode) {
-      const toggleBtn = document.getElementById('toggle-organigrama-edit-btn');
       const cancelBtn = document.getElementById('cancel-organigrama-edit-btn');
       const saveBtn = document.getElementById('save-organigrama-btn');
-      
-      if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-          loadOrganigrama(false);
-        });
-      }
       
       if (cancelBtn) {
         cancelBtn.addEventListener('click', () => {
@@ -392,13 +380,6 @@ async function loadOrganigrama(editMode = false) {
           }
         });
       });
-    } else {
-      const toggleBtn = document.getElementById('toggle-organigrama-edit-btn');
-      if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-          loadOrganigrama(true);
-        });
-      }
     }
     
     hideSpinner();

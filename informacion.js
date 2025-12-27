@@ -720,8 +720,24 @@ const addContractBtn = document.getElementById('add-contract-btn');
 const addContractBtnEdit = document.getElementById('add-contract-btn-edit');
 
 if (addContractBtn) {
-  addContractBtn.addEventListener('click', () => {
-    showEditMode({});
+  addContractBtn.addEventListener('click', async () => {
+    try {
+      const snapshot = await getCompanyInfo();
+      const companyInfo = snapshot.val() || {};
+      await showEditMode(companyInfo);
+      // After showing edit mode, add new contract
+      setTimeout(() => {
+        const contractsList = document.getElementById('contracts-list-edit');
+        if (contractsList) {
+          const newContractDiv = createContractEditItem('new', {});
+          contractsList.appendChild(newContractDiv);
+          newContractDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 100);
+    } catch (error) {
+      await showError('Error al cargar información: ' + error.message);
+      console.error('Error loading company info:', error);
+    }
   });
 }
 
