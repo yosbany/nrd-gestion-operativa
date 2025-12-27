@@ -68,6 +68,42 @@ async function loadOrganigrama(editMode = false) {
       }
     });
 
+    // Track which roles have employees assigned
+    const rolesWithEmployees = new Set();
+    Object.entries(employees).forEach(([employeeId, employee]) => {
+      const employeeRoleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+      employeeRoleIds.forEach(roleId => {
+        rolesWithEmployees.add(roleId);
+      });
+    });
+
+    // Add roles that have employees but are not yet in any area
+    // These roles will be added to all areas so they can be mapped
+    const rolesNotInOrganigrama = new Set();
+    rolesWithEmployees.forEach(roleId => {
+      let roleInAnyArea = false;
+      Object.keys(organigramaStructure).forEach(areaId => {
+        if (organigramaStructure[areaId].roles[roleId]) {
+          roleInAnyArea = true;
+        }
+      });
+      if (!roleInAnyArea && roles[roleId]) {
+        rolesNotInOrganigrama.add(roleId);
+      }
+    });
+
+    // Add unmapped roles to all areas so they appear in the organigrama
+    rolesNotInOrganigrama.forEach(roleId => {
+      Object.keys(organigramaStructure).forEach(areaId => {
+        if (!organigramaStructure[areaId].roles[roleId]) {
+          organigramaStructure[areaId].roles[roleId] = {
+            role: roles[roleId] || { name: 'Rol desconocido' },
+            employees: []
+          };
+        }
+      });
+    });
+
     // Map employees to roles in each area
     Object.entries(employees).forEach(([employeeId, employee]) => {
       const employeeRoleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
