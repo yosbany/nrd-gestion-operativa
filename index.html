@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1767092205137">
+  <link rel="stylesheet" href="styles.css?v=1767092343732">
   <meta name="theme-color" content="#dc2626">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -612,10 +612,16 @@
   <!-- jsPDF for PDF generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   
+  <!-- Initialize NRD Data Access Library -->
+  <script>
+    // Initialize NRD Data Access Library
+    // Esta librería maneja la inicialización de Firebase y el acceso a datos para todas las entidades
+    const nrd = new NRDDataAccess();
+  </script>
+  
   <!-- App Scripts -->
-  <script src="modal.js?v=1767092205137"></script>
-  <script src="db.js?v=1767092205137"></script>
-  <script src="auth.js?v=1767092205137"></script>
+  <script src="modal.js?v=1767092343732"></script>
+  <script src="auth.js?v=1767092343732"></script>
   <script src="initialize.js"></script>
   <script src="areas.js"></script>
   <script src="processes.js"></script>
@@ -626,7 +632,7 @@
   <script src="inicio.js"></script>
   <script src="informacion.js"></script>
   <script src="organigrama.js"></script>
-  <script src="app.js?v=1767092205137"></script>
+  <script src="app.js?v=1767092343732"></script>
 
   <script>
     // Global error handler
@@ -677,7 +683,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1767092205137')
+        navigator.serviceWorker.register('service-worker.js?v=1767092343732')
           .then(reg => {
             console.log('Service Worker registered');
             

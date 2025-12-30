@@ -27,8 +27,7 @@ async function calculateTaskCost(task) {
     }
     
     // Load all employees
-    const employeesSnapshot = await getEmployeesRef().once('value');
-    const allEmployees = employeesSnapshot.val() || {};
+    const allEmployees = await nrd.employees.getAll();
     
     // For each role, get employees with that role and their salaries
     const roleCosts = [];
@@ -173,27 +172,25 @@ function loadTasks() {
 
   // Remove previous listener
   if (tasksListener) {
-    getTasksRef().off('value', tasksListener);
+    tasksListener();
     tasksListener = null;
   }
 
-  // Listen for tasks
-  tasksListener = getTasksRef().on('value', async (snapshot) => {
+  // Listen for tasks using NRD Data Access
+  tasksListener = nrd.tasks.onValue(async (data) => {
     if (!tasksList) return;
-    allTasks = snapshot.val() || {};
+    allTasks = data || {};
 
     // Load processes and roles for display
-    const processesSnapshot = await getProcessesRef().once('value');
-    const processes = processesSnapshot.val() || {};
+    const processes = await nrd.processes.getAll();
     taskProcessMap = {};
-    Object.entries(processes).forEach(([id, process]) => {
+    Object.entries(processes || {}).forEach(([id, process]) => {
       taskProcessMap[id] = process.name;
     });
 
-    const rolesSnapshot = await getRolesRef().once('value');
-    const roles = rolesSnapshot.val() || {};
+    const roles = await nrd.roles.getAll();
     taskRoleMap = {};
-    Object.entries(roles).forEach(([id, role]) => {
+    Object.entries(roles || {}).forEach(([id, role]) => {
       taskRoleMap[id] = role.name;
     });
     
@@ -237,11 +234,9 @@ async function showTaskForm(taskId = null) {
 
   // Load roles for checkboxes
   Promise.all([
-    getRolesRef().once('value'),
-    taskId ? getTask(taskId) : Promise.resolve(null)
-  ]).then(async ([rolesSnapshot, taskSnapshot]) => {
-    const roles = rolesSnapshot.val() || {};
-    const task = taskSnapshot && taskSnapshot.val() ? taskSnapshot.val() : null;
+    nrd.roles.getAll(),
+    taskId ? nrd.tasks.getById(taskId) : Promise.resolve(null)
+  ]).then(async ([roles, task]) => {
     
     // Calculate and display cost if editing
     if (task) {
@@ -292,8 +287,7 @@ async function showTaskForm(taskId = null) {
 
   if (taskId) {
     if (title) title.textContent = 'Editar Tarea';
-    getTask(taskId).then(async snapshot => {
-      const task = snapshot.val();
+    nrd.tasks.getById(taskId).then(async task => {
       if (task) {
         document.getElementById('task-name').value = task.name || '';
         document.getElementById('task-description').value = task.description || '';
@@ -370,9 +364,9 @@ function hideTaskForm() {
 // Save task
 function saveTask(taskId, taskData) {
   if (taskId) {
-    return updateTask(taskId, taskData);
+    return nrd.tasks.update(taskId, taskData);
   } else {
-    return createTask(taskData);
+    return nrd.tasks.create(taskData);
   }
 }
 
@@ -380,8 +374,7 @@ function saveTask(taskId, taskData) {
 async function viewTask(taskId) {
   showSpinner('Cargando tarea...');
   try {
-    const snapshot = await getTask(taskId);
-    const task = snapshot.val();
+    const task = await nrd.tasks.getById(taskId);
     hideSpinner();
     if (!task) {
       await showError('Tarea no encontrada');
@@ -405,8 +398,7 @@ async function viewTask(taskId) {
     // Get process and role names
     let processName = 'Sin proceso';
     if (task.processId) {
-      const processSnapshot = await getProcess(task.processId);
-      const process = processSnapshot.val();
+      const process = await nrd.processes.getById(task.processId);
       if (process) processName = process.name;
     }
 
@@ -415,8 +407,8 @@ async function viewTask(taskId) {
     let roleNames = 'Sin rol';
     
     if (roleIds.length > 0) {
-      const rolePromises = roleIds.map(roleId => getRole(roleId).then(snapshot => {
-        const role = snapshot.val();
+      const rolePromises = roleIds.map(roleId => nrd.roles.getById(roleId).then(role => {
+        // role already loaded from nrd.roles.getById above
         return role ? role.name : null;
       }));
       const roleNamesArray = await Promise.all(rolePromises);
@@ -558,7 +550,7 @@ async function deleteTaskHandler(taskId) {
 
   showSpinner('Eliminando tarea...');
   try {
-    await deleteTask(taskId);
+    await nrd.tasks.delete(taskId);
     hideSpinner();
     backToTasks();
   } catch (error) {
@@ -677,9 +669,8 @@ if (backToTasksBtn) {
 
 // Load tasks for select
 function loadTasksForSelect() {
-  return getTasksRef().once('value').then(snapshot => {
-    const tasks = snapshot.val() || {};
-    return Object.entries(tasks).map(([id, task]) => ({ id, ...task }));
+  return nrd.tasks.getAll().then(tasks => {
+    return Object.entries(tasks || {}).map(([id, task]) => ({ id, ...task }));
   });
 }
 

@@ -24,8 +24,7 @@ async function filterAndDisplayEmployees(searchTerm = '') {
   const term = normalizeSearchText(searchTerm.trim());
   
   // Load roles for filtering by role names
-  const rolesSnapshot = await getRolesRef().once('value');
-  const roles = rolesSnapshot.val() || {};
+  const roles = await nrd.roles.getAll();
   const roleMap = {};
   Object.entries(roles).forEach(([id, role]) => {
     roleMap[id] = role.name;
@@ -88,14 +87,14 @@ function loadEmployees() {
 
   // Remove previous listener
   if (employeesListener) {
-    getEmployeesRef().off('value', employeesListener);
+    employeesListener();
     employeesListener = null;
   }
 
-  // Listen for employees
-  employeesListener = getEmployeesRef().on('value', async (snapshot) => {
+  // Listen for employees using NRD Data Access
+  employeesListener = nrd.employees.onValue(async (data) => {
     if (!employeesList) return;
-    allEmployees = snapshot.val() || {};
+    allEmployees = data || {};
     
     // Get search term and filter
     const searchInput = document.getElementById('employees-search');
@@ -137,8 +136,8 @@ function showEmployeeForm(employeeId = null) {
   // Load roles for checkboxes and employee data in parallel
   Promise.all([
     loadRolesForSelect(),
-    employeeId ? getEmployee(employeeId) : Promise.resolve(null)
-  ]).then(([roles, employeeSnapshot]) => {
+    employeeId ? nrd.employees.getById(employeeId) : Promise.resolve(null)
+  ]).then(([roles, employee]) => {
     const rolesContainer = document.getElementById('employee-roles-container');
     if (rolesContainer) {
       rolesContainer.innerHTML = '';
@@ -148,8 +147,8 @@ function showEmployeeForm(employeeId = null) {
       }
       
       // Get employee roleIds if editing
-      const roleIds = employeeSnapshot && employeeSnapshot.val() 
-        ? (employeeSnapshot.val().roleIds || (employeeSnapshot.val().roleId ? [employeeSnapshot.val().roleId] : []))
+      const roleIds = employee 
+        ? (employee.roleIds || (employee.roleId ? [employee.roleId] : []))
         : [];
       
       roles.forEach(role => {
@@ -172,9 +171,8 @@ function showEmployeeForm(employeeId = null) {
     }
     
     // Load other employee fields if editing
-    if (employeeId && employeeSnapshot) {
+    if (employeeId && employee) {
       if (title) title.textContent = 'Editar Empleado';
-      const employee = employeeSnapshot.val();
       if (employee) {
         const nameInput = document.getElementById('employee-name');
         const emailInput = document.getElementById('employee-email');
@@ -209,9 +207,9 @@ function hideEmployeeForm() {
 // Save employee
 function saveEmployee(employeeId, employeeData) {
   if (employeeId) {
-    return updateEmployee(employeeId, employeeData);
+    return nrd.employees.update(employeeId, employeeData);
   } else {
-    return createEmployee(employeeData);
+    return nrd.employees.create(employeeData);
   }
 }
 
@@ -219,8 +217,7 @@ function saveEmployee(employeeId, employeeData) {
 async function viewEmployee(employeeId) {
   showSpinner('Cargando empleado...');
   try {
-    const snapshot = await getEmployee(employeeId);
-    const employee = snapshot.val();
+    const employee = await nrd.employees.getById(employeeId);
     hideSpinner();
     if (!employee) {
       await showError('Empleado no encontrado');
@@ -246,8 +243,8 @@ async function viewEmployee(employeeId) {
     let roleNames = 'Sin roles';
     
     if (roleIds.length > 0) {
-      const rolePromises = roleIds.map(roleId => getRole(roleId).then(snapshot => {
-        const role = snapshot.val();
+      const rolePromises = roleIds.map(roleId => nrd.roles.getById(roleId).then(role => {
+        // role already loaded from nrd.roles.getById above
         return role ? role.name : null;
       }));
       const roleNamesArray = await Promise.all(rolePromises);
@@ -328,7 +325,7 @@ async function deleteEmployeeHandler(employeeId) {
 
   showSpinner('Eliminando empleado...');
   try {
-    await deleteEmployee(employeeId);
+    await nrd.employees.delete(employeeId);
     hideSpinner();
     backToEmployees();
   } catch (error) {
@@ -422,8 +419,8 @@ if (backToEmployeesBtn) {
 
 // Load employees for select
 function loadEmployeesForSelect() {
-  return getEmployeesRef().once('value').then(snapshot => {
-    const employees = snapshot.val() || {};
+  return nrd.employees.getAll().then(employees => {
+    // employees already loaded from nrd.employees.getAll above
     return Object.entries(employees).map(([id, employee]) => ({ id, ...employee }));
   });
 }

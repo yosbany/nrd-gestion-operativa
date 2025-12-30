@@ -9,12 +9,10 @@ async function loadInformacion() {
 
   showSpinner('Cargando información...');
   try {
-    const [companyInfoSnapshot, contractsSnapshot] = await Promise.all([
-      getCompanyInfo(),
-      getContractsRef().once('value')
+    const [companyInfo, contracts] = await Promise.all([
+      nrd.companyInfo.get(),
+      nrd.contracts ? nrd.contracts.getAll() : firebase.database().ref('contracts').once('value').then(s => s.val() || {})
     ]);
-    const companyInfo = companyInfoSnapshot.val() || {};
-    const contracts = contractsSnapshot.val() || {};
 
     // Show read mode
     showReadMode(companyInfo, contracts);
@@ -94,8 +92,7 @@ async function showEditMode(companyInfo) {
   if (visionInput) visionInput.value = companyInfo.vision || '';
   
   // Load contracts for editing
-  const contractsSnapshot = await getContractsRef().once('value');
-  const contracts = contractsSnapshot.val() || {};
+  const contracts = nrd.contracts ? await nrd.contracts.getAll() : await firebase.database().ref('contracts').once('value').then(s => s.val() || {});
   displayContractsEdit(contracts);
 }
 
@@ -104,8 +101,7 @@ const editCompanyInfoBtn = document.getElementById('edit-company-info-btn');
 if (editCompanyInfoBtn) {
   editCompanyInfoBtn.addEventListener('click', async () => {
     try {
-      const snapshot = await getCompanyInfo();
-      const companyInfo = snapshot.val() || {};
+      const companyInfo = await nrd.companyInfo.get();
       showEditMode(companyInfo);
     } catch (error) {
       await showError('Error al cargar información: ' + error.message);
@@ -119,12 +115,10 @@ const cancelEditCompanyInfoBtn = document.getElementById('cancel-edit-company-in
 if (cancelEditCompanyInfoBtn) {
   cancelEditCompanyInfoBtn.addEventListener('click', async () => {
     try {
-      const [companyInfoSnapshot, contractsSnapshot] = await Promise.all([
-        getCompanyInfo(),
-        getContractsRef().once('value')
+      const [companyInfo, contracts] = await Promise.all([
+        nrd.companyInfo.get(),
+        nrd.contracts ? nrd.contracts.getAll() : firebase.database().ref('contracts').once('value').then(s => s.val() || {})
       ]);
-      const companyInfo = companyInfoSnapshot.val() || {};
-      const contracts = contractsSnapshot.val() || {};
       showReadMode(companyInfo, contracts);
     } catch (error) {
       await showError('Error al cargar información: ' + error.message);
@@ -163,7 +157,7 @@ if (companyInfoForm) {
         vision: vision || null
       };
       
-      await updateCompanyInfo(updatedInfo);
+      await nrd.companyInfo.set(updatedInfo);
       hideSpinner();
       await showSuccess('Información guardada exitosamente');
       
@@ -183,20 +177,13 @@ async function generateCompanyPDF() {
   try {
     // Load all data
     const [companyInfoSnapshot, areasSnapshot, processesSnapshot, tasksSnapshot, rolesSnapshot, employeesSnapshot] = await Promise.all([
-      getCompanyInfo(),
-      getAreasRef().once('value'),
-      getProcessesRef().once('value'),
-      getTasksRef().once('value'),
-      getRolesRef().once('value'),
-      getEmployeesRef().once('value')
+      nrd.companyInfo.get(),
+      nrd.areas.getAll(),
+      nrd.processes.getAll(),
+      nrd.tasks.getAll(),
+      nrd.roles.getAll(),
+      nrd.employees.getAll()
     ]);
-
-    const companyInfo = companyInfoSnapshot.val() || {};
-    const areas = areasSnapshot.val() || {};
-    const processes = processesSnapshot.val() || {};
-    const tasks = tasksSnapshot.val() || {};
-    const roles = rolesSnapshot.val() || {};
-    const employees = employeesSnapshot.val() || {};
 
     hideSpinner();
 
@@ -668,8 +655,7 @@ async function saveContract(contractDiv) {
     
     if (contractId && contractId !== 'new') {
       // Load existing documents and merge
-      const existingContract = await getContract(contractId);
-      const existing = existingContract.val();
+      const existing = nrd.contracts ? await nrd.contracts.getById(contractId) : await firebase.database().ref('contracts').child(contractId).once('value').then(s => s.val());
       if (existing && existing.documents) {
         // Keep documents that weren't removed (preserve by index)
         const existingDocs = existing.documents.filter((doc, index) => {
@@ -679,10 +665,18 @@ async function saveContract(contractDiv) {
       } else {
         contractData.documents = newDocuments.length > 0 ? newDocuments : null;
       }
-      await updateContract(contractId, contractData);
+      if (nrd.contracts) {
+        await nrd.contracts.update(contractId, contractData);
+      } else {
+        await firebase.database().ref('contracts').child(contractId).update(contractData);
+      }
     } else {
       contractData.documents = newDocuments.length > 0 ? newDocuments : null;
-      await createContract(contractData);
+      if (nrd.contracts) {
+        await nrd.contracts.create(contractData);
+      } else {
+        await firebase.database().ref('contracts').push(contractData);
+      }
     }
     
     hideSpinner();
@@ -704,7 +698,11 @@ async function deleteContractHandler(contractId) {
   
   showSpinner('Eliminando contrato/habilitación...');
   try {
-    await deleteContract(contractId);
+    if (nrd.contracts) {
+      await nrd.contracts.delete(contractId);
+    } else {
+      await firebase.database().ref('contracts').child(contractId).remove();
+    }
     hideSpinner();
     await showSuccess('Contrato/habilitación eliminado exitosamente');
     loadInformacion();
@@ -722,8 +720,7 @@ const addContractBtnEdit = document.getElementById('add-contract-btn-edit');
 if (addContractBtn) {
   addContractBtn.addEventListener('click', async () => {
     try {
-      const snapshot = await getCompanyInfo();
-      const companyInfo = snapshot.val() || {};
+      const companyInfo = await nrd.companyInfo.get();
       await showEditMode(companyInfo);
       // After showing edit mode, add new contract
       setTimeout(() => {

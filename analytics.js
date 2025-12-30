@@ -4,13 +4,10 @@
 async function calculateWorkloadByEmployee() {
   try {
     // Load all data
-    const [tasksSnapshot, employeesSnapshot] = await Promise.all([
-      getTasksRef().once('value'),
-      getEmployeesRef().once('value')
+    const [tasks, employees] = await Promise.all([
+      nrd.tasks.getAll(),
+      nrd.employees.getAll()
     ]);
-
-    const tasks = tasksSnapshot.val() || {};
-    const employees = employeesSnapshot.val() || {};
 
     // Build workload map
     const workloadMap = {};
@@ -69,15 +66,11 @@ async function calculateWorkloadByEmployee() {
 // Calculate workload by role
 async function calculateWorkloadByRole() {
   try {
-    const [tasksSnapshot, rolesSnapshot, employeesSnapshot] = await Promise.all([
-      getTasksRef().once('value'),
-      getRolesRef().once('value'),
-      getEmployeesRef().once('value')
+    const [tasks, roles, employees] = await Promise.all([
+      nrd.tasks.getAll(),
+      nrd.roles.getAll(),
+      nrd.employees.getAll()
     ]);
-
-    const tasks = tasksSnapshot.val() || {};
-    const roles = rolesSnapshot.val() || {};
-    const employees = employeesSnapshot.val() || {};
 
     const workloadMap = {};
 
@@ -132,15 +125,11 @@ async function calculateWorkloadByRole() {
 // Calculate workload by area
 async function calculateWorkloadByArea() {
   try {
-    const [areasSnapshot, processesSnapshot, tasksSnapshot] = await Promise.all([
-      getAreasRef().once('value'),
-      getProcessesRef().once('value'),
-      getTasksRef().once('value')
+    const [areas, processes, tasks] = await Promise.all([
+      nrd.areas.getAll(),
+      nrd.processes.getAll(),
+      nrd.tasks.getAll()
     ]);
-
-    const areas = areasSnapshot.val() || {};
-    const processes = processesSnapshot.val() || {};
-    const tasks = tasksSnapshot.val() || {};
 
     const workloadMap = {};
 
@@ -244,8 +233,7 @@ async function calculateIncidentsByRole() {
 // Calculate cost by employee
 async function calculateCostByEmployee() {
   try {
-    const employeesSnapshot = await getEmployeesRef().once('value');
-    const employees = employeesSnapshot.val() || {};
+    const employees = await nrd.employees.getAll();
 
     return Object.entries(employees)
       .filter(([id, employee]) => employee.salary)
@@ -268,13 +256,10 @@ async function calculateCostByEmployee() {
 // Calculate cost by role
 async function calculateCostByRole() {
   try {
-    const [employeesSnapshot, rolesSnapshot] = await Promise.all([
-      getEmployeesRef().once('value'),
-      getRolesRef().once('value')
+    const [employees, roles] = await Promise.all([
+      nrd.employees.getAll(),
+      nrd.roles.getAll()
     ]);
-
-    const employees = employeesSnapshot.val() || {};
-    const roles = rolesSnapshot.val() || {};
 
     const costMap = {};
 
@@ -317,19 +302,15 @@ async function calculateCostByRole() {
 // Calculate cost by area
 async function calculateCostByArea() {
   try {
-    const [areasSnapshot, processesSnapshot, tasksSnapshot, employeesSnapshot, rolesSnapshot] = await Promise.all([
-      getAreasRef().once('value'),
-      getProcessesRef().once('value'),
-      getTasksRef().once('value'),
-      getEmployeesRef().once('value'),
-      getRolesRef().once('value')
+    const [areas, processes, tasks, employees, roles] = await Promise.all([
+      nrd.areas.getAll(),
+      nrd.processes.getAll(),
+      nrd.tasks.getAll(),
+      nrd.employees.getAll(),
+      nrd.roles.getAll()
     ]);
 
-    const areas = areasSnapshot.val() || {};
-    const processes = processesSnapshot.val() || {};
-    const tasks = tasksSnapshot.val() || {};
-    const employees = employeesSnapshot.val() || {};
-    const roles = rolesSnapshot.val() || {};
+    // Data already loaded from Promise.all above
 
     const costMap = {};
 

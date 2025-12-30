@@ -866,12 +866,10 @@ async function initializeSystem() {
     showSpinner('Inicializando sistema...');
     
     // Step 1: Initialize company info structure
-    const companyInfoRef = getCompanyInfoRef();
-    const companyInfoSnapshot = await companyInfoRef.once('value');
-    const existingCompanyInfo = companyInfoSnapshot.val();
+    const existingCompanyInfo = await nrd.companyInfo.get();
     
     if (!existingCompanyInfo) {
-      await companyInfoRef.set({
+      await nrd.companyInfo.set({
         legalName: null,
         tradeName: null,
         rut: null,
@@ -885,86 +883,78 @@ async function initializeSystem() {
     }
     
     // Step 2: Create areas
-    const areasRef = getAreasRef();
-    const areasSnapshot = await areasRef.once('value');
-    const existingAreas = areasSnapshot.val() || {};
+    const existingAreas = await nrd.areas.getAll();
     const areaNameToId = {};
     
     for (const areaData of initialData.areas) {
       // Check if area already exists by name
-      const existingArea = Object.entries(existingAreas).find(([id, area]) => area.name === areaData.name);
+      const existingArea = Object.entries(existingAreas || {}).find(([id, area]) => area.name === areaData.name);
       
       if (existingArea) {
         areaNameToId[areaData.name] = existingArea[0];
       } else {
-        const newAreaRef = await createArea({
+        const newAreaId = await nrd.areas.create({
           name: areaData.name,
           description: areaData.description,
           managerEmployeeId: null
         });
-        areaNameToId[areaData.name] = newAreaRef.key;
+        areaNameToId[areaData.name] = newAreaId;
       }
     }
     
     // Step 3: Create roles
-    const rolesRef = getRolesRef();
-    const rolesSnapshot = await rolesRef.once('value');
-    const existingRoles = rolesSnapshot.val() || {};
+    const existingRoles = await nrd.roles.getAll();
     const roleNameToId = {};
     
     for (const roleName of initialData.roles) {
       // Check if role already exists by name
-      const existingRole = Object.entries(existingRoles).find(([id, role]) => role.name === roleName);
+      const existingRole = Object.entries(existingRoles || {}).find(([id, role]) => role.name === roleName);
       
       if (existingRole) {
         roleNameToId[roleName] = existingRole[0];
       } else {
-        const newRoleRef = await createRole({
+        const newRoleId = await nrd.roles.create({
           name: roleName,
           description: null
         });
-        roleNameToId[roleName] = newRoleRef.key;
+        roleNameToId[roleName] = newRoleId;
       }
     }
     
     // Step 4: Create employees
-    const employeesRef = getEmployeesRef();
-    const employeesSnapshot = await employeesRef.once('value');
-    const existingEmployees = employeesSnapshot.val() || {};
+    const existingEmployees = await nrd.employees.getAll();
     const employeeNameToId = {};
     
     for (const employeeData of initialData.employees) {
       // Check if employee already exists by name
-      const existingEmployee = Object.entries(existingEmployees).find(([id, emp]) => emp.name === employeeData.name);
+      const existingEmployee = Object.entries(existingEmployees || {}).find(([id, emp]) => emp.name === employeeData.name);
       
       if (existingEmployee) {
         employeeNameToId[employeeData.name] = existingEmployee[0];
         // Update roleIds if needed
         const roleIds = employeeData.roleNames.map(rn => roleNameToId[rn]).filter(Boolean);
         if (roleIds.length > 0) {
-          await updateEmployee(existingEmployee[0], { roleIds });
+          await nrd.employees.update(existingEmployee[0], { roleIds });
         }
       } else {
         const roleIds = employeeData.roleNames.map(rn => roleNameToId[rn]).filter(Boolean);
-        const newEmployeeRef = await createEmployee({
+        const newEmployeeId = await nrd.employees.create({
           name: employeeData.name,
           roleIds: roleIds.length > 0 ? roleIds : null,
           email: null,
           phone: null
         });
-        employeeNameToId[employeeData.name] = newEmployeeRef.key;
+        employeeNameToId[employeeData.name] = newEmployeeId;
       }
     }
     
     // Step 5: Create tasks
-    const tasksRef = getTasksRef();
-    const tasksSnapshot = await tasksRef.once('value');
-    const existingTasks = tasksSnapshot.val() || {};
+    const existingTasks = await nrd.tasks.getAll();
     const taskNameToId = {};
     
     for (const taskData of initialData.tasks) {
       // Check if task already exists by name
-      const existingTask = Object.entries(existingTasks).find(([id, task]) => task.name === taskData.name);
+      const existingTask = Object.entries(existingTasks || {}).find(([id, task]) => task.name === taskData.name);
       
       if (existingTask) {
         taskNameToId[taskData.name] = existingTask[0];
@@ -985,15 +975,13 @@ async function initializeSystem() {
           roleIds: (taskData.type === 'with_role' && roleIds && roleIds.length > 0) ? roleIds : null
         };
         
-        const newTaskRef = await createTask(taskToCreate);
-        taskNameToId[taskData.name] = newTaskRef.key;
+        const newTaskId = await nrd.tasks.create(taskToCreate);
+        taskNameToId[taskData.name] = newTaskId;
       }
     }
     
     // Step 6: Create processes
-    const processesRef = getProcessesRef();
-    const processesSnapshot = await processesRef.once('value');
-    const existingProcesses = processesSnapshot.val() || {};
+    const existingProcesses = await nrd.processes.getAll();
     
     for (const processData of initialData.processes) {
       // Check if process already exists by name
@@ -1061,16 +1049,12 @@ async function initializeSystem() {
           activities: activities.length > 0 ? activities : null
         };
         
-        await createProcess(processToCreate);
+        await nrd.processes.create(processToCreate);
       }
     }
     
     // Step 7: Initialize contracts structure (empty if doesn't exist)
-    const contractsRef = getContractsRef();
-    const contractsSnapshot = await contractsRef.once('value');
-    if (!contractsSnapshot.val()) {
-      // Contracts will be created by user, no default structure needed
-    }
+    // Contracts will be created by user, no default structure needed
     
     hideSpinner();
     await showSuccess('Sistema inicializado exitosamente con datos de nrd-kb-generate');

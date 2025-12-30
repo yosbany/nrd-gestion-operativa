@@ -56,14 +56,14 @@ function loadAreas() {
 
   // Remove previous listener
   if (areasListener) {
-    getAreasRef().off('value', areasListener);
+    areasListener();
     areasListener = null;
   }
 
-  // Listen for areas
-  areasListener = getAreasRef().on('value', (snapshot) => {
+  // Listen for areas using NRD Data Access
+  areasListener = nrd.areas.onValue((data) => {
     if (!areasList) return;
-    allAreas = snapshot.val() || {};
+    allAreas = data || {};
     
     // Get search term and filter
     const searchInput = document.getElementById('areas-search');
@@ -117,8 +117,7 @@ function showAreaForm(areaId = null) {
       // Load area data if editing
       if (areaId) {
         if (title) title.textContent = 'Editar Área';
-        getArea(areaId).then(snapshot => {
-          const area = snapshot.val();
+        nrd.areas.getById(areaId).then(area => {
           if (area) {
             const nameInput = document.getElementById('area-name');
             const descInput = document.getElementById('area-description');
@@ -152,9 +151,9 @@ function hideAreaForm() {
 // Save area
 function saveArea(areaId, areaData) {
   if (areaId) {
-    return updateArea(areaId, areaData);
+    return nrd.areas.update(areaId, areaData);
   } else {
-    return createArea(areaData);
+    return nrd.areas.create(areaData);
   }
 }
 
@@ -162,12 +161,11 @@ function saveArea(areaId, areaData) {
 async function viewArea(areaId) {
   showSpinner('Cargando área...');
   try {
-    const [areaSnapshot, processesSnapshot, employeesSnapshot] = await Promise.all([
-      getArea(areaId),
-      getProcessesRef().once('value'),
-      getEmployeesRef().once('value')
+    const [area, allProcesses, allEmployees] = await Promise.all([
+      nrd.areas.getById(areaId),
+      nrd.processes.getAll(),
+      nrd.employees.getAll()
     ]);
-    const area = areaSnapshot.val();
     hideSpinner();
     if (!area) {
       await showError('Área no encontrada');
@@ -189,13 +187,11 @@ async function viewArea(areaId) {
     if (searchContainer) searchContainer.style.display = 'none';
 
     // Load processes for this area
-    const allProcesses = processesSnapshot.val() || {};
-    const areaProcesses = Object.entries(allProcesses)
+    const areaProcesses = Object.entries(allProcesses || {})
       .filter(([id, process]) => process.areaId === areaId)
       .map(([id, process]) => ({ id, ...process }));
 
     // Get manager name
-    const allEmployees = employeesSnapshot.val() || {};
     let managerName = 'Sin encargado';
     if (area.managerEmployeeId && allEmployees[area.managerEmployeeId]) {
       managerName = allEmployees[area.managerEmployeeId].name;
@@ -274,9 +270,8 @@ function backToAreas() {
 // Delete area handler
 async function deleteAreaHandler(areaId) {
   // Check if area has processes
-  const processesSnapshot = await getProcessesRef().once('value');
-  const processes = processesSnapshot.val() || {};
-  const hasProcesses = Object.values(processes).some(p => p.areaId === areaId);
+  const processes = await nrd.processes.getAll();
+  const hasProcesses = Object.values(processes || {}).some(p => p.areaId === areaId);
   
   if (hasProcesses) {
     await showError('No se puede eliminar un área que tiene procesos asociados');
@@ -288,7 +283,7 @@ async function deleteAreaHandler(areaId) {
 
   showSpinner('Eliminando área...');
   try {
-    await deleteArea(areaId);
+    await nrd.areas.delete(areaId);
     hideSpinner();
     backToAreas();
   } catch (error) {
@@ -364,9 +359,8 @@ if (backToAreasBtn) {
 
 // Load areas for process form
 function loadAreasForProcess() {
-  return getAreasRef().once('value').then(snapshot => {
-    const areas = snapshot.val() || {};
-    return Object.entries(areas).map(([id, area]) => ({ id, ...area }));
+  return nrd.areas.getAll().then(areas => {
+    return Object.entries(areas || {}).map(([id, area]) => ({ id, ...area }));
   });
 }
 

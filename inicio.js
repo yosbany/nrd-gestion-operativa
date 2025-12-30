@@ -3,15 +3,11 @@
 // Calculate documentation health
 async function calculateDocumentationHealth() {
   try {
-    const [tasksSnapshot, processesSnapshot, areasSnapshot] = await Promise.all([
-      getTasksRef().once('value'),
-      getProcessesRef().once('value'),
-      getAreasRef().once('value')
+    const [tasks, processes, areas] = await Promise.all([
+      nrd.tasks.getAll(),
+      nrd.processes.getAll(),
+      nrd.areas.getAll()
     ]);
-
-    const tasks = tasksSnapshot.val() || {};
-    const processes = processesSnapshot.val() || {};
-    const areas = areasSnapshot.val() || {};
 
     const totalTasks = Object.keys(tasks).length;
     const totalProcesses = Object.keys(processes).length;
@@ -92,17 +88,12 @@ async function calculateDocumentationHealth() {
 // Calculate standardization health
 async function calculateStandardizationHealth() {
   try {
-    const [tasksSnapshot, processesSnapshot, employeesSnapshot, rolesSnapshot] = await Promise.all([
-      getTasksRef().once('value'),
-      getProcessesRef().once('value'),
-      getEmployeesRef().once('value'),
-      getRolesRef().once('value')
+    const [tasks, processes, employees, roles] = await Promise.all([
+      nrd.tasks.getAll(),
+      nrd.processes.getAll(),
+      nrd.employees.getAll(),
+      nrd.roles.getAll()
     ]);
-
-    const tasks = tasksSnapshot.val() || {};
-    const processes = processesSnapshot.val() || {};
-    const employees = employeesSnapshot.val() || {};
-    const roles = rolesSnapshot.val() || {};
 
     const totalTasks = Object.keys(tasks).length;
     const totalProcesses = Object.keys(processes).length;
@@ -180,15 +171,11 @@ async function calculateStandardizationHealth() {
 // Calculate systematization health
 async function calculateSystematizationHealth() {
   try {
-    const [tasksSnapshot, processesSnapshot, areasSnapshot] = await Promise.all([
-      getTasksRef().once('value'),
-      getProcessesRef().once('value'),
-      getAreasRef().once('value')
+    const [tasks, processes, areas] = await Promise.all([
+      nrd.tasks.getAll(),
+      nrd.processes.getAll(),
+      nrd.areas.getAll()
     ]);
-
-    const tasks = tasksSnapshot.val() || {};
-    const processes = processesSnapshot.val() || {};
-    const areas = areasSnapshot.val() || {};
 
     // Tasks without process
     const tasksWithoutProcess = Object.entries(tasks)
@@ -259,7 +246,7 @@ async function loadInicio() {
       calculateDocumentationHealth(),
       calculateStandardizationHealth(),
       calculateSystematizationHealth(),
-      getCompanyInfo()
+      nrd.companyInfo.get()
     ]);
 
     const companyInfo = companyInfoSnapshot.val() || {};

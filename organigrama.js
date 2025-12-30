@@ -12,17 +12,13 @@ async function loadOrganigrama(editMode = false) {
   showSpinner('Cargando organigrama...');
   try {
     // Load all data
-    const [areasSnapshot, rolesSnapshot, employeesSnapshot, processesSnapshot] = await Promise.all([
-      getAreasRef().once('value'),
-      getRolesRef().once('value'),
-      getEmployeesRef().once('value'),
-      getProcessesRef().once('value')
+    const [areas, roles, employees, processes] = await Promise.all([
+      nrd.areas.getAll(),
+      nrd.roles.getAll(),
+      nrd.employees.getAll(),
+      nrd.processes.getAll()
     ]);
-
-    const areas = areasSnapshot.val() || {};
-    const roles = rolesSnapshot.val() || {};
-    const employees = employeesSnapshot.val() || {};
-    const processes = processesSnapshot.val() || {};
+    // processes already loaded from Promise.all above
 
     // Build structure: Area -> Roles -> Employees
     const organigramaStructure = {};
@@ -36,8 +32,7 @@ async function loadOrganigrama(editMode = false) {
     });
 
     // Get tasks to find roles by process/area
-    const tasksSnapshot = await getTasksRef().once('value');
-    const tasks = tasksSnapshot.val() || {};
+    const tasks = await nrd.tasks.getAll();
 
     // Map roles to areas through processes and tasks
     // First, map through processes' activities (new structure)
@@ -484,7 +479,7 @@ async function saveOrganigramaChanges() {
       // Combine preserved and new roles
       const newRoleIds = [...preservedRoleIds, ...organigramaRoleIdsForEmployee];
       
-      return updateEmployee(employeeId, {
+      return nrd.employees.update(employeeId, {
         roleIds: newRoleIds.length > 0 ? newRoleIds : null,
         roleId: null // Remove old field
       });

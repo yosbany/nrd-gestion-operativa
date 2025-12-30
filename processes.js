@@ -65,18 +65,17 @@ function loadProcesses() {
 
   // Remove previous listener
   if (processesListener) {
-    getProcessesRef().off('value', processesListener);
+    processesListener();
     processesListener = null;
   }
 
-  // Listen for processes
-  processesListener = getProcessesRef().on('value', async (snapshot) => {
+  // Listen for processes using NRD Data Access
+  processesListener = nrd.processes.onValue(async (data) => {
     if (!processesList) return;
-    allProcesses = snapshot.val() || {};
+    allProcesses = data || {};
 
     // Load areas for display
-    const areasSnapshot = await getAreasRef().once('value');
-    const areas = areasSnapshot.val() || {};
+    const areas = await nrd.areas.getAll();
     processAreaMap = {};
     Object.entries(areas).forEach(([id, area]) => {
       processAreaMap[id] = area.name;
@@ -134,8 +133,7 @@ function showProcessForm(processId = null) {
       // After loading areas, load process data if editing
       if (processId) {
         if (title) title.textContent = 'Editar Proceso';
-        getProcess(processId).then(snapshot => {
-          const process = snapshot.val();
+        nrd.processes.getById(processId).then(process => {
           if (process) {
             const nameInput = document.getElementById('process-name');
             const objectiveInput = document.getElementById('process-objective');
@@ -172,9 +170,9 @@ function hideProcessForm() {
 // Save process
 function saveProcess(processId, processData) {
   if (processId) {
-    return updateProcess(processId, processData);
+    return nrd.processes.update(processId, processData);
   } else {
-    return createProcess(processData);
+    return nrd.processes.create(processData);
   }
 }
 
@@ -182,8 +180,7 @@ function saveProcess(processId, processData) {
 async function viewProcess(processId) {
   showSpinner('Cargando proceso...');
   try {
-    const snapshot = await getProcess(processId);
-    const process = snapshot.val();
+    const process = await nrd.processes.getById(processId);
     hideSpinner();
     if (!process) {
       await showError('Proceso no encontrado');
@@ -207,21 +204,16 @@ async function viewProcess(processId) {
     // Get area name
     let areaName = 'Sin área';
     if (process.areaId) {
-      const areaSnapshot = await getArea(process.areaId);
-      const area = areaSnapshot.val();
+      const area = await nrd.areas.getById(process.areaId);
       if (area) areaName = area.name;
     }
 
     // Load tasks, roles, and employees for this process
-    const [tasksSnapshot, rolesSnapshot, employeesSnapshot] = await Promise.all([
-      getTasksRef().once('value'),
-      getRolesRef().once('value'),
-      getEmployeesRef().once('value')
+    const [allTasks, allRoles, allEmployees] = await Promise.all([
+      nrd.tasks.getAll(),
+      nrd.roles.getAll(),
+      nrd.employees.getAll()
     ]);
-    
-    const allTasks = tasksSnapshot.val() || {};
-    const allRoles = rolesSnapshot.val() || {};
-    const allEmployees = employeesSnapshot.val() || {};
     
     // Create role map and employee map
     const roleMap = {};
@@ -389,9 +381,8 @@ function backToProcesses() {
 // Delete process handler
 async function deleteProcessHandler(processId) {
   // Check if process has tasks
-  const tasksSnapshot = await getTasksRef().once('value');
-  const tasks = tasksSnapshot.val() || {};
-  const hasTasks = Object.values(tasks).some(t => t.processId === processId);
+  const tasks = await nrd.tasks.getAll();
+  const hasTasks = Object.values(tasks || {}).some(t => t.processId === processId);
   
   if (hasTasks) {
     await showError('No se puede eliminar un proceso que tiene tareas asociadas');
@@ -403,7 +394,7 @@ async function deleteProcessHandler(processId) {
 
   showSpinner('Eliminando proceso...');
   try {
-    await deleteProcess(processId);
+    await nrd.processes.delete(processId);
     hideSpinner();
     backToProcesses();
   } catch (error) {
@@ -616,14 +607,11 @@ async function showProcessFlowEdit(processId, processName, activitiesWithTasks, 
   // Load all tasks, roles, and employees to show available tasks
   showSpinner('Cargando datos...');
   try {
-    const [allTasksSnapshot, rolesSnapshot, employeesSnapshot] = await Promise.all([
-      getTasksRef().once('value'),
-      getRolesRef().once('value'),
-      getEmployeesRef().once('value')
+    const [allTasks, allRoles, allEmployees] = await Promise.all([
+      nrd.tasks.getAll(),
+      nrd.roles.getAll(),
+      nrd.employees.getAll()
     ]);
-    const allTasks = allTasksSnapshot.val() || {};
-    const allRoles = rolesSnapshot.val() || {};
-    const allEmployees = employeesSnapshot.val() || {};
     const roleMap = {};
     Object.entries(allRoles).forEach(([id, role]) => {
       roleMap[id] = role.name;
@@ -802,16 +790,13 @@ async function updateProcessFlowDisplay() {
   const { activities } = window.currentProcessFlowEdit;
   
   // Load all tasks, roles, and employees
-  const [allTasksSnapshot, rolesSnapshot, employeesSnapshot] = await Promise.all([
-    getTasksRef().once('value'),
-    getRolesRef().once('value'),
-    getEmployeesRef().once('value')
+  const [allTasks, allRoles, allEmployees] = await Promise.all([
+    nrd.tasks.getAll(),
+    nrd.roles.getAll(),
+    nrd.employees.getAll()
   ]);
   
-  const allTasks = allTasksSnapshot.val() || {};
-  window.allTasksForFlowEdit = allTasks; // Store for addActivityToProcess
-  const allRoles = rolesSnapshot.val() || {};
-  const allEmployees = employeesSnapshot.val() || {};
+  window.allTasksForFlowEdit = allTasks || {}; // Store for addActivityToProcess
   const roleMap = {};
   Object.entries(allRoles).forEach(([id, role]) => {
     roleMap[id] = role.name;
@@ -928,7 +913,7 @@ async function saveProcessFlow() {
       roleId: a.roleId
     }));
     
-    await updateProcess(processId, {
+    await nrd.processes.update(processId, {
       activities: activitiesToSave
     });
     

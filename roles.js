@@ -56,14 +56,14 @@ function loadRoles() {
 
   // Remove previous listener
   if (rolesListener) {
-    getRolesRef().off('value', rolesListener);
+    rolesListener();
     rolesListener = null;
   }
 
-  // Listen for roles
-  rolesListener = getRolesRef().on('value', (snapshot) => {
+  // Listen for roles using NRD Data Access
+  rolesListener = nrd.roles.onValue((data) => {
     if (!rolesList) return;
-    allRoles = snapshot.val() || {};
+    allRoles = data || {};
     
     // Get search term and filter
     const searchInput = document.getElementById('roles-search');
@@ -104,8 +104,7 @@ function showRoleForm(roleId = null) {
 
   if (roleId) {
     if (title) title.textContent = 'Editar Rol';
-    getRole(roleId).then(snapshot => {
-      const role = snapshot.val();
+        nrd.roles.getById(roleId).then(role => {
       if (role) {
         const nameInput = document.getElementById('role-name');
         const descInput = document.getElementById('role-description');
@@ -136,18 +135,27 @@ function hideRoleForm() {
 // Save role
 function saveRole(roleId, roleData) {
   if (roleId) {
-    return updateRole(roleId, roleData);
+    return nrd.roles.update(roleId, roleData);
   } else {
-    return createRole(roleData);
+    return nrd.roles.create(roleData);
   }
 }
 
 // View role detail
 async function viewRole(roleId) {
+  if (!roleId) {
+    await showError('ID de rol no válido');
+    return;
+  }
+  
   showSpinner('Cargando rol...');
   try {
-    const snapshot = await getRole(roleId);
-    const role = snapshot.val();
+    const role = await nrd.roles.getById(roleId);
+    if (!role) {
+      hideSpinner();
+      await showError('Rol no encontrado');
+      return;
+    }
     hideSpinner();
     if (!role) {
       await showError('Rol no encontrado');
@@ -169,12 +177,10 @@ async function viewRole(roleId) {
     if (searchContainer) searchContainer.style.display = 'none';
 
     // Load tasks and processes for this role
-    const [tasksSnapshot, processesSnapshot] = await Promise.all([
-      getTasksRef().once('value'),
-      getProcessesRef().once('value')
+    const [allTasks, allProcesses] = await Promise.all([
+      nrd.tasks.getAll(),
+      nrd.processes.getAll()
     ]);
-    const allTasks = tasksSnapshot.val() || {};
-    const allProcesses = processesSnapshot.val() || {};
     
     // Create process map
     const processMap = {};
@@ -190,8 +196,7 @@ async function viewRole(roleId) {
       .map(([id, task]) => ({ id, ...task }));
 
     // Load employees with this role
-    const employeesSnapshot = await getEmployeesRef().once('value');
-    const allEmployees = employeesSnapshot.val() || {};
+    const allEmployees = await nrd.employees.getAll();
     const roleEmployees = Object.entries(allEmployees)
       .filter(([id, employee]) => {
         const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
@@ -285,12 +290,11 @@ function backToRoles() {
 // Delete role handler
 async function deleteRoleHandler(roleId) {
   // Check if role has tasks or employees
-  const tasksSnapshot = await getTasksRef().once('value');
-  const tasks = tasksSnapshot.val() || {};
+  const tasks = await nrd.tasks.getAll();
+  // tasks already loaded from nrd.tasks.getAll above
   const hasTasks = Object.values(tasks).some(t => t.roleId === roleId);
   
-  const employeesSnapshot = await getEmployeesRef().once('value');
-  const employees = employeesSnapshot.val() || {};
+  const employees = await nrd.employees.getAll();
   const hasEmployees = Object.values(employees).some(e => e.roleId === roleId);
   
   if (hasTasks || hasEmployees) {
@@ -303,7 +307,7 @@ async function deleteRoleHandler(roleId) {
 
   showSpinner('Eliminando rol...');
   try {
-    await deleteRole(roleId);
+    await nrd.roles.delete(roleId);
     hideSpinner();
     backToRoles();
   } catch (error) {
@@ -374,8 +378,8 @@ if (backToRolesBtn) {
 
 // Load roles for task/employee forms
 function loadRolesForSelect() {
-  return getRolesRef().once('value').then(snapshot => {
-    const roles = snapshot.val() || {};
+  return nrd.roles.getAll().then(roles => {
+    // roles already loaded from nrd.roles.getAll above
     return Object.entries(roles).map(([id, role]) => ({ id, ...role }));
   });
 }
