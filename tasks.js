@@ -372,6 +372,11 @@ function saveTask(taskId, taskData) {
 
 // View task detail
 async function viewTask(taskId) {
+  if (!taskId) {
+    await showError('ID de tarea no válido');
+    return;
+  }
+  
   showSpinner('Cargando tarea...');
   try {
     const task = await nrd.tasks.getById(taskId);

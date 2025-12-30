@@ -159,6 +159,11 @@ function saveArea(areaId, areaData) {
 
 // View area detail
 async function viewArea(areaId) {
+  if (!areaId) {
+    await showError('ID de área no válido');
+    return;
+  }
+  
   showSpinner('Cargando área...');
   try {
     const [area, allProcesses, allEmployees] = await Promise.all([

@@ -215,6 +215,11 @@ function saveEmployee(employeeId, employeeData) {
 
 // View employee detail
 async function viewEmployee(employeeId) {
+  if (!employeeId) {
+    await showError('ID de empleado no válido');
+    return;
+  }
+  
   showSpinner('Cargando empleado...');
   try {
     const employee = await nrd.employees.getById(employeeId);

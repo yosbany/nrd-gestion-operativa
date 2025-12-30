@@ -178,6 +178,11 @@ function saveProcess(processId, processData) {
 
 // View process detail
 async function viewProcess(processId) {
+  if (!processId) {
+    await showError('ID de proceso no válido');
+    return;
+  }
+  
   showSpinner('Cargando proceso...');
   try {
     const process = await nrd.processes.getById(processId);

@@ -148,14 +148,14 @@ async function viewRole(roleId) {
     return;
   }
   
+  if (!roleId) {
+    await showError('ID de rol no válido');
+    return;
+  }
+  
   showSpinner('Cargando rol...');
   try {
     const role = await nrd.roles.getById(roleId);
-    if (!role) {
-      hideSpinner();
-      await showError('Rol no encontrado');
-      return;
-    }
     hideSpinner();
     if (!role) {
       await showError('Rol no encontrado');
