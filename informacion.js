@@ -176,7 +176,7 @@ async function generateCompanyPDF() {
   showSpinner('Generando PDF...');
   try {
     // Load all data
-    const [companyInfoSnapshot, areasSnapshot, processesSnapshot, tasksSnapshot, rolesSnapshot, employeesSnapshot] = await Promise.all([
+    const [companyInfo, areas, processes, tasks, roles, employees] = await Promise.all([
       nrd.companyInfo.get(),
       nrd.areas.getAll(),
       nrd.processes.getAll(),

@@ -242,14 +242,12 @@ async function loadInicio() {
 
   showSpinner('Calculando indicadores de salud...');
   try {
-    const [docHealth, stdHealth, sysHealth, companyInfoSnapshot] = await Promise.all([
+    const [docHealth, stdHealth, sysHealth, companyInfo] = await Promise.all([
       calculateDocumentationHealth(),
       calculateStandardizationHealth(),
       calculateSystematizationHealth(),
       nrd.companyInfo.get()
     ]);
-
-    const companyInfo = companyInfoSnapshot.val() || {};
     
     // Check all required fields
     const hasLegalName = companyInfo.legalName && companyInfo.legalName.trim().length > 0;
