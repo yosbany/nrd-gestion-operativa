@@ -67,7 +67,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 
 // Initialize app
-auth.onAuthStateChanged((user) => {
+nrd.auth.onAuthStateChanged((user) => {
   if (user) {
     // Default to inicio view
     switchView('inicio');

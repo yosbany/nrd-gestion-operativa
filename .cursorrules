@@ -1,0 +1,1089 @@
+# NRD System - Arquitectura de Información y Especificaciones
+
+Este documento contiene la arquitectura de información completa del sistema NRD, incluyendo especificaciones de acceso a datos, estilos, patrones de diseño y estructura arquitectónica que todas las aplicaciones del sistema deben seguir.
+
+## Índice
+
+1. **Tecnologías y Estándares** - Stack tecnológico y uso del archivo .cursorrules
+2. **NRD Data Access** - Guía de uso de la librería de acceso a datos
+3. **Especificaciones de Estilos y Paleta de Colores** - Estándares visuales del sistema
+4. **Arquitectura de la Información** - Patrones y estructura para todas las apps
+
+---
+
+# Tecnologías y Estándares
+
+## Stack Tecnológico
+
+Todas las aplicaciones del sistema NRD deben seguir estos estándares tecnológicos:
+
+### JavaScript
+
+- **Versión**: ES6 (ECMAScript 2015) nativo
+- **Sin librerías**: No se utilizan librerías JavaScript externas (excepto Firebase SDK y Tailwind CSS)
+- **Características ES6 permitidas**:
+  - Arrow functions (`() => {}`)
+  - Template literals (`` `text ${variable}` ``)
+  - Destructuring (`const { prop } = obj`)
+  - Spread operator (`...array`)
+  - Promises y async/await
+  - Classes (si es necesario)
+  - Let y const (no usar var)
+  - Default parameters
+  - Rest parameters
+
+### Dependencias Externas Permitidas
+
+- **Firebase SDK**: Para autenticación y base de datos (compat mode)
+- **Tailwind CSS**: Framework CSS via CDN
+- **NRD Data Access**: Librería propia para acceso a datos (opcional, según necesidad)
+
+### Prohibido
+
+- ❌ jQuery
+- ❌ React, Vue, Angular u otros frameworks
+- ❌ Lodash, Underscore u otras librerías de utilidades
+- ❌ Librerías de UI (excepto Tailwind CSS)
+- ❌ Build tools o bundlers (las apps son vanilla JS)
+
+## Archivo .cursorrules
+
+### Uso en Todas las Apps
+
+**Cada aplicación del sistema NRD debe incluir un archivo `.cursorrules` en su raíz** que contenga:
+
+1. **Copia completa de este documento** - Todas las especificaciones de arquitectura
+2. **Especificaciones específicas de la app** (si las hay) - Agregadas al final del documento
+
+### Estructura del Archivo .cursorrules
+
+```
+app-name/
+├── .cursorrules          # Este documento completo + especificaciones de la app
+├── index.html
+├── app.js
+└── ...
+```
+
+### Propósito
+
+El archivo `.cursorrules` sirve como:
+- **Documentación técnica** para desarrolladores
+- **Guía de referencia** para mantener consistencia
+- **Especificaciones** para herramientas de IA (como Cursor)
+- **Estándares** que todas las apps deben seguir
+
+### Mantenimiento
+
+- **Actualizar cuando cambien estándares**: Si se actualiza la arquitectura, actualizar todos los `.cursorrules` de todas las apps
+- **Específico por app**: Cada app puede agregar secciones específicas al final del documento
+- **Versionado**: Mantener sincronizado con la arquitectura principal del sistema
+
+---
+
+# NRD Data Access - Guía de Uso
+
+Esta es una librería de acceso a datos para Firebase Realtime Database. Sigue estas instrucciones para usarla correctamente en tus proyectos.
+
+## Instalación
+
+Incluye la librería en tu HTML usando una de estas opciones:
+
+```html
+<!-- Opción 1: GitHub Pages -->
+<script src="https://yosbany.github.io/nrd-data-access/dist/nrd-data-access.js"></script>
+
+<!-- Opción 2: jsDelivr CDN -->
+<script src="https://cdn.jsdelivr.net/gh/yosbany/nrd-data-access@main/dist/nrd-data-access.js"></script>
+```
+
+## Inicialización
+
+```javascript
+const nrd = new NRDDataAccess();
+```
+
+## Autenticación
+
+```javascript
+// Iniciar sesión
+await nrd.auth.signIn('usuario@email.com', 'contraseña');
+
+// Registrar usuario
+await nrd.auth.signUp('nuevo@email.com', 'contraseña');
+
+// Cerrar sesión
+await nrd.auth.signOut();
+
+// Obtener usuario actual
+const user = nrd.auth.getCurrentUser();
+
+// Escuchar cambios de autenticación
+const unsubscribe = nrd.auth.onAuthStateChanged((user) => {
+  if (user) {
+    console.log('Usuario autenticado:', user.email);
+  } else {
+    console.log('No autenticado');
+  }
+});
+```
+
+## Operaciones CRUD (para todas las entidades: accounts, areas, categories, clients, contracts, employees, orders, processes, products, roles, tasks, transactions)
+
+```javascript
+// Obtener todos
+const items = await nrd.clients.getAll();
+
+// Obtener por ID
+const item = await nrd.clients.getById('id');
+
+// Crear
+const id = await nrd.clients.create({ name: 'Juan', phone: '123' });
+
+// Actualizar
+await nrd.clients.update('id', { phone: '456' });
+
+// Eliminar
+await nrd.clients.delete('id');
+
+// Consultar por campo
+const results = await nrd.clients.queryByChild('name', 'Juan');
+
+// Escuchar cambios en tiempo real (todos)
+const unsubscribe = nrd.clients.onValue((items) => {
+  console.log('Actualizado:', items);
+});
+
+// Escuchar cambios de uno específico
+const unsubscribe = nrd.clients.onValueById('id', (item) => {
+  console.log('Actualizado:', item);
+});
+```
+
+## CompanyInfo (Objeto único, métodos especiales)
+
+```javascript
+// Obtener
+const info = await nrd.companyInfo.get();
+
+// Establecer/reemplazar completo
+await nrd.companyInfo.set({
+  tradeName: 'Mi Empresa',
+  address: 'Calle 123',
+  phone: '123456'
+});
+
+// Actualizar parcial
+await nrd.companyInfo.update({ phone: '789' });
+```
+
+## Modelos de Datos
+
+### Account
+```typescript
+{ name: string; active?: boolean; initialBalance?: number; }
+```
+
+### Area
+```typescript
+{ name: string; description?: string; managerEmployeeId?: string; }
+```
+
+### Category
+```typescript
+{ name: string; type: 'income' | 'expense'; active?: boolean; }
+```
+
+### Client
+```typescript
+{ name: string; address?: string; phone?: string; description?: string; }
+```
+
+### Contract
+```typescript
+{ name: string; description?: string; importantData?: { [key: string]: string; }; documents?: ContractDocument[]; }
+ContractDocument: { name: string; data: string; } // data es un data URL (base64)
+```
+
+### CompanyInfo
+```typescript
+{ address?: string; email?: string; legalName?: string; mission?: string; mobile?: string; phone?: string; rut?: string; tradeName?: string; vision?: string; }
+```
+
+### Employee
+```typescript
+{ name: string; roleIds?: string[]; }
+```
+
+### Order
+```typescript
+{ clientId: string; clientName?: string; status: string; total: number; createdAt?: number; deliveryDate?: number; items?: OrderItem[]; }
+OrderItem: { productId: string; productName?: string; quantity: number; price: number; }
+```
+
+### Process
+```typescript
+{ name: string; areaId?: string; objective?: string; taskIds?: string[]; activities?: ProcessActivity[]; }
+ProcessActivity: { name: string; taskId: string; }
+```
+
+### Product
+```typescript
+{ name: string; price: number; active?: boolean; }
+```
+
+### Role
+```typescript
+{ name: string; }
+```
+
+### Task
+```typescript
+{ name: string; description?: string; processId?: string; order?: number; type?: string; assignedEmployeeId?: string; roleIds?: string[]; estimatedTime?: number; executionSteps?: string[]; successCriteria?: string[]; commonErrors?: string[]; }
+```
+
+### Transaction
+```typescript
+{ type: 'income' | 'expense'; accountId: string; accountName?: string; amount: number; categoryId?: string; categoryName?: string; description?: string; date: number; createdAt?: number; }
+```
+
+## Servicios Disponibles
+
+- `nrd.auth` - AuthService
+- `nrd.accounts` - AccountsService
+- `nrd.areas` - AreasService
+- `nrd.categories` - CategoriesService
+- `nrd.clients` - ClientsService
+- `nrd.companyInfo` - CompanyInfoService (métodos: get, set, update)
+- `nrd.contracts` - ContractsService
+- `nrd.employees` - EmployeesService
+- `nrd.orders` - OrdersService
+- `nrd.processes` - ProcessesService
+- `nrd.products` - ProductsService
+- `nrd.roles` - RolesService
+- `nrd.tasks` - TasksService
+- `nrd.transactions` - TransactionsService
+
+## Notas Importantes
+
+1. Todos los métodos son asíncronos - usa `await` o `.then()`
+2. Siempre maneja errores con `try/catch`
+3. Los IDs se generan automáticamente al crear registros
+4. `onValue()` y `onValueById()` retornan función para desuscribirse
+5. CompanyInfo es un objeto único, no una colección
+6. Todos los campos marcados con `?` son opcionales
+
+## Agregar Nuevos Métodos
+
+Si necesitas un método específico que no está disponible en la librería, simplemente solicita las instrucciones para implementarlo en este proyecto. El método se agregará al servicio correspondiente siguiendo los patrones establecidos en `BaseService`.
+
+**Ejemplo de solicitud:**
+- "Necesito un método para ordenar productos por precio"
+- "Quiero un método para buscar clientes por rango de fechas"
+- "Necesito filtrar transacciones por múltiples criterios"
+
+## Repositorio
+
+https://github.com/yosbany/nrd-data-access
+
+---
+
+# NRD Pedidos - Especificaciones de Estilos y Paleta de Colores
+
+Esta aplicación utiliza un diseño minimalista y moderno con Tailwind CSS. Sigue estas especificaciones para mantener la consistencia visual.
+
+## Framework y Herramientas
+
+- **JavaScript**: ES6 nativo (sin librerías JavaScript externas, excepto Firebase SDK)
+- **Framework CSS**: Tailwind CSS (via CDN: `https://cdn.tailwindcss.com`)
+- **Estilos personalizados**: `styles.css` (mínimos, principalmente para tooltips y utilidades)
+- **Fuente**: Sans-serif (font-sans) con antialiasing
+
+## Paleta de Colores
+
+### Colores Principales
+
+- **Color Primario (Red-600)**: `#dc2626`
+  - Usado en: Botones principales, header, navegación activa, tema de la app
+  - Clase Tailwind: `bg-red-600`, `text-red-600`, `border-red-600`
+  - Theme color: `#dc2626` (meta theme-color)
+
+- **Color Primario Hover (Red-700)**: 
+  - Usado en: Estados hover de botones primarios
+  - Clase Tailwind: `hover:bg-red-700`, `border-red-700`
+
+### Colores Secundarios
+
+- **Gris Oscuro (Gray-600)**: 
+  - Usado en: Texto secundario, botones secundarios, navegación inactiva
+  - Clase Tailwind: `text-gray-600`, `border-gray-600`, `bg-gray-600`
+
+- **Gris Medio (Gray-700)**: 
+  - Usado en: Texto secundario más oscuro, hover de botones secundarios
+  - Clase Tailwind: `text-gray-700`, `hover:bg-gray-700`
+
+- **Gris Claro (Gray-200, Gray-300)**: 
+  - Usado en: Bordes, fondos de secciones, inputs
+  - Clase Tailwind: `border-gray-200`, `border-gray-300`, `bg-gray-200`
+
+### Colores de Acción
+
+- **Éxito/WhatsApp (Green-600/700)**: 
+  - Usado en: Botón de WhatsApp, acciones de éxito
+  - Clase Tailwind: `bg-green-600`, `hover:bg-green-700`, `border-green-600`
+
+- **Edición (Gray-600/700)**: 
+  - Usado en: Botón de editar
+  - Clase Tailwind: `bg-gray-600`, `hover:bg-gray-700`
+
+### Colores Base
+
+- **Fondo Principal**: `white` (`bg-white`)
+- **Texto Principal**: `black` (`text-black`)
+- **Overlay/Backdrop**: `black/50` (`bg-black/50`) para modales, `black/20` para spinner
+
+### Colores en Header
+
+- **Header Background**: `bg-red-600`
+- **Header Border**: `border-red-700`
+- **Botones Header**: `border-white/30`, `hover:border-white`, `hover:bg-white/10`
+
+## Tipografía
+
+### Fuentes
+
+- **Familia**: Sans-serif (font-sans)
+- **Peso**: Light (font-light) - predeterminado para la mayoría de elementos
+- **Antialiasing**: Habilitado (`antialiased`)
+
+### Tamaños de Texto
+
+- **Títulos principales**: `text-xl sm:text-2xl` (login), `text-lg sm:text-xl` (secciones)
+- **Texto normal**: `text-sm sm:text-base`
+- **Texto pequeño**: `text-xs sm:text-sm` (botones, labels)
+- **Labels**: `text-xs uppercase tracking-wider`
+
+### Espaciado de Letras
+
+- **Títulos**: `tracking-tight` (espaciado reducido)
+- **Botones**: `tracking-wider` (espaciado amplio)
+- **Labels**: `tracking-wider` con `uppercase`
+
+## Componentes y Estilos
+
+### Botones
+
+#### Botón Primario
+```html
+class="px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light"
+```
+
+#### Botón Secundario
+```html
+class="px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light"
+```
+
+#### Botón en Header
+```html
+class="px-3 sm:px-4 py-1.5 sm:py-2 border border-white/30 hover:border-white text-white hover:bg-white/10 transition-colors uppercase tracking-wider text-xs font-light"
+```
+
+### Inputs
+
+#### Input con borde inferior (estilo minimalista)
+```html
+class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base"
+```
+
+#### Input con borde completo
+```html
+class="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm sm:text-base rounded"
+```
+
+### Navegación
+
+- **Fondo**: `bg-white`
+- **Borde inferior**: `border-b border-gray-200`
+- **Botón activo**: `border-b-2 border-red-600 text-red-600`
+- **Botón inactivo**: `border-b-2 border-transparent text-gray-600 hover:text-red-600`
+- **Sticky**: `sticky top-[45px] sm:top-[53px] z-10`
+
+### Cards/Contenedores
+
+- **Borde**: `border border-gray-200`
+- **Padding**: `p-3 sm:p-4 md:p-6`
+- **Espaciado interno**: `space-y-3 sm:space-y-4`
+
+### Modales
+
+- **Overlay**: `fixed inset-0 bg-black/50 z-50`
+- **Contenedor**: `bg-white rounded-lg max-w-md w-full border border-gray-200 shadow-lg`
+- **Padding**: `p-4 sm:p-6`
+
+## Responsive Design
+
+### Breakpoints
+
+- **sm**: 640px (tablets pequeñas)
+- **md**: 768px (tablets)
+- **lg**: 1024px (desktop)
+
+### Patrones Responsive Comunes
+
+- **Padding**: `p-3 sm:p-4 md:p-6`
+- **Espaciado vertical**: `space-y-3 sm:space-y-4`
+- **Tamaño de texto**: `text-xs sm:text-sm` o `text-sm sm:text-base`
+- **Layout**: `flex-col sm:flex-row`
+- **Ancho**: `w-full sm:w-auto`
+
+## Transiciones y Animaciones
+
+- **Transiciones de color**: `transition-colors` (predeterminado en botones)
+- **Spinner**: `animate-spin` (Tailwind)
+- **Tooltips**: `transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out`
+
+## Z-Index
+
+- **Header/Nav**: `z-10`
+- **Modales/Spinner**: `z-50`
+- **Tooltips**: `z-1000`
+
+## Espaciado
+
+### Padding
+
+- **Pequeño**: `p-3` (móvil) → `p-4` (tablet) → `p-6` (desktop)
+- **Botones**: `px-4 sm:px-6 py-2` o `px-3 sm:px-4 py-1.5 sm:py-2`
+
+### Margin/Gap
+
+- **Entre elementos**: `gap-2 sm:gap-3` o `gap-2 sm:gap-4`
+- **Espaciado vertical**: `space-y-3 sm:space-y-4`
+- **Margin bottom**: `mb-2 sm:mb-3` o `mb-3 sm:mb-4`
+
+## Bordes
+
+- **Grosor estándar**: `border` (1px)
+- **Grosor grueso**: `border-b-2` (navegación)
+- **Color estándar**: `border-gray-200` o `border-gray-300`
+- **Color activo**: `border-red-600`
+- **Radio**: `rounded` (4px) o `rounded-lg` (8px)
+
+## Estados Interactivos
+
+### Hover
+
+- **Botones primarios**: `hover:bg-red-700`
+- **Botones secundarios**: `hover:border-red-600 hover:text-red-600`
+- **Enlaces**: `hover:text-red-600`
+
+### Focus
+
+- **Inputs**: `focus:outline-none focus:border-red-600`
+
+### Active
+
+- **Navegación**: `border-b-2 border-red-600 text-red-600`
+
+## Utilidades CSS Personalizadas
+
+### Clases en styles.css
+
+- `.hidden`: `display: none !important`
+- `.no-print`: Oculto al imprimir
+- `.order-tooltip-container`: Contenedor de tooltips para pedidos
+- `.order-tooltip-content`: Contenido de tooltip con posicionamiento dinámico
+
+## Reglas de Diseño
+
+1. **Minimalismo**: Diseño limpio con espacios en blanco generosos
+2. **Consistencia**: Usar siempre las clases de Tailwind especificadas
+3. **Responsive First**: Diseñar primero para móvil, luego adaptar a pantallas mayores
+4. **Accesibilidad**: Mantener contraste adecuado y estados focus visibles
+5. **Tipografía ligera**: Preferir `font-light` para un aspecto moderno y elegante
+6. **Colores limitados**: Usar principalmente la paleta roja/gris, verde solo para acciones específicas
+7. **Transiciones suaves**: Siempre usar `transition-colors` en elementos interactivos
+
+## Ejemplo de Componente Completo
+
+```html
+<!-- Card de pedido/cliente/producto -->
+<div class="border border-gray-200 p-3 sm:p-4 rounded">
+  <h3 class="text-lg sm:text-xl font-light tracking-tight mb-2">Título</h3>
+  <p class="text-sm sm:text-base text-gray-600 mb-4">Contenido</p>
+  <div class="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
+    <button class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+      Acción Principal
+    </button>
+    <button class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+      Acción Secundaria
+    </button>
+  </div>
+</div>
+```
+
+---
+
+# NRD Apps - Arquitectura de la Información
+
+Esta sección define la arquitectura estándar que todas las aplicaciones del sistema NRD deben seguir para mantener consistencia, escalabilidad y mantenibilidad.
+
+## Estructura de Archivos
+
+### Organización Modular
+
+Cada aplicación debe seguir esta estructura de archivos:
+
+```
+app-name/
+├── index.html          # Estructura HTML principal
+├── app.js             # Controlador principal y navegación
+├── auth.js            # Gestión de autenticación
+├── db.js              # Funciones helper de base de datos
+├── modal.js           # Sistema de modales y alertas
+├── [entity].js        # Módulos por entidad (orders.js, clients.js, products.js)
+├── firebase.js        # Configuración de Firebase
+├── styles.css         # Estilos personalizados mínimos
+├── service-worker.js  # Service Worker para PWA
+├── manifest.json      # Configuración PWA
+└── .cursorrules       # Reglas del proyecto
+```
+
+### Principios de Separación
+
+- **JavaScript ES6 nativo**: Todos los archivos `.js` utilizan JavaScript ES6 puro, sin librerías externas (excepto Firebase SDK)
+- **Un archivo por entidad**: Cada entidad principal (orders, clients, products) tiene su propio módulo JavaScript
+- **Separación de responsabilidades**: 
+  - `app.js`: Navegación y coordinación general
+  - `auth.js`: Autenticación y gestión de usuario
+  - `db.js`: Acceso a datos y referencias de Firebase
+  - `modal.js`: Sistema de UI para modales y alertas
+  - `[entity].js`: Lógica específica de cada entidad
+
+## Arquitectura de Navegación
+
+### Sistema de Vistas
+
+Todas las apps deben implementar un sistema de vistas consistente:
+
+```javascript
+// Patrón estándar de navegación
+let currentView = null;
+
+function switchView(viewName) {
+  // Prevenir carga duplicada
+  if (currentView === viewName) return;
+  currentView = viewName;
+
+  // Ocultar todas las vistas
+  const views = ['view1', 'view2', 'view3'];
+  views.forEach(view => {
+    const viewElement = document.getElementById(`${view}-view`);
+    if (viewElement) viewElement.classList.add('hidden');
+  });
+
+  // Mostrar vista seleccionada
+  const selectedView = document.getElementById(`${viewName}-view`);
+  if (selectedView) selectedView.classList.remove('hidden');
+
+  // Actualizar botones de navegación
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.classList.remove('border-red-600', 'text-red-600');
+    btn.classList.add('border-transparent', 'text-gray-600');
+  });
+  const activeBtn = document.querySelector(`[data-view="${viewName}"]`);
+  if (activeBtn) {
+    activeBtn.classList.remove('border-transparent', 'text-gray-600');
+    activeBtn.classList.add('border-red-600', 'text-red-600');
+  }
+
+  // Cargar datos de la vista
+  if (viewName === 'view1') {
+    loadView1Data();
+  }
+}
+```
+
+### Estructura HTML de Navegación
+
+```html
+<nav class="bg-white border-b border-gray-200 flex overflow-x-auto sticky top-[45px] sm:top-[53px] z-10">
+  <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-red-600 text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="view1">
+    Vista 1
+  </button>
+  <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="view2">
+    Vista 2
+  </button>
+</nav>
+```
+
+## Arquitectura de Datos
+
+### Patrón de Listeners de Firebase
+
+Cada módulo de entidad debe seguir este patrón para datos en tiempo real:
+
+```javascript
+// Variable para almacenar listener
+let entityListener = null;
+
+// Función de carga con listener
+function loadEntities() {
+  const listElement = document.getElementById('entities-list');
+  if (!listElement) return;
+  
+  listElement.innerHTML = '';
+
+  // Remover listener anterior
+  if (entityListener) {
+    getEntitiesRef().off('value', entityListener);
+    entityListener = null;
+  }
+
+  // Escuchar cambios en tiempo real
+  entityListener = getEntitiesRef().on('value', (snapshot) => {
+    if (!listElement) return;
+    listElement.innerHTML = '';
+    const entities = snapshot.val() || {};
+
+    // Manejar estado vacío
+    if (Object.keys(entities).length === 0) {
+      listElement.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No hay registros</p>';
+      return;
+    }
+
+    // Procesar y mostrar datos
+    Object.entries(entities).forEach(([id, entity]) => {
+      // Crear elemento de lista
+      const item = createEntityItem(id, entity);
+      listElement.appendChild(item);
+    });
+  });
+}
+```
+
+### Funciones Helper de Base de Datos
+
+Patrón estándar en `db.js`:
+
+```javascript
+// Obtener referencia de entidad
+function getEntitiesRef() {
+  return database.ref('entities');
+}
+
+// Obtener entidad por ID
+function getEntity(entityId) {
+  return getEntitiesRef().child(entityId).once('value');
+}
+
+// Crear entidad
+function createEntity(entityData) {
+  return getEntitiesRef().push(entityData);
+}
+
+// Actualizar entidad
+function updateEntity(entityId, entityData) {
+  return getEntitiesRef().child(entityId).update(entityData);
+}
+
+// Eliminar entidad
+function deleteEntity(entityId) {
+  return getEntitiesRef().child(entityId).remove();
+}
+```
+
+## Arquitectura de Vistas por Entidad
+
+Cada entidad debe tener tres estados principales:
+
+### 1. Vista de Lista
+
+```javascript
+// Estructura HTML estándar
+<div id="entities-view" class="view space-y-3 sm:space-y-4">
+  <!-- Header con acciones -->
+  <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
+    <button id="new-entity-btn" 
+      class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+      Nuevo
+    </button>
+  </div>
+  
+  <!-- Búsqueda (opcional) -->
+  <div class="mb-3 sm:mb-4">
+    <input type="text" id="entities-search-input" 
+      placeholder="Buscar..." 
+      class="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-white text-sm sm:text-base rounded">
+  </div>
+  
+  <!-- Lista de elementos -->
+  <div id="entities-list" class="space-y-2 sm:space-y-3"></div>
+</div>
+```
+
+### 2. Vista de Formulario (Crear/Editar)
+
+```javascript
+// Estructura HTML estándar
+<div id="entity-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
+  <div class="flex items-center justify-between mb-3 sm:mb-4">
+    <h3 id="entity-form-title" class="text-lg sm:text-xl font-light tracking-tight">Nuevo</h3>
+    <button id="close-entity-form" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+  </div>
+  
+  <form id="entity-form-element">
+    <input type="hidden" id="entity-id">
+    
+    <!-- Campos del formulario -->
+    <div class="mb-4 sm:mb-6">
+      <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Campo</label>
+      <input type="text" id="entity-field" required 
+        class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+    </div>
+    
+    <!-- Botones de acción -->
+    <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
+      <button type="submit" 
+        class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+        Guardar
+      </button>
+      <button type="button" id="cancel-entity-btn" 
+        class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+        Cancelar
+      </button>
+    </div>
+  </form>
+</div>
+```
+
+### 3. Vista de Detalle
+
+```javascript
+// Estructura HTML estándar
+<div id="entity-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
+  <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="text-lg sm:text-xl font-light tracking-tight">Detalle</h3>
+      <button id="back-to-entities" 
+        class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+    </div>
+  </div>
+  
+  <div id="entity-detail-content"></div>
+  
+  <!-- Botones de acción -->
+  <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+    <button id="edit-entity-detail-btn" 
+      class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+      Editar
+    </button>
+    <button id="delete-entity-detail-btn" 
+      class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+      Eliminar
+    </button>
+  </div>
+</div>
+```
+
+## Patrones de Funciones por Entidad
+
+### Funciones Estándar Requeridas
+
+Cada módulo `[entity].js` debe implementar estas funciones:
+
+```javascript
+// 1. Cargar lista de entidades
+function loadEntities() {
+  // Implementar listener de Firebase
+  // Renderizar lista
+  // Manejar búsqueda/filtrado
+}
+
+// 2. Mostrar formulario (crear/editar)
+function showEntityForm(entityId = null) {
+  // Mostrar formulario
+  // Ocultar lista y detalle
+  // Cargar datos si es edición
+  // Configurar título dinámico
+}
+
+// 3. Ocultar formulario
+function hideEntityForm() {
+  // Ocultar formulario
+  // Mostrar lista
+  // Limpiar formulario
+}
+
+// 4. Ver detalle de entidad
+function viewEntity(entityId) {
+  // Ocultar lista y formulario
+  // Mostrar vista de detalle
+  // Cargar y renderizar datos
+}
+
+// 5. Guardar entidad (crear/actualizar)
+async function saveEntity() {
+  // Validar datos
+  // Obtener ID (nuevo o existente)
+  // Crear o actualizar
+  // Mostrar feedback
+  // Ocultar formulario
+  // Recargar lista
+}
+
+// 6. Eliminar entidad
+async function deleteEntity(entityId) {
+  // Confirmar eliminación
+  // Eliminar de Firebase
+  // Mostrar feedback
+  // Volver a lista
+}
+```
+
+## Sistema de Modales y Alertas
+
+### Uso Estándar de Modales
+
+```javascript
+// Confirmación simple
+const confirmed = await showConfirm('Título', 'Mensaje');
+if (confirmed) {
+  // Acción
+}
+
+// Confirmación con opciones
+const option = await showConfirmWithOptions('Título', 'Mensaje', 'Opción 1', 'Opción 2');
+if (option === 'option1') {
+  // Acción 1
+} else if (option === 'option2') {
+  // Acción 2
+}
+
+// Alertas
+await showSuccess('Operación exitosa');
+await showError('Error en la operación');
+await showInfo('Información importante');
+```
+
+### Spinner de Carga
+
+```javascript
+// Mostrar spinner
+showSpinner('Cargando...');
+
+try {
+  // Operación asíncrona
+  await someAsyncOperation();
+} finally {
+  // Ocultar spinner
+  hideSpinner();
+}
+```
+
+## Patrones de Búsqueda y Filtrado
+
+### Búsqueda en Tiempo Real
+
+```javascript
+let searchTerm = '';
+
+// Input de búsqueda
+const searchInput = document.getElementById('entities-search-input');
+if (searchInput) {
+  searchInput.addEventListener('input', (e) => {
+    searchTerm = e.target.value;
+    loadEntities(); // Recargar con filtro
+  });
+}
+
+// En loadEntities(), filtrar antes de renderizar:
+let entitiesToShow = Object.entries(entities);
+if (searchTerm.trim()) {
+  const searchLower = searchTerm.toLowerCase().trim();
+  entitiesToShow = entitiesToShow.filter(([id, entity]) => {
+    // Lógica de búsqueda
+    return entity.name?.toLowerCase().includes(searchLower);
+  });
+}
+```
+
+## Manejo de Estados Vacíos
+
+### Patrón Estándar
+
+```javascript
+if (entitiesToShow.length === 0) {
+  listElement.innerHTML = '<p class="text-center text-gray-600 py-6 sm:py-8 text-sm sm:text-base">No hay registros</p>';
+  return;
+}
+```
+
+### Estado Vacío con Acción
+
+```javascript
+if (entitiesToShow.length === 0) {
+  listElement.innerHTML = `
+    <div class="text-center py-8 sm:py-12 border border-gray-200 p-4 sm:p-8">
+      <p class="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">No hay registros</p>
+      <button id="init-entities-btn" 
+        class="px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+        Inicializar
+      </button>
+    </div>
+  `;
+  return;
+}
+```
+
+## Patrones de Cards/Items de Lista
+
+### Estructura Estándar de Card
+
+```javascript
+function createEntityCard(id, entity) {
+  const item = document.createElement('div');
+  item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
+  item.dataset.entityId = id;
+  
+  item.innerHTML = `
+    <div class="flex justify-between items-center mb-2 sm:mb-3">
+      <div class="text-base sm:text-lg font-light">${escapeHtml(entity.name)}</div>
+    </div>
+    <div class="text-xs sm:text-sm text-gray-600">
+      ${entity.description ? `<div>${escapeHtml(entity.description)}</div>` : ''}
+    </div>
+  `;
+  
+  item.addEventListener('click', () => viewEntity(id));
+  return item;
+}
+```
+
+## Gestión de Autenticación
+
+### Patrón Estándar en auth.js
+
+```javascript
+let currentUser = null;
+
+// Escuchar cambios de autenticación
+auth.onAuthStateChanged((user) => {
+  currentUser = user;
+  if (user) {
+    showAppScreen();
+  } else {
+    showLoginScreen();
+  }
+});
+
+// Obtener usuario actual
+function getCurrentUser() {
+  return currentUser;
+}
+```
+
+## Validación y Sanitización
+
+### Función de Escape HTML
+
+```javascript
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+```
+
+### Validación de Formularios
+
+```javascript
+// Validación antes de guardar
+function validateEntityForm() {
+  const name = document.getElementById('entity-name').value.trim();
+  if (!name) {
+    showError('El nombre es requerido');
+    return false;
+  }
+  return true;
+}
+```
+
+## Manejo de Errores
+
+### Patrón Estándar
+
+```javascript
+try {
+  showSpinner('Guardando...');
+  await saveEntity();
+  await showSuccess('Guardado exitosamente');
+} catch (error) {
+  console.error('Error:', error);
+  await showError(error.message || 'Error al guardar');
+} finally {
+  hideSpinner();
+}
+```
+
+## Convenciones de Nombres
+
+### IDs de Elementos HTML
+
+- **Vistas**: `[entity]-view` (ej: `orders-view`, `clients-view`)
+- **Listas**: `[entity]-list` (ej: `orders-list`, `clients-list`)
+- **Formularios**: `[entity]-form` (ej: `order-form`, `client-form`)
+- **Detalles**: `[entity]-detail` (ej: `order-detail`, `client-detail`)
+- **Botones**: `[action]-[entity]-btn` (ej: `new-order-btn`, `edit-client-btn`)
+
+### Variables JavaScript
+
+- **Listeners**: `[entity]Listener` (ej: `ordersListener`, `clientsListener`)
+- **Términos de búsqueda**: `[entity]SearchTerm` (ej: `ordersSearchTerm`)
+- **Datos temporales**: `current[Entity]` (ej: `currentOrder`, `currentClient`)
+
+## Flujo de Navegación Estándar
+
+```
+Login Screen
+    ↓ (autenticación exitosa)
+App Screen
+    ↓ (selección de vista)
+View (Lista)
+    ↓ (click en item)
+Detail View
+    ↓ (click editar)
+Form View (Edición)
+    ↓ (guardar)
+View (Lista)
+
+View (Lista)
+    ↓ (click nuevo)
+Form View (Creación)
+    ↓ (guardar)
+View (Lista)
+```
+
+## Reglas de Arquitectura
+
+1. **Separación de responsabilidades**: Cada módulo tiene una responsabilidad única
+2. **Listeners únicos**: Solo un listener activo por entidad a la vez
+3. **Limpieza de listeners**: Siempre remover listeners al cambiar de vista
+4. **Estados consistentes**: Ocultar/mostrar elementos de forma consistente
+5. **Feedback al usuario**: Siempre mostrar spinner en operaciones asíncronas
+6. **Manejo de errores**: Try/catch en todas las operaciones asíncronas
+7. **Validación**: Validar datos antes de enviar a Firebase
+8. **Sanitización**: Escapar HTML en todos los datos renderizados
+9. **Responsive**: Todos los componentes deben ser responsive desde móvil
+10. **Accesibilidad**: Mantener estados focus y contraste adecuado
+
+## Ejemplo Completo de Módulo
+
+Ver archivos de referencia:
+- `orders.js` - Ejemplo completo con búsqueda, filtrado y múltiples vistas
+- `clients.js` - Ejemplo con relaciones y conteos
+- `products.js` - Ejemplo con estados (activo/inactivo)
+
+Cada nuevo módulo debe seguir estos patrones para mantener consistencia en todo el sistema.
+

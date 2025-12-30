@@ -1,192 +1,322 @@
-// Database helper functions
+// Database helper functions using NRD Data Access Library
 
-// Get user reference
-function getUserRef() {
-  const user = getCurrentUser();
-  if (!user) throw new Error('Usuario no autenticado');
-  return database.ref(`users/${user.uid}`);
+// Initialize NRD Data Access Library
+// Esta librería maneja la inicialización de Firebase y el acceso a datos para todas las entidades
+const nrd = new NRDDataAccess();
+
+// Store active listeners for proper cleanup
+// Map: callback -> unsubscribe function
+const activeListeners = new Map();
+
+// Helper function to create Firebase-compatible reference wrapper
+function createRefWrapper(service, path) {
+  const wrapper = {
+    on: function(event, callback) {
+      if (event === 'value') {
+        // Store unsubscribe function associated with this callback
+        const unsubscribe = service.onValue((data) => {
+          // Convert data format to Firebase snapshot format
+          // NRD Data Access returns an object with IDs as keys
+          const snapshot = {
+            val: () => data || {}
+          };
+          callback(snapshot);
+        });
+        
+        // Store the unsubscribe function with the callback as key
+        activeListeners.set(callback, unsubscribe);
+        
+        // Return the callback (Firebase pattern: off uses the return value of on)
+        return callback;
+      }
+    },
+    off: function(event, callback) {
+      if (event === 'value' && callback) {
+        // Find and call the unsubscribe function for this callback
+        const unsubscribe = activeListeners.get(callback);
+        if (unsubscribe && typeof unsubscribe === 'function') {
+          unsubscribe();
+          activeListeners.delete(callback);
+        }
+      }
+    },
+    once: function(event) {
+      if (event === 'value') {
+        return service.getAll().then(data => {
+          return {
+            val: () => data || {}
+          };
+        });
+      }
+      return Promise.resolve({ val: () => null });
+    },
+    push: function(data) {
+      return service.create(data).then(id => {
+        return {
+          key: id,
+          then: function(callback) {
+            if (callback) callback(this);
+            return Promise.resolve(this);
+          }
+        };
+      });
+    },
+    child: function(childPath) {
+      // For child operations, we need the ID
+      const childId = childPath;
+      return {
+        once: function(event) {
+          if (event === 'value') {
+            return service.getById(childId).then(item => {
+              return {
+                val: () => item || null
+              };
+            });
+          }
+          return Promise.resolve({ val: () => null });
+        },
+        update: function(data) {
+          return service.update(childId, data);
+        },
+        remove: function() {
+          return service.delete(childId);
+        },
+        set: function(data) {
+          return service.update(childId, data);
+        }
+      };
+    }
+  };
 }
 
 // ========== OPERATIONAL SYSTEM DATABASE FUNCTIONS ==========
 
 // Areas
 function getAreasRef() {
-  return database.ref('areas');
+  return createRefWrapper(nrd.areas, 'areas');
 }
 
 function getArea(areaId) {
-  return getAreasRef().child(areaId).once('value');
+  return nrd.areas.getById(areaId).then(area => {
+    return {
+      val: () => area || null
+    };
+  });
 }
 
 function createArea(areaData) {
-  return getAreasRef().push(areaData);
+  return nrd.areas.create(areaData).then(id => {
+    return {
+      key: id,
+      then: function(callback) {
+        if (callback) callback(this);
+        return Promise.resolve(this);
+      }
+    };
+  });
 }
 
 function updateArea(areaId, areaData) {
-  return getAreasRef().child(areaId).update(areaData);
+  return nrd.areas.update(areaId, areaData);
 }
 
 function deleteArea(areaId) {
-  return getAreasRef().child(areaId).remove();
+  return nrd.areas.delete(areaId);
 }
 
 // Processes
 function getProcessesRef() {
-  return database.ref('processes');
+  return createRefWrapper(nrd.processes, 'processes');
 }
 
 function getProcess(processId) {
-  return getProcessesRef().child(processId).once('value');
+  return nrd.processes.getById(processId).then(process => {
+    return {
+      val: () => process || null
+    };
+  });
 }
 
 function createProcess(processData) {
-  return getProcessesRef().push(processData);
+  return nrd.processes.create(processData).then(id => {
+    return {
+      key: id,
+      then: function(callback) {
+        if (callback) callback(this);
+        return Promise.resolve(this);
+      }
+    };
+  });
 }
 
 function updateProcess(processId, processData) {
-  return getProcessesRef().child(processId).update(processData);
+  return nrd.processes.update(processId, processData);
 }
 
 function deleteProcess(processId) {
-  return getProcessesRef().child(processId).remove();
+  return nrd.processes.delete(processId);
 }
 
 // Tasks
 function getTasksRef() {
-  return database.ref('tasks');
+  return createRefWrapper(nrd.tasks, 'tasks');
 }
 
 function getTask(taskId) {
-  return getTasksRef().child(taskId).once('value');
+  return nrd.tasks.getById(taskId).then(task => {
+    return {
+      val: () => task || null
+    };
+  });
 }
 
 function createTask(taskData) {
-  return getTasksRef().push(taskData);
+  return nrd.tasks.create(taskData).then(id => {
+    return {
+      key: id,
+      then: function(callback) {
+        if (callback) callback(this);
+        return Promise.resolve(this);
+      }
+    };
+  });
 }
 
 function updateTask(taskId, taskData) {
-  return getTasksRef().child(taskId).update(taskData);
+  return nrd.tasks.update(taskId, taskData);
 }
 
 function deleteTask(taskId) {
-  return getTasksRef().child(taskId).remove();
+  return nrd.tasks.delete(taskId);
 }
 
 // Roles
 function getRolesRef() {
-  return database.ref('roles');
+  return createRefWrapper(nrd.roles, 'roles');
 }
 
 function getRole(roleId) {
-  return getRolesRef().child(roleId).once('value');
+  return nrd.roles.getById(roleId).then(role => {
+    return {
+      val: () => role || null
+    };
+  });
 }
 
 function createRole(roleData) {
-  return getRolesRef().push(roleData);
+  return nrd.roles.create(roleData).then(id => {
+    return {
+      key: id,
+      then: function(callback) {
+        if (callback) callback(this);
+        return Promise.resolve(this);
+      }
+    };
+  });
 }
 
 function updateRole(roleId, roleData) {
-  return getRolesRef().child(roleId).update(roleData);
+  return nrd.roles.update(roleId, roleData);
 }
 
 function deleteRole(roleId) {
-  return getRolesRef().child(roleId).remove();
+  return nrd.roles.delete(roleId);
 }
 
 // Employees
 function getEmployeesRef() {
-  return database.ref('employees');
+  return createRefWrapper(nrd.employees, 'employees');
 }
 
 function getEmployee(employeeId) {
-  return getEmployeesRef().child(employeeId).once('value');
+  return nrd.employees.getById(employeeId).then(employee => {
+    return {
+      val: () => employee || null
+    };
+  });
 }
 
 function createEmployee(employeeData) {
-  return getEmployeesRef().push(employeeData);
+  return nrd.employees.create(employeeData).then(id => {
+    return {
+      key: id,
+      then: function(callback) {
+        if (callback) callback(this);
+        return Promise.resolve(this);
+      }
+    };
+  });
 }
 
 function updateEmployee(employeeId, employeeData) {
-  return getEmployeesRef().child(employeeId).update(employeeData);
+  return nrd.employees.update(employeeId, employeeData);
 }
 
 function deleteEmployee(employeeId) {
-  return getEmployeesRef().child(employeeId).remove();
-}
-
-// Task Executions
-function getTaskExecutionsRef() {
-  return database.ref('taskExecutions');
-}
-
-function getTaskExecution(executionId) {
-  return getTaskExecutionsRef().child(executionId).once('value');
-}
-
-function createTaskExecution(executionData) {
-  return getTaskExecutionsRef().push(executionData);
-}
-
-function updateTaskExecution(executionId, executionData) {
-  return getTaskExecutionsRef().child(executionId).update(executionData);
-}
-
-function deleteTaskExecution(executionId) {
-  return getTaskExecutionsRef().child(executionId).remove();
+  return nrd.employees.delete(employeeId);
 }
 
 // Company Information
 function getCompanyInfoRef() {
-  return database.ref('companyInfo');
+  // CompanyInfo is a special service in NRD Data Access
+  return {
+    once: function(event) {
+      if (event === 'value') {
+        return nrd.companyInfo.get().then(info => {
+          return {
+            val: () => info || {}
+          };
+        });
+      }
+      return Promise.resolve({ val: () => {} });
+    },
+    set: function(data) {
+      return nrd.companyInfo.set(data);
+    }
+  };
 }
 
 function getCompanyInfo() {
-  return getCompanyInfoRef().once('value');
+  return nrd.companyInfo.get().then(info => {
+    return {
+      val: () => info || {}
+    };
+  });
 }
 
 function updateCompanyInfo(companyData) {
-  return getCompanyInfoRef().set(companyData);
-}
-
-// Incidents
-function getIncidentsRef() {
-  return database.ref('incidents');
-}
-
-function getIncident(incidentId) {
-  return getIncidentsRef().child(incidentId).once('value');
-}
-
-function createIncident(incidentData) {
-  return getIncidentsRef().push(incidentData);
-}
-
-function updateIncident(incidentId, incidentData) {
-  return getIncidentsRef().child(incidentId).update(incidentData);
-}
-
-function deleteIncident(incidentId) {
-  return getIncidentsRef().child(incidentId).remove();
+  return nrd.companyInfo.set(companyData);
 }
 
 // Contracts and Permits
 function getContractsRef() {
-  return database.ref('contracts');
+  return createRefWrapper(nrd.contracts, 'contracts');
 }
 
 function getContract(contractId) {
-  return getContractsRef().child(contractId).once('value');
+  return nrd.contracts.getById(contractId).then(contract => {
+    return {
+      val: () => contract || null
+    };
+  });
 }
 
 function createContract(contractData) {
-  return getContractsRef().push(contractData);
+  return nrd.contracts.create(contractData).then(id => {
+    return {
+      key: id,
+      then: function(callback) {
+        if (callback) callback(this);
+        return Promise.resolve(this);
+      }
+    };
+  });
 }
 
 function updateContract(contractId, contractData) {
-  return getContractsRef().child(contractId).update(contractData);
+  return nrd.contracts.update(contractId, contractData);
 }
 
 function deleteContract(contractId) {
-  return getContractsRef().child(contractId).remove();
+  return nrd.contracts.delete(contractId);
 }
-

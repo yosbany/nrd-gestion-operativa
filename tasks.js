@@ -553,16 +553,6 @@ function backToTasks() {
 
 // Delete task handler
 async function deleteTaskHandler(taskId) {
-  // Check if task has executions
-  const executionsSnapshot = await getTaskExecutionsRef().once('value');
-  const executions = executionsSnapshot.val() || {};
-  const hasExecutions = Object.values(executions).some(e => e.taskId === taskId);
-  
-  if (hasExecutions) {
-    await showError('No se puede eliminar una tarea que tiene ejecuciones registradas');
-    return;
-  }
-
   const confirmed = await showConfirm('Eliminar Tarea', '¿Está seguro de eliminar esta tarea?');
   if (!confirmed) return;
 

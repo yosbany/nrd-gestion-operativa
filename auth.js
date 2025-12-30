@@ -1,8 +1,8 @@
 // Authentication state management
 let currentUser = null;
 
-// Listen for auth state changes
-auth.onAuthStateChanged((user) => {
+// Listen for auth state changes using NRD Data Access
+nrd.auth.onAuthStateChanged((user) => {
   try {
     currentUser = user;
     if (user) {
@@ -84,7 +84,7 @@ if (loginForm) {
       if (errorDiv) errorDiv.textContent = '';
       showSpinner('Iniciando sesión...');
 
-      await auth.signInWithEmailAndPassword(email, password);
+      await nrd.auth.signIn(email, password);
       hideSpinner();
     } catch (error) {
       hideSpinner();
@@ -103,7 +103,7 @@ if (logoutBtn) {
   logoutBtn.addEventListener('click', async () => {
     try {
       showSpinner('Cerrando sesión...');
-      await auth.signOut();
+      await nrd.auth.signOut();
       hideSpinner();
     } catch (error) {
       hideSpinner();
@@ -115,6 +115,6 @@ if (logoutBtn) {
 
 // Get current user
 function getCurrentUser() {
-  return currentUser;
+  return nrd.auth.getCurrentUser() || currentUser;
 }
 
