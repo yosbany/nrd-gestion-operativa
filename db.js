@@ -10,6 +10,12 @@ const activeListeners = new Map();
 
 // Helper function to create Firebase-compatible reference wrapper
 function createRefWrapper(service, path) {
+  // Validate service exists
+  if (!service) {
+    console.error(`Service ${path} is not available. NRD Data Access may not be initialized.`);
+    throw new Error(`Service ${path} is not available`);
+  }
+  
   const wrapper = {
     on: function(event, callback) {
       if (event === 'value') {
@@ -87,12 +93,18 @@ function createRefWrapper(service, path) {
       };
     }
   };
+  
+  return wrapper;
 }
 
 // ========== OPERATIONAL SYSTEM DATABASE FUNCTIONS ==========
 
 // Areas
 function getAreasRef() {
+  if (!nrd || !nrd.areas) {
+    console.error('NRD Data Access not initialized or areas service not available');
+    throw new Error('NRD Data Access not initialized');
+  }
   return createRefWrapper(nrd.areas, 'areas');
 }
 
@@ -126,6 +138,10 @@ function deleteArea(areaId) {
 
 // Processes
 function getProcessesRef() {
+  if (!nrd || !nrd.processes) {
+    console.error('NRD Data Access not initialized or processes service not available');
+    throw new Error('NRD Data Access not initialized');
+  }
   return createRefWrapper(nrd.processes, 'processes');
 }
 
@@ -159,6 +175,10 @@ function deleteProcess(processId) {
 
 // Tasks
 function getTasksRef() {
+  if (!nrd || !nrd.tasks) {
+    console.error('NRD Data Access not initialized or tasks service not available');
+    throw new Error('NRD Data Access not initialized');
+  }
   return createRefWrapper(nrd.tasks, 'tasks');
 }
 
