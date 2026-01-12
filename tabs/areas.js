@@ -61,9 +61,19 @@ function loadAreas() {
   }
 
   // Listen for areas using NRD Data Access
-  areasListener = nrd.areas.onValue((data) => {
+  areasListener = nrd.areas.onValue(async (data) => {
     if (!areasList) return;
-    allAreas = data || {};
+    // If onValue returns array, convert to object with IDs as keys
+    if (Array.isArray(data)) {
+      const areasObj = {};
+      data.forEach((area, index) => {
+        const id = area.id || area.key || area.$id || index.toString();
+        areasObj[id] = area;
+      });
+      allAreas = areasObj;
+    } else {
+      allAreas = data || {};
+    }
     
     // Get search term and filter
     const searchInput = document.getElementById('areas-search');
@@ -115,8 +125,23 @@ function showAreaForm(areaId = null) {
       });
       
       // Load area data if editing
+      const subtitle = document.getElementById('area-form-subtitle');
+      const saveBtn = document.getElementById('save-area-btn');
+      
       if (areaId) {
         if (title) title.textContent = 'Editar Área';
+        if (subtitle) subtitle.textContent = 'Modifique la información del área';
+        // Cambiar color del header a azul para edición
+        const formHeader = document.getElementById('area-form-header');
+        if (formHeader) {
+          formHeader.classList.remove('bg-green-600', 'bg-gray-600');
+          formHeader.classList.add('bg-blue-600');
+        }
+        // Cambiar color del botón guardar a azul
+        if (saveBtn) {
+          saveBtn.classList.remove('bg-green-600', 'border-green-600', 'hover:bg-green-700');
+          saveBtn.classList.add('bg-blue-600', 'border-blue-600', 'hover:bg-blue-700');
+        }
         nrd.areas.getById(areaId).then(area => {
           if (area) {
             const nameInput = document.getElementById('area-name');
@@ -128,6 +153,18 @@ function showAreaForm(areaId = null) {
         });
       } else {
         if (title) title.textContent = 'Nueva Área';
+        if (subtitle) subtitle.textContent = 'Cree una nueva área operativa de la organización';
+        // Cambiar color del header a verde para nuevo
+        const formHeader = document.getElementById('area-form-header');
+        if (formHeader) {
+          formHeader.classList.remove('bg-blue-600', 'bg-gray-600');
+          formHeader.classList.add('bg-green-600');
+        }
+        // Cambiar color del botón guardar a verde
+        if (saveBtn) {
+          saveBtn.classList.remove('bg-blue-600', 'border-blue-600', 'hover:bg-blue-700');
+          saveBtn.classList.add('bg-green-600', 'border-green-600', 'hover:bg-green-700');
+        }
       }
     }
   });
@@ -166,11 +203,28 @@ async function viewArea(areaId) {
   
   showSpinner('Cargando área...');
   try {
-    const [area, allProcesses, allEmployees] = await Promise.all([
+    let [area, allProcesses, allEmployees] = await Promise.all([
       nrd.areas.getById(areaId),
       nrd.processes.getAll(),
       nrd.employees.getAll()
     ]);
+    
+    // Convert arrays to objects with IDs as keys if needed
+    const convertToObject = (data, name) => {
+      if (Array.isArray(data)) {
+        const obj = {};
+        data.forEach((item, index) => {
+          const id = item.id || item.key || item.$id || index.toString();
+          obj[id] = item;
+        });
+        return obj;
+      }
+      return data || {};
+    };
+    
+    allProcesses = convertToObject(allProcesses, 'processes');
+    allEmployees = convertToObject(allEmployees, 'employees');
+    
     hideSpinner();
     if (!area) {
       await showError('Área no encontrada');
@@ -358,6 +412,14 @@ if (closeAreaFormBtn) {
 const backToAreasBtn = document.getElementById('back-to-areas');
 if (backToAreasBtn) {
   backToAreasBtn.addEventListener('click', () => {
+    backToAreas();
+  });
+}
+
+// Close area detail button
+const closeAreaDetailBtn = document.getElementById('close-area-detail-btn');
+if (closeAreaDetailBtn) {
+  closeAreaDetailBtn.addEventListener('click', () => {
     backToAreas();
   });
 }

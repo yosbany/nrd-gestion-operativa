@@ -959,20 +959,18 @@ async function initializeSystem() {
       if (existingTask) {
         taskNameToId[taskData.name] = existingTask[0];
       } else {
-        const roleIds = taskData.roleNames ? taskData.roleNames.map(rn => roleNameToId[rn]).filter(Boolean) : null;
-        
+        // Type and roles are now configured in processes, not stored in tasks
         const taskToCreate = {
           name: taskData.name,
           description: taskData.description || null,
-          type: taskData.type,
           frequency: taskData.frequency || null,
           estimatedTime: taskData.estimatedTime || null,
           // Cost is calculated automatically based on roles and employee salaries, not stored
           cost: null,
           executionSteps: taskData.executionSteps || null,
           successCriteria: taskData.successCriteria || null,
-          commonErrors: taskData.commonErrors || null,
-          roleIds: (taskData.type === 'with_role' && roleIds && roleIds.length > 0) ? roleIds : null
+          commonErrors: taskData.commonErrors || null
+          // Type and roleIds are now configured in processes through activities, not stored in tasks
         };
         
         const newTaskId = await nrd.tasks.create(taskToCreate);
@@ -995,23 +993,26 @@ async function initializeSystem() {
         }
         
         // Get activities with task IDs and role IDs
+        // Each activity must have: name, taskId (idTask), roleId (idRol)
+        // Roles are now configured in process activities, not in tasks
         const activities = [];
         if (processData.activities && Array.isArray(processData.activities)) {
           processData.activities.forEach(activity => {
             const taskId = taskNameToId[activity.taskName];
             if (taskId) {
-              // Get task data to find its roles
+              // Get task data to find its roles (from initialData, not from stored task)
               const taskData = initialData.tasks.find(t => t.name === activity.taskName);
               let roleId = null;
               
-              // If activity specifies a roleName, use it; otherwise use first role from task
+              // If activity specifies a roleName, use it; otherwise use first role from task's roleNames
               if (activity.roleName) {
                 roleId = roleNameToId[activity.roleName] || null;
               } else if (taskData && taskData.roleNames && taskData.roleNames.length > 0) {
-                // Use first role from task as default
+                // Use first role from task's roleNames as default
                 roleId = roleNameToId[taskData.roleNames[0]] || null;
               }
               
+              // Activity structure: name, taskId (idTask), roleId (idRol)
               activities.push({
                 name: activity.name,
                 taskId: taskId,
@@ -1024,15 +1025,16 @@ async function initializeSystem() {
           processData.taskNames.forEach((taskName, index) => {
             const taskId = taskNameToId[taskName];
             if (taskId) {
-              // Get task data to find its roles
+              // Get task data to find its roles (from initialData, not from stored task)
               const taskData = initialData.tasks.find(t => t.name === taskName);
               let roleId = null;
               
               if (taskData && taskData.roleNames && taskData.roleNames.length > 0) {
-                // Use first role from task as default
+                // Use first role from task's roleNames as default
                 roleId = roleNameToId[taskData.roleNames[0]] || null;
               }
               
+              // Activity structure: name, taskId (idTask), roleId (idRol)
               activities.push({
                 name: taskName, // Use task name as activity name for backward compatibility
                 taskId: taskId,
@@ -1054,10 +1056,10 @@ async function initializeSystem() {
     }
     
     // Step 7: Initialize contracts structure (empty if doesn't exist)
-    // Contracts will be created by user, no default structure needed
+      // Contracts will be created by user, no default structure needed
     
     hideSpinner();
-    await showSuccess('Sistema inicializado exitosamente con datos de nrd-kb-generate');
+    await showSuccess('Sistema inicializado exitosamente con datos base.');
     
     // Reload the app to show initialized structure
     location.reload();
@@ -1069,29 +1071,4 @@ async function initializeSystem() {
   }
 }
 
-// Initialize button handler
-const initializeBtn = document.getElementById('initialize-btn');
-if (initializeBtn) {
-  initializeBtn.addEventListener('click', async () => {
-    try {
-      const currentUser = getCurrentUser();
-      
-      // Verify user is authorized
-      if (!currentUser || currentUser.email !== 'yosbany@nrd.com') {
-        await showError('No tienes permisos para inicializar');
-        return;
-      }
-      
-      const confirmed = await showConfirm(
-        'Inicializar Sistema', 
-        '¿Está seguro de que desea inicializar el sistema? Esta acción cargará todos los datos de la carpeta nrd-kb-generate (áreas, procesos, tareas, roles y empleados). Los datos existentes se mantendrán si ya existen.'
-      );
-      
-      if (!confirmed) return;
-      
-      await initializeSystem();
-    } catch (error) {
-      console.error('Initialize button error:', error);
-    }
-  });
-}
+// Initialize button handler removed - button no longer exists in UI

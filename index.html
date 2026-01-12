@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1767096944613">
+  <link rel="stylesheet" href="styles.css?v=1767442000">
   <meta name="theme-color" content="#dc2626">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -64,19 +64,18 @@
   <!-- Main App Screen -->
   <div id="app-screen" class="min-h-screen flex flex-col hidden">
     <header class="bg-red-600 border-b border-red-700 px-3 sm:px-4 py-2.5 sm:py-3 flex justify-between items-center sticky top-0 z-10">
+            <div class="flex items-center gap-2 sm:gap-3">
+                <img src="icon-192.png" alt="NRD Gestión Operativa" class="w-8 h-8 sm:w-10 sm:h-10 rounded">
       <h1 class="text-lg sm:text-xl font-light tracking-tight text-white">NRD Gestión Operativa</h1>
+            </div>
       <div class="flex gap-2 items-center">
         <button id="install-btn" 
           class="px-3 sm:px-4 py-1.5 sm:py-2 border border-white/30 hover:border-white text-white hover:bg-white/10 transition-colors uppercase tracking-wider text-xs font-light hidden">
           Instalar
         </button>
-        <button id="initialize-btn" 
-          class="px-3 sm:px-4 py-1.5 sm:py-2 border border-white/30 hover:border-white text-white hover:bg-white/10 transition-colors uppercase tracking-wider text-xs font-light hidden">
-          Inicializar
-        </button>
-        <button id="logout-btn" 
+        <button id="profile-btn" 
           class="px-3 sm:px-4 py-1.5 sm:py-2 border border-white/30 hover:border-white text-white hover:bg-white/10 transition-colors uppercase tracking-wider text-xs font-light">
-          Salir
+          Perfil
         </button>
       </div>
     </header>
@@ -243,23 +242,32 @@
             class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
         </div>
         <div id="areas-list" class="space-y-2 sm:space-y-3"></div>
-        <div id="area-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
-          <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-lg sm:text-xl font-light tracking-tight">Detalle del Área</h3>
-              <button id="back-to-areas" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+        <div id="area-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden overflow-hidden">
+          <div id="area-detail-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-gray-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg sm:text-xl font-semibold tracking-tight text-white">Detalle del Área</h3>
+                <p class="text-sm text-white/90 mt-1">Visualice la información completa del área operativa</p>
+              </div>
+              <button id="back-to-areas" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
             </div>
           </div>
           <div id="area-detail-content"></div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
             <button id="delete-area-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
             <button id="edit-area-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
+            <button id="close-area-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cerrar</button>
           </div>
         </div>
-        <div id="area-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
-          <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 id="area-form-title" class="text-lg sm:text-xl font-light tracking-tight">Nueva Área</h3>
-            <button id="close-area-form" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+        <div id="area-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden overflow-hidden">
+          <div id="area-form-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-green-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 id="area-form-title" class="text-lg sm:text-xl font-semibold tracking-tight text-white">Nueva Área</h3>
+                <p id="area-form-subtitle" class="text-sm text-white/90 mt-1">Cree una nueva área operativa de la organización</p>
+              </div>
+              <button id="close-area-form" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
           </div>
           <form id="area-form-element">
             <input type="hidden" id="area-id">
@@ -279,7 +287,7 @@
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
               <button type="button" id="cancel-area-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
+              <button type="submit" id="save-area-btn" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
             </div>
           </form>
         </div>
@@ -295,11 +303,14 @@
             class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
         </div>
         <div id="processes-list" class="space-y-2 sm:space-y-3"></div>
-        <div id="process-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
-          <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-lg sm:text-xl font-light tracking-tight">Detalle del Proceso</h3>
-              <button id="back-to-processes" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+        <div id="process-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden overflow-hidden">
+          <div id="process-detail-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-gray-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg sm:text-xl font-semibold tracking-tight text-white">Detalle del Proceso</h3>
+                <p class="text-sm text-white/90 mt-1">Visualice la información completa del proceso</p>
+              </div>
+              <button id="back-to-processes" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
             </div>
           </div>
           <div id="process-detail-content"></div>
@@ -308,12 +319,18 @@
             <button id="view-process-diagram-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Ver Diagrama</button>
             <button id="edit-process-flow-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar Flujo</button>
             <button id="edit-process-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
+            <button id="close-process-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cerrar</button>
           </div>
         </div>
-        <div id="process-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
-          <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 id="process-form-title" class="text-lg sm:text-xl font-light tracking-tight">Nuevo Proceso</h3>
-            <button id="close-process-form" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+        <div id="process-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden overflow-hidden">
+          <div id="process-form-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-green-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 id="process-form-title" class="text-lg sm:text-xl font-semibold tracking-tight text-white">Nuevo Proceso</h3>
+                <p id="process-form-subtitle" class="text-sm text-white/90 mt-1">Defina un nuevo proceso operativo</p>
+              </div>
+              <button id="close-process-form" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
           </div>
           <form id="process-form-element">
             <input type="hidden" id="process-id">
@@ -333,7 +350,7 @@
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
               <button type="button" id="cancel-process-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
+              <button type="submit" id="save-process-btn" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
             </div>
           </form>
         </div>
@@ -349,23 +366,32 @@
             class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
         </div>
         <div id="tasks-list" class="space-y-2 sm:space-y-3"></div>
-        <div id="task-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
-          <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-lg sm:text-xl font-light tracking-tight">Detalle de la Tarea</h3>
-              <button id="back-to-tasks" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+        <div id="task-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden overflow-hidden">
+          <div id="task-detail-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-gray-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg sm:text-xl font-semibold tracking-tight text-white">Detalle de la Tarea</h3>
+                <p class="text-sm text-white/90 mt-1">Visualice la información completa de la tarea</p>
+              </div>
+              <button id="back-to-tasks" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
             </div>
           </div>
           <div id="task-detail-content"></div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
             <button id="delete-task-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
             <button id="edit-task-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
+            <button id="close-task-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cerrar</button>
           </div>
         </div>
-        <div id="task-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
-          <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 id="task-form-title" class="text-lg sm:text-xl font-light tracking-tight">Nueva Tarea</h3>
-            <button id="close-task-form" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+        <div id="task-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden overflow-hidden">
+          <div id="task-form-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-green-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 id="task-form-title" class="text-lg sm:text-xl font-semibold tracking-tight text-white">Nueva Tarea</h3>
+                <p id="task-form-subtitle" class="text-sm text-white/90 mt-1">Cree una nueva tarea dentro de un proceso</p>
+              </div>
+              <button id="close-task-form" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
           </div>
           <form id="task-form-element">
             <input type="hidden" id="task-id">
@@ -376,22 +402,6 @@
             <div class="mb-4 sm:mb-6">
               <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Descripción</label>
               <textarea id="task-description" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
-            </div>
-            <div class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Tipo</label>
-              <select id="task-type" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
-                <option value="with_role">Con rol asignado</option>
-                <option value="without_role">Sin rol asignado</option>
-                <option value="voluntary">Voluntaria</option>
-                <option value="unpaid">No remunerada</option>
-                <option value="exchange">Canje por beneficios</option>
-              </select>
-            </div>
-            <div id="task-role-select-container" class="mb-4 sm:mb-6">
-              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Roles</label>
-              <div id="task-roles-container" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 p-3">
-                <!-- Roles checkboxes will be inserted here -->
-              </div>
             </div>
             <div class="mb-4 sm:mb-6">
               <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Frecuencia</label>
@@ -419,7 +429,7 @@
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
               <button type="button" id="cancel-task-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
+              <button type="submit" id="save-task-btn" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
             </div>
           </form>
         </div>
@@ -435,23 +445,32 @@
             class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
         </div>
         <div id="roles-list" class="space-y-2 sm:space-y-3"></div>
-        <div id="role-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
-          <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-lg sm:text-xl font-light tracking-tight">Detalle del Rol</h3>
-              <button id="back-to-roles" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+        <div id="role-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden overflow-hidden">
+          <div id="role-detail-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-gray-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg sm:text-xl font-semibold tracking-tight text-white">Detalle del Rol</h3>
+                <p class="text-sm text-white/90 mt-1">Visualice la información completa del rol</p>
+              </div>
+              <button id="back-to-roles" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
             </div>
           </div>
           <div id="role-detail-content"></div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
             <button id="delete-role-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
             <button id="edit-role-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
+            <button id="close-role-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cerrar</button>
           </div>
         </div>
-        <div id="role-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
-          <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 id="role-form-title" class="text-lg sm:text-xl font-light tracking-tight">Nuevo Rol</h3>
-            <button id="close-role-form" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+        <div id="role-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden overflow-hidden">
+          <div id="role-form-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-green-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 id="role-form-title" class="text-lg sm:text-xl font-semibold tracking-tight text-white">Nuevo Rol</h3>
+                <p id="role-form-subtitle" class="text-sm text-white/90 mt-1">Defina un nuevo rol organizacional</p>
+              </div>
+              <button id="close-role-form" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
           </div>
           <form id="role-form-element">
             <input type="hidden" id="role-id">
@@ -465,7 +484,7 @@
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
               <button type="button" id="cancel-role-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
+              <button type="submit" id="save-role-btn" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
             </div>
           </form>
         </div>
@@ -481,23 +500,32 @@
             class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
         </div>
         <div id="employees-list" class="space-y-2 sm:space-y-3"></div>
-        <div id="employee-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden">
-          <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="text-lg sm:text-xl font-light tracking-tight">Detalle del Empleado</h3>
-              <button id="back-to-employees" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+        <div id="employee-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden overflow-hidden">
+          <div id="employee-detail-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-gray-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg sm:text-xl font-semibold tracking-tight text-white">Detalle del Empleado</h3>
+                <p class="text-sm text-white/90 mt-1">Visualice la información completa del empleado</p>
+              </div>
+              <button id="back-to-employees" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
             </div>
           </div>
           <div id="employee-detail-content"></div>
           <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
             <button id="delete-employee-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
             <button id="edit-employee-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
+            <button id="close-employee-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cerrar</button>
           </div>
         </div>
-        <div id="employee-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden">
-          <div class="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 id="employee-form-title" class="text-lg sm:text-xl font-light tracking-tight">Nuevo Empleado</h3>
-            <button id="close-employee-form" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+        <div id="employee-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden overflow-hidden">
+          <div id="employee-form-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-green-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 id="employee-form-title" class="text-lg sm:text-xl font-semibold tracking-tight text-white">Nuevo Empleado</h3>
+                <p id="employee-form-subtitle" class="text-sm text-white/90 mt-1">Registre un nuevo empleado en el sistema</p>
+              </div>
+              <button id="close-employee-form" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
           </div>
           <form id="employee-form-element">
             <input type="hidden" id="employee-id">
@@ -525,7 +553,7 @@
             </div>
             <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
               <button type="button" id="cancel-employee-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
-              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
+              <button type="submit" id="save-employee-btn" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
             </div>
           </form>
         </div>
@@ -601,6 +629,25 @@
     </div>
   </div>
 
+  <!-- Profile Modal -->
+  <div id="profile-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-md w-full border border-gray-200 shadow-lg">
+      <div class="p-4 sm:p-6 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-lg sm:text-xl font-light tracking-tight">Perfil de Usuario</h3>
+        <button id="close-profile-modal" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+      </div>
+      <div id="profile-modal-content" class="p-4 sm:p-6 space-y-4">
+        <!-- User data will be inserted here -->
+      </div>
+      <div class="p-4 sm:p-6 border-t border-gray-200">
+        <button id="profile-logout-btn" 
+          class="w-full px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+          Cerrar Sesión
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -608,6 +655,9 @@
   
   <!-- NRD Data Access Library -->
   <script src="https://cdn.jsdelivr.net/gh/yosbany/nrd-data-access@main/dist/nrd-data-access.js"></script>
+  
+  <!-- Logger (must load before other app scripts) -->
+  <script src="logger.js?v=1767442000"></script>
   
   <!-- jsPDF for PDF generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -620,19 +670,19 @@
   </script>
   
   <!-- App Scripts -->
-  <script src="modal.js?v=1767096944613"></script>
-  <script src="auth.js?v=1767096944613"></script>
-  <script src="initialize.js"></script>
-  <script src="areas.js"></script>
-  <script src="processes.js"></script>
-  <script src="tasks.js"></script>
-  <script src="roles.js"></script>
-  <script src="employees.js"></script>
-  <script src="analytics.js"></script>
-  <script src="inicio.js"></script>
-  <script src="informacion.js"></script>
-  <script src="organigrama.js"></script>
-  <script src="app.js?v=1767096944613"></script>
+  <script src="modal.js?v=1767442000"></script>
+  <script src="auth.js?v=1767442000"></script>
+  <script src="initialize.js?v=1767442000"></script>
+  <script src="tabs/areas.js?v=1767442000"></script>
+  <script src="tabs/processes.js?v=1767442000"></script>
+  <script src="tabs/tasks.js?v=1767442000"></script>
+  <script src="tabs/roles.js?v=1767442000"></script>
+  <script src="tabs/employees.js?v=1767442000"></script>
+  <script src="tabs/analytics.js?v=1767442000"></script>
+  <script src="tabs/inicio.js?v=1767442000"></script>
+  <script src="tabs/informacion.js?v=1767442000"></script>
+  <script src="tabs/organigrama.js?v=1767442000"></script>
+  <script src="app.js?v=1767442000"></script>
 
   <script>
     // Global error handler
@@ -683,7 +733,7 @@
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         // Register service worker without version parameter
-        navigator.serviceWorker.register('service-worker.js?v=1767096944613')
+        navigator.serviceWorker.register('service-worker.js?v=1767442000')
           .then(reg => {
             console.log('Service Worker registered');
             

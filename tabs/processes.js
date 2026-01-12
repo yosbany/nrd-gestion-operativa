@@ -72,7 +72,17 @@ function loadProcesses() {
   // Listen for processes using NRD Data Access
   processesListener = nrd.processes.onValue(async (data) => {
     if (!processesList) return;
-    allProcesses = data || {};
+    // If onValue returns array, convert to object with IDs as keys
+    if (Array.isArray(data)) {
+      const processesObj = {};
+      data.forEach((process, index) => {
+        const id = process.id || process.key || process.$id || index.toString();
+        processesObj[id] = process;
+      });
+      allProcesses = processesObj;
+    } else {
+      allProcesses = data || {};
+    }
 
     // Load areas for display
     const areas = await nrd.areas.getAll();
@@ -131,8 +141,23 @@ function showProcessForm(processId = null) {
       });
       
       // After loading areas, load process data if editing
+      const subtitle = document.getElementById('process-form-subtitle');
+      const saveBtn = document.getElementById('save-process-btn');
+      
       if (processId) {
         if (title) title.textContent = 'Editar Proceso';
+        if (subtitle) subtitle.textContent = 'Modifique la información del proceso';
+        // Cambiar color del header a azul para edición
+        const formHeader = document.getElementById('process-form-header');
+        if (formHeader) {
+          formHeader.classList.remove('bg-green-600', 'bg-gray-600');
+          formHeader.classList.add('bg-blue-600');
+        }
+        // Cambiar color del botón guardar a azul
+        if (saveBtn) {
+          saveBtn.classList.remove('bg-green-600', 'border-green-600', 'hover:bg-green-700');
+          saveBtn.classList.add('bg-blue-600', 'border-blue-600', 'hover:bg-blue-700');
+        }
         nrd.processes.getById(processId).then(process => {
           if (process) {
             const nameInput = document.getElementById('process-name');
@@ -147,6 +172,18 @@ function showProcessForm(processId = null) {
         });
       } else {
         if (title) title.textContent = 'Nuevo Proceso';
+        if (subtitle) subtitle.textContent = 'Defina un nuevo proceso operativo';
+        // Cambiar color del header a verde para nuevo
+        const formHeader = document.getElementById('process-form-header');
+        if (formHeader) {
+          formHeader.classList.remove('bg-blue-600', 'bg-gray-600');
+          formHeader.classList.add('bg-green-600');
+        }
+        // Cambiar color del botón guardar a verde
+        if (saveBtn) {
+          saveBtn.classList.remove('bg-blue-600', 'border-blue-600', 'hover:bg-blue-700');
+          saveBtn.classList.add('bg-green-600', 'border-green-600', 'hover:bg-green-700');
+        }
       }
     }
   });
@@ -214,11 +251,28 @@ async function viewProcess(processId) {
     }
 
     // Load tasks, roles, and employees for this process
-    const [allTasks, allRoles, allEmployees] = await Promise.all([
+    let [allTasks, allRoles, allEmployees] = await Promise.all([
       nrd.tasks.getAll(),
       nrd.roles.getAll(),
       nrd.employees.getAll()
     ]);
+    
+    // Convert arrays to objects with IDs as keys if needed
+    const convertToObject = (data, name) => {
+      if (Array.isArray(data)) {
+        const obj = {};
+        data.forEach((item, index) => {
+          const id = item.id || item.key || item.$id || index.toString();
+          obj[id] = item;
+        });
+        return obj;
+      }
+      return data || {};
+    };
+    
+    allTasks = convertToObject(allTasks, 'tasks');
+    allRoles = convertToObject(allRoles, 'roles');
+    allEmployees = convertToObject(allEmployees, 'employees');
     
     // Create role map and employee map
     const roleMap = {};
@@ -287,14 +341,6 @@ async function viewProcess(processId) {
               const activityRoleId = activityData.roleId;
               const activityRoleName = activityRoleId ? (roleMap[activityRoleId] || 'Rol desconocido') : null;
               
-              const taskTypeLabels = {
-                'with_role': 'Con rol',
-                'without_role': 'Sin rol',
-                'voluntary': 'Voluntaria',
-                'unpaid': 'No remunerada',
-                'exchange': 'Canje'
-              };
-              
               return `
                 <div class="border border-gray-200 p-2 sm:p-3 hover:border-red-600 transition-colors">
                   <div class="flex items-center gap-2 mb-1">
@@ -303,7 +349,6 @@ async function viewProcess(processId) {
                       <div class="font-medium text-sm sm:text-base text-gray-800">${escapeHtml(activityData.activityName)}</div>
                       <div class="text-xs text-gray-500 mt-0.5 cursor-pointer hover:text-red-600" onclick="viewTask('${task.id}')">Tarea: ${escapeHtml(task.name)}</div>
                     </div>
-                    <span class="text-xs px-2 py-0.5 bg-gray-100 rounded">${taskTypeLabels[task.type] || task.type}</span>
                   </div>
                   ${activityRoleName ? `<div class="text-xs text-gray-600 ml-6">Rol: ${escapeHtml(activityRoleName)}</div>` : ''}
                 </div>
@@ -473,6 +518,14 @@ if (backToProcessesBtn) {
   });
 }
 
+// Close process detail button
+const closeProcessDetailBtn = document.getElementById('close-process-detail-btn');
+if (closeProcessDetailBtn) {
+  closeProcessDetailBtn.addEventListener('click', () => {
+    backToProcesses();
+  });
+}
+
 // Close process diagram button
 const closeProcessDiagramBtn = document.getElementById('close-process-diagram');
 if (closeProcessDiagramBtn) {
@@ -520,36 +573,18 @@ function showProcessDiagram(processId, processName, activitiesWithTasks, roleMap
     return;
   }
   
-  const taskTypeLabels = {
-    'with_role': 'Con rol',
-    'without_role': 'Sin rol',
-    'voluntary': 'Voluntaria',
-    'unpaid': 'No remunerada',
-    'exchange': 'Canje'
-  };
-  
-  const taskTypeColors = {
-    'with_role': 'bg-blue-100 border-blue-300',
-    'without_role': 'bg-gray-100 border-gray-300',
-    'voluntary': 'bg-green-100 border-green-300',
-    'unpaid': 'bg-yellow-100 border-yellow-300',
-    'exchange': 'bg-purple-100 border-purple-300'
-  };
-  
   let diagramHTML = '<div class="flex flex-col items-center space-y-4">';
   
   activitiesWithTasks.forEach((activityData, index) => {
     const task = activityData.task;
-    const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-    const roleNames = taskRoleIds.map(rid => roleMap[rid]).filter(n => n !== undefined);
-    const roleName = roleNames.length > 0 ? roleNames.join(', ') : null;
-    const taskTypeLabel = taskTypeLabels[task.type] || task.type;
-    const taskTypeColor = taskTypeColors[task.type] || 'bg-gray-100 border-gray-300';
+    // Get role from activity, not from task
+    const activityRoleId = activityData.roleId;
+    const roleName = activityRoleId && roleMap[activityRoleId] ? roleMap[activityRoleId] : null;
     
     // Activity card
     diagramHTML += `
       <div class="w-full max-w-md">
-        <div class="border-2 ${taskTypeColor} rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+        <div class="border-2 border-gray-300 bg-gray-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
           <div class="flex items-start justify-between mb-2">
             <div class="flex items-center gap-2 flex-1">
               <span class="text-lg font-medium text-gray-700 bg-white rounded-full w-8 h-8 flex items-center justify-center border-2 border-gray-400">${index + 1}</span>
@@ -558,11 +593,10 @@ function showProcessDiagram(processId, processName, activitiesWithTasks, roleMap
                 <p class="text-xs text-gray-500 mt-0.5 cursor-pointer hover:text-red-600" onclick="closeProcessDiagram(); setTimeout(() => viewTask('${task.id}'), 100);">Tarea: ${escapeHtml(task.name)}</p>
               </div>
             </div>
-            <span class="text-xs px-2 py-1 bg-white rounded border border-gray-300 text-gray-700 whitespace-nowrap">${taskTypeLabel}</span>
           </div>
           ${roleName ? `
             <div class="mt-2 pt-2 border-t border-gray-300">
-              <span class="text-xs text-gray-600 uppercase tracking-wider">Roles:</span>
+              <span class="text-xs text-gray-600 uppercase tracking-wider">Rol:</span>
               <span class="text-sm font-light text-gray-800 ml-2">${escapeHtml(roleName)}</span>
             </div>
           ` : ''}

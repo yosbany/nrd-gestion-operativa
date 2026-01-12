@@ -38,8 +38,8 @@ async function calculateDocumentationHealth() {
 
     Object.values(processes).forEach(process => {
       if (process.objective) processesWithObjective++;
-      // Check if process has tasks
-      const hasTasks = Object.values(tasks).some(task => task.processId === process.id);
+      // Check if process has tasks through activities
+      const hasTasks = process.activities && Array.isArray(process.activities) && process.activities.length > 0;
       if (hasTasks) processesWithTasks++;
     });
 
@@ -100,20 +100,47 @@ async function calculateStandardizationHealth() {
     const totalEmployees = Object.keys(employees).length;
     const totalRoles = Object.keys(roles).length;
 
-    // Tasks standardization
+    // Tasks standardization - deduce from process activities
     let tasksWithRole = 0;
     let tasksWithProcess = 0;
-    let tasksWithOrder = 0;
     let tasksWithTime = 0;
     let tasksStandardized = 0;
 
+    // Build task-process and task-role maps from process activities
+    const taskProcessMap = {}; // taskId -> Set of processIds
+    const taskRoleMap = {}; // taskId -> Set of roleIds
+    
+    Object.entries(processes).forEach(([processId, process]) => {
+      if (process.activities && Array.isArray(process.activities)) {
+        process.activities.forEach(activity => {
+          if (activity.taskId) {
+            if (!taskProcessMap[activity.taskId]) {
+              taskProcessMap[activity.taskId] = new Set();
+            }
+            taskProcessMap[activity.taskId].add(processId);
+            
+            if (activity.roleId) {
+              if (!taskRoleMap[activity.taskId]) {
+                taskRoleMap[activity.taskId] = new Set();
+              }
+              taskRoleMap[activity.taskId].add(activity.roleId);
+            }
+          }
+        });
+      }
+    });
+
     Object.values(tasks).forEach(task => {
-      const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-      if (taskRoleIds.length > 0) tasksWithRole++;
-      if (task.processId) tasksWithProcess++;
-      if (task.order !== null && task.order !== undefined) tasksWithOrder++;
+      const taskId = task.id || task.key || task.$id;
+      const hasRole = taskId && taskRoleMap[taskId] && taskRoleMap[taskId].size > 0;
+      const hasProcess = taskId && taskProcessMap[taskId] && taskProcessMap[taskId].size > 0;
+      
+      if (hasRole) tasksWithRole++;
+      if (hasProcess) tasksWithProcess++;
       if (task.estimatedTime) tasksWithTime++;
-      if (taskRoleIds.length > 0 && task.processId && task.order !== null && task.order !== undefined && task.estimatedTime) {
+      
+      // Task is standardized if it has role, process, and estimated time
+      if (hasRole && hasProcess && task.estimatedTime) {
         tasksStandardized++;
       }
     });
@@ -124,8 +151,8 @@ async function calculateStandardizationHealth() {
 
     Object.values(processes).forEach(process => {
       if (process.areaId) processesWithArea++;
-      // Check if process has area and tasks
-      const hasTasks = Object.values(tasks).some(task => task.processId === process.id);
+      // Check if process has area and activities (tasks)
+      const hasTasks = process.activities && Array.isArray(process.activities) && process.activities.length > 0;
       if (process.areaId && hasTasks) processesStandardized++;
     });
 
@@ -142,7 +169,6 @@ async function calculateStandardizationHealth() {
         total: totalTasks,
         withRole: tasksWithRole,
         withProcess: tasksWithProcess,
-        withOrder: tasksWithOrder,
         withTime: tasksWithTime,
         standardized: tasksStandardized,
         standardizationRate: totalTasks > 0 ? Math.round((tasksStandardized / totalTasks) * 100) : 0
@@ -177,9 +203,27 @@ async function calculateSystematizationHealth() {
       nrd.areas.getAll()
     ]);
 
-    // Tasks without process
+    // Build task-process map from process activities
+    const taskProcessMap = {}; // taskId -> Set of processIds
+    Object.entries(processes).forEach(([processId, process]) => {
+      if (process.activities && Array.isArray(process.activities)) {
+        process.activities.forEach(activity => {
+          if (activity.taskId) {
+            if (!taskProcessMap[activity.taskId]) {
+              taskProcessMap[activity.taskId] = new Set();
+            }
+            taskProcessMap[activity.taskId].add(processId);
+          }
+        });
+      }
+    });
+
+    // Tasks without process (not used in any process activity)
     const tasksWithoutProcess = Object.entries(tasks)
-      .filter(([id, task]) => !task.processId)
+      .filter(([id, task]) => {
+        const taskId = task.id || task.key || task.$id || id;
+        return !taskProcessMap[taskId] || taskProcessMap[taskId].size === 0;
+      })
       .map(([id, task]) => ({ id, name: task.name }));
 
     // Processes without area
@@ -187,10 +231,10 @@ async function calculateSystematizationHealth() {
       .filter(([id, process]) => !process.areaId)
       .map(([id, process]) => ({ id, name: process.name }));
 
-    // Processes without tasks
+    // Processes without tasks (no activities)
     const processesWithoutTasks = Object.entries(processes)
       .filter(([id, process]) => {
-        return !Object.values(tasks).some(task => task.processId === id);
+        return !process.activities || !Array.isArray(process.activities) || process.activities.length === 0;
       })
       .map(([id, process]) => ({ id, name: process.name }));
 

@@ -8,15 +8,52 @@ let taskRoleMap = {}; // Store role names for tasks
 // Calculate task cost based on roles and employees
 // Cost is calculated as: average monthly salary of employees with task roles / minutes per month * estimated time
 // Assumes 160 working hours per month = 9600 minutes
-async function calculateTaskCost(task) {
+async function calculateTaskCost(task, taskId = null) {
   try {
-    // Only calculate cost for tasks with roles
-    if (task.type !== 'with_role') {
+    // Calculate cost based on roles deduced from processes
+    // Get task ID from parameter or task object
+    const id = taskId || task.id || task.key || task.$id;
+    if (!id) {
       return null;
     }
     
-    const roleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-    if (!roleIds || roleIds.length === 0) {
+    // Get all processes to find roles for this task
+    let allProcesses = await nrd.processes.getAll();
+    
+    // Convert array to object if needed
+    const convertToObject = (data) => {
+      if (Array.isArray(data)) {
+        const obj = {};
+        data.forEach((item, index) => {
+          const itemId = item.id || item.key || item.$id || index.toString();
+          obj[itemId] = item;
+        });
+        return obj;
+      }
+      return data || {};
+    };
+    
+    allProcesses = convertToObject(allProcesses);
+    
+    // Find roleIds from process activities
+    const roleIds = new Set();
+    Object.values(allProcesses).forEach(process => {
+      if (process.activities && Array.isArray(process.activities)) {
+        process.activities.forEach(activity => {
+          // Find activities that use this task
+          if (activity.taskId === id && activity.roleId) {
+            roleIds.add(activity.roleId);
+          }
+        });
+      }
+    });
+    
+    // Note: task.roleIds is deprecated, roles are now configured in process activities
+    // Keep this for backward compatibility with existing data
+    const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
+    taskRoleIds.forEach(roleId => roleIds.add(roleId));
+    
+    if (roleIds.size === 0) {
       return null;
     }
     
@@ -32,7 +69,7 @@ async function calculateTaskCost(task) {
     // For each role, get employees with that role and their salaries
     const roleCosts = [];
     
-    for (const roleId of roleIds) {
+    for (const roleId of Array.from(roleIds)) {
       const employeesWithRole = Object.values(allEmployees).filter(emp => {
         const empRoleIds = emp.roleIds || (emp.roleId ? [emp.roleId] : []);
         return empRoleIds.includes(roleId);
@@ -77,14 +114,6 @@ async function calculateTaskCost(task) {
   }
 }
 
-const taskTypeLabels = {
-  'with_role': 'Con rol',
-  'without_role': 'Sin rol',
-  'voluntary': 'Voluntaria',
-  'unpaid': 'No remunerada',
-  'exchange': 'Canje'
-};
-
 // Normalize text for search (remove accents, ñ->n, b->v, c->s)
 function normalizeSearchText(text) {
   return text
@@ -110,16 +139,12 @@ async function filterAndDisplayTasks(searchTerm = '') {
     
     const name = normalizeSearchText(task.name || '');
     const description = normalizeSearchText(task.description || '');
-    const processName = normalizeSearchText(taskProcessMap[task.processId] || '');
-    
-    // Get all role names for search
-    const roleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-    const roleNames = roleIds.map(rid => normalizeSearchText(taskRoleMap[rid] || '')).join(' ');
+      const processName = normalizeSearchText(taskProcessMap[id] || '');
+      const roleNames = normalizeSearchText(taskRoleMap[id] || '');
     
     const frequency = normalizeSearchText(task.frequency || '');
-    const typeLabel = normalizeSearchText(taskTypeLabels[task.type] || '');
     return name.includes(term) || description.includes(term) || processName.includes(term) || 
-           roleNames.includes(term) || frequency.includes(term) || typeLabel.includes(term);
+           roleNames.includes(term) || frequency.includes(term);
   });
 
   if (filteredTasks.length === 0) {
@@ -128,32 +153,31 @@ async function filterAndDisplayTasks(searchTerm = '') {
   }
 
   // Calculate costs for all tasks
-  const costPromises = filteredTasks.map(([id, task]) => calculateTaskCost(task));
+  const costPromises = filteredTasks.map(([id, task]) => calculateTaskCost(task, id));
   const calculatedCosts = await Promise.all(costPromises);
   
   filteredTasks.forEach(([id, task], index) => {
     const item = document.createElement('div');
     item.className = 'border border-gray-200 p-3 sm:p-4 md:p-6 hover:border-red-600 transition-colors cursor-pointer';
     item.dataset.taskId = id;
-    const processName = task.processId ? (taskProcessMap[task.processId] || 'Proceso desconocido') : 'Sin proceso';
+    const processName = taskProcessMap[id] || 'Sin proceso';
     const calculatedCost = calculatedCosts[index];
-    
-    // Get role names (support both old roleId and new roleIds)
-    const roleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-    const roleNames = roleIds.map(rid => taskRoleMap[rid]).filter(n => n !== undefined);
-    const roleName = roleNames.length > 0 ? roleNames.join(', ') : 'Sin rol';
+    const roleName = taskRoleMap[id] || 'Sin rol';
     
     item.innerHTML = `
       <div class="flex justify-between items-center mb-2 sm:mb-3">
         <div class="text-base sm:text-lg font-light">${escapeHtml(task.name)}</div>
         <div class="flex items-center gap-2">
           ${calculatedCost !== null ? `<span class="text-xs sm:text-sm text-gray-600">$${calculatedCost.toFixed(2)}</span>` : ''}
-          <span class="text-xs px-2 py-0.5 bg-gray-100 rounded">${taskTypeLabels[task.type] || task.type || 'Sin tipo'}</span>
         </div>
       </div>
+      ${task.description ? `
+      <div class="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3">
+        Descripción: <span class="font-light">${escapeHtml(task.description)}</span>
+      </div>
+      ` : ''}
       <div class="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
-        <div>Proceso: ${escapeHtml(processName)}</div>
-        ${roleNames.length > 0 ? `<div>Roles: ${escapeHtml(roleName)}</div>` : ''}
+        ${roleName !== 'Sin rol' ? `<div>Roles: ${escapeHtml(roleName)}</div>` : ''}
         ${task.estimatedTime ? `<div>Tiempo estimado: ${task.estimatedTime} min</div>` : ''}
         ${task.frequency ? `<div>Frecuencia: ${escapeHtml(task.frequency)}</div>` : ''}
       </div>
@@ -179,19 +203,76 @@ function loadTasks() {
   // Listen for tasks using NRD Data Access
   tasksListener = nrd.tasks.onValue(async (data) => {
     if (!tasksList) return;
-    allTasks = data || {};
+    // If onValue returns array, convert to object with IDs as keys
+    if (Array.isArray(data)) {
+      const tasksObj = {};
+      data.forEach((task, index) => {
+        const id = task.id || task.key || task.$id || index.toString();
+        tasksObj[id] = task;
+      });
+      allTasks = tasksObj;
+    } else {
+      allTasks = data || {};
+    }
 
-    // Load processes and roles for display
-    const processes = await nrd.processes.getAll();
-    taskProcessMap = {};
-    Object.entries(processes || {}).forEach(([id, process]) => {
-      taskProcessMap[id] = process.name;
+    // Load processes and roles to deduce task associations
+    let processes = await nrd.processes.getAll();
+    let roles = await nrd.roles.getAll();
+    
+    // Convert arrays to objects with IDs as keys if needed
+    const convertToObject = (data) => {
+      if (Array.isArray(data)) {
+        const obj = {};
+        data.forEach((item, index) => {
+          const id = item.id || item.key || item.$id || index.toString();
+          obj[id] = item;
     });
-
-    const roles = await nrd.roles.getAll();
-    taskRoleMap = {};
-    Object.entries(roles || {}).forEach(([id, role]) => {
-      taskRoleMap[id] = role.name;
+        return obj;
+      }
+      return data || {};
+    };
+    
+    processes = convertToObject(processes);
+    roles = convertToObject(roles);
+    
+    // Build role name map
+    const roleNameMap = {};
+    Object.entries(roles).forEach(([id, role]) => {
+      roleNameMap[id] = role.name;
+    });
+    
+    // Deduce processes and roles for each task from process activities
+    taskProcessMap = {}; // taskId -> array of process names
+    taskRoleMap = {}; // taskId -> array of role names
+    
+    Object.keys(allTasks).forEach(taskId => {
+      const processNames = [];
+      const roleNames = new Set();
+      
+      // Search through all processes for activities using this task
+      Object.entries(processes).forEach(([processId, process]) => {
+        if (process.activities && Array.isArray(process.activities)) {
+          // New structure: check activities
+          const activitiesUsingTask = process.activities.filter(activity => activity.taskId === taskId);
+          if (activitiesUsingTask.length > 0) {
+            processNames.push(process.name);
+            // Collect roleIds from activities
+            activitiesUsingTask.forEach(activity => {
+              if (activity.roleId && roleNameMap[activity.roleId]) {
+                roleNames.add(roleNameMap[activity.roleId]);
+              }
+            });
+          }
+        } else if (process.taskIds && Array.isArray(process.taskIds)) {
+          // Backward compatibility: check taskIds
+          if (process.taskIds.includes(taskId)) {
+            processNames.push(process.name);
+          }
+        }
+      });
+      
+      taskProcessMap[taskId] = processNames.length > 0 ? processNames.join(', ') : 'Sin proceso';
+      taskRoleMap[taskId] = Array.from(roleNames).length > 0 ? Array.from(roleNames).join(', ') : 'Sin rol';
     });
     
     // Get search term
@@ -231,117 +312,73 @@ async function showTaskForm(taskId = null) {
     const taskIdInput = document.getElementById('task-id');
     if (taskIdInput) taskIdInput.value = taskId || '';
   }
-
-  // Load roles for checkboxes
-  Promise.all([
-    nrd.roles.getAll(),
-    taskId ? nrd.tasks.getById(taskId) : Promise.resolve(null)
-  ]).then(async ([roles, task]) => {
     
     // Calculate and display cost if editing
+  if (taskId) {
+    nrd.tasks.getById(taskId).then(async task => {
     if (task) {
       const calculatedCost = await calculateTaskCost(task);
       const costInput = document.getElementById('task-cost');
       if (costInput) {
         costInput.value = calculatedCost !== null ? `$${calculatedCost.toFixed(2)} (calculado)` : 'No calculable';
       }
+      }
+    });
     } else {
       const costInput = document.getElementById('task-cost');
       if (costInput) {
         costInput.value = 'Se calculará automáticamente al guardar';
       }
     }
-    
-    // Roles checkboxes
-    const rolesContainer = document.getElementById('task-roles-container');
-    if (rolesContainer) {
-      rolesContainer.innerHTML = '';
-      if (Object.keys(roles).length === 0) {
-        rolesContainer.innerHTML = '<p class="text-sm text-gray-500">No hay roles disponibles</p>';
-      } else {
-        // Get task roleIds if editing
-        const roleIds = task
-          ? (task.roleIds || (task.roleId ? [task.roleId] : []))
-          : [];
-        
-        Object.entries(roles).forEach(([roleId, role]) => {
-          const label = document.createElement('label');
-          label.className = 'flex items-center gap-2 cursor-pointer';
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.value = roleId;
-          checkbox.className = 'w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500';
-          checkbox.dataset.roleId = roleId;
-          // Mark as checked if this role is in the task's roleIds
-          checkbox.checked = roleIds.includes(roleId);
-          const span = document.createElement('span');
-          span.className = 'text-sm font-light';
-          span.textContent = role.name;
-          label.appendChild(checkbox);
-          label.appendChild(span);
-          rolesContainer.appendChild(label);
-        });
-      }
-    }
-  });
 
+  const subtitle = document.getElementById('task-form-subtitle');
+  const saveBtn = document.getElementById('save-task-btn');
+  
   if (taskId) {
     if (title) title.textContent = 'Editar Tarea';
+    if (subtitle) subtitle.textContent = 'Modifique la información de la tarea';
+    // Cambiar color del header a azul para edición
+    const formHeader = document.getElementById('task-form-header');
+    if (formHeader) {
+      formHeader.classList.remove('bg-green-600', 'bg-gray-600');
+      formHeader.classList.add('bg-blue-600');
+    }
+    // Cambiar color del botón guardar a azul
+    if (saveBtn) {
+      saveBtn.classList.remove('bg-green-600', 'border-green-600', 'hover:bg-green-700');
+      saveBtn.classList.add('bg-blue-600', 'border-blue-600', 'hover:bg-blue-700');
+    }
     nrd.tasks.getById(taskId).then(async task => {
       if (task) {
         document.getElementById('task-name').value = task.name || '';
         document.getElementById('task-description').value = task.description || '';
-        document.getElementById('task-type').value = task.type || 'with_role';
         document.getElementById('task-frequency').value = task.frequency || '';
         document.getElementById('task-estimated-time').value = task.estimatedTime || '';
         // Calculate and display cost
-        const calculatedCost = await calculateTaskCost(task);
+        const calculatedCost = await calculateTaskCost(task, taskId);
         document.getElementById('task-cost').value = calculatedCost !== null ? `$${calculatedCost.toFixed(2)} (calculado)` : 'No calculable';
         document.getElementById('task-execution-steps').value = task.executionSteps ? task.executionSteps.join('\n') : '';
         document.getElementById('task-success-criteria').value = task.successCriteria ? (Array.isArray(task.successCriteria) ? task.successCriteria.join('\n') : task.successCriteria) : '';
         document.getElementById('task-common-errors').value = task.commonErrors ? task.commonErrors.join('\n') : '';
-        
-        // Set checked roles (support both old roleId and new roleIds)
-        const roleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-        const checkboxes = document.querySelectorAll('#task-roles-container input[type="checkbox"]');
-        checkboxes.forEach(checkbox => {
-          checkbox.checked = roleIds.includes(checkbox.value);
-        });
-        
-        // Update role container visibility based on type
-        updateRoleSelectVisibility(task.type);
       }
     });
   } else {
     if (title) title.textContent = 'Nueva Tarea';
-    document.getElementById('task-type').value = 'with_role';
-    updateRoleSelectVisibility('with_role');
+    if (subtitle) subtitle.textContent = 'Cree una nueva tarea dentro de un proceso';
+    // Cambiar color del header a verde para nuevo
+    const formHeader = document.getElementById('task-form-header');
+    if (formHeader) {
+      formHeader.classList.remove('bg-blue-600', 'bg-gray-600');
+      formHeader.classList.add('bg-green-600');
+    }
+    // Cambiar color del botón guardar a verde
+    if (saveBtn) {
+      saveBtn.classList.remove('bg-blue-600', 'border-blue-600', 'hover:bg-blue-700');
+      saveBtn.classList.add('bg-green-600', 'border-green-600', 'hover:bg-green-700');
+    }
     const costInput = document.getElementById('task-cost');
     if (costInput) {
       costInput.value = 'Se calculará automáticamente al guardar';
-    }
-  }
-  
-  // Add event listener for type change
-  const typeSelect = document.getElementById('task-type');
-  if (typeSelect) {
-    typeSelect.addEventListener('change', (e) => {
-      updateRoleSelectVisibility(e.target.value);
-    });
-  }
-}
-
-// Update role select visibility based on task type
-function updateRoleSelectVisibility(taskType) {
-  const roleSelectContainer = document.getElementById('task-role-select-container');
-  if (roleSelectContainer) {
-    if (taskType === 'with_role') {
-      roleSelectContainer.style.display = 'block';
-    } else {
-      roleSelectContainer.style.display = 'none';
-      // Uncheck all checkboxes when hiding
-      const checkboxes = document.querySelectorAll('#task-roles-container input[type="checkbox"]');
-      checkboxes.forEach(checkbox => checkbox.checked = false);
     }
   }
 }
@@ -379,7 +416,28 @@ async function viewTask(taskId) {
   
   showSpinner('Cargando tarea...');
   try {
-    const task = await nrd.tasks.getById(taskId);
+    let [task, allProcesses, allRoles] = await Promise.all([
+      nrd.tasks.getById(taskId),
+      nrd.processes.getAll(),
+      nrd.roles.getAll()
+    ]);
+    
+    // Convert arrays to objects with IDs as keys if needed
+    const convertToObject = (data, name) => {
+      if (Array.isArray(data)) {
+        const obj = {};
+        data.forEach((item, index) => {
+          const id = item.id || item.key || item.$id || index.toString();
+          obj[id] = item;
+        });
+        return obj;
+      }
+      return data || {};
+    };
+    
+    allProcesses = convertToObject(allProcesses, 'processes');
+    allRoles = convertToObject(allRoles, 'roles');
+    
     hideSpinner();
     if (!task) {
       await showError('Tarea no encontrada');
@@ -400,37 +458,50 @@ async function viewTask(taskId) {
     if (detail) detail.classList.remove('hidden');
     if (searchContainer) searchContainer.style.display = 'none';
 
-    // Get process and role names
-    let processName = 'Sin proceso';
-    if (task.processId) {
-      const process = await nrd.processes.getById(task.processId);
-      if (process) processName = process.name;
-    }
-
-    // Get role names (support both old roleId and new roleIds)
-    const roleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-    let roleNames = 'Sin rol';
+    // Deduce processes and roles from process activities configuration
+    const processesUsingTask = [];
+    const roleIdsFromProcesses = new Set();
     
-    if (roleIds.length > 0) {
-      const rolePromises = roleIds.map(roleId => nrd.roles.getById(roleId).then(role => {
-        // role already loaded from nrd.roles.getById above
-        return role ? role.name : null;
-      }));
-      const roleNamesArray = await Promise.all(rolePromises);
-      const validNames = roleNamesArray.filter(n => n !== null);
-      roleNames = validNames.length > 0 ? validNames.join(', ') : 'Sin rol';
+    Object.entries(allProcesses).forEach(([processId, process]) => {
+      if (process.activities && Array.isArray(process.activities)) {
+        // New structure: check activities
+        const activitiesUsingTask = process.activities.filter(activity => activity.taskId === taskId);
+        if (activitiesUsingTask.length > 0) {
+          processesUsingTask.push({
+            id: processId,
+            name: process.name,
+            activities: activitiesUsingTask
+          });
+          // Collect roleIds from activities
+          activitiesUsingTask.forEach(activity => {
+            if (activity.roleId) {
+              roleIdsFromProcesses.add(activity.roleId);
+            }
+          });
+        }
+      } else if (process.taskIds && Array.isArray(process.taskIds)) {
+        // Backward compatibility: check taskIds
+        if (process.taskIds.includes(taskId)) {
+          processesUsingTask.push({
+            id: processId,
+            name: process.name,
+            activities: []
+          });
+        }
+      }
+    });
+    
+    // Get role names from deduced roleIds
+    let roleNames = 'Sin rol';
+    if (roleIdsFromProcesses.size > 0) {
+      const roleNamesArray = Array.from(roleIdsFromProcesses)
+        .map(roleId => allRoles[roleId]?.name)
+        .filter(name => name !== undefined);
+      roleNames = roleNamesArray.length > 0 ? roleNamesArray.join(', ') : 'Sin rol';
     }
-
-    const taskTypeLabels = {
-      'with_role': 'Con rol asignado',
-      'without_role': 'Sin rol asignado',
-      'voluntary': 'Voluntaria',
-      'unpaid': 'No remunerada',
-      'exchange': 'Canje por beneficios'
-    };
 
     // Calculate task cost
-    const calculatedCost = await calculateTaskCost(task);
+    const calculatedCost = await calculateTaskCost(task, taskId);
 
     detailContent.innerHTML = `
       <div class="space-y-3 sm:space-y-4">
@@ -444,18 +515,21 @@ async function viewTask(taskId) {
           <span class="font-light text-sm sm:text-base text-right">${escapeHtml(task.description)}</span>
         </div>
         ` : ''}
-        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
-          <span class="text-gray-600 font-light text-sm sm:text-base">Tipo:</span>
-          <span class="font-light text-sm sm:text-base">${taskTypeLabels[task.type] || task.type || 'Sin tipo'}</span>
+        ${processesUsingTask.length > 0 ? `
+        <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+          <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Procesos que usan esta tarea:</h4>
+          <div class="space-y-2">
+            ${processesUsingTask.map(process => `
+              <div class="border border-gray-200 p-2 sm:p-3 hover:border-red-600 transition-colors cursor-pointer" onclick="viewProcess('${process.id}')">
+                <div class="font-light text-sm sm:text-base">${escapeHtml(process.name)}</div>
+                ${process.activities && process.activities.length > 0 ? `
+                  <div class="text-xs text-gray-500 mt-1">
+                    ${process.activities.map(activity => escapeHtml(activity.name || 'Actividad sin nombre')).join(', ')}
+                  </div>
+                ` : ''}
         </div>
-        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
-          <span class="text-gray-600 font-light text-sm sm:text-base">Proceso:</span>
-          <span class="font-light text-sm sm:text-base">${escapeHtml(processName)}</span>
+            `).join('')}
         </div>
-        ${roleIds.length > 0 ? `
-        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
-          <span class="text-gray-600 font-light text-sm sm:text-base">Roles:</span>
-          <span class="font-light text-sm sm:text-base text-right">${escapeHtml(roleNames)}</span>
         </div>
         ` : ''}
         ${task.frequency ? `
@@ -474,12 +548,6 @@ async function viewTask(taskId) {
         <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
           <span class="text-gray-600 font-light text-sm sm:text-base">Costo calculado:</span>
           <span class="font-light text-sm sm:text-base">$${calculatedCost.toFixed(2)}</span>
-        </div>
-        ` : ''}
-        ${task.order ? `
-        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
-          <span class="text-gray-600 font-light text-sm sm:text-base">Orden:</span>
-          <span class="font-light text-sm sm:text-base">${task.order}</span>
         </div>
         ` : ''}
       </div>
@@ -573,14 +641,10 @@ if (taskFormElement) {
     const taskId = document.getElementById('task-id').value;
     const name = document.getElementById('task-name').value.trim();
     const description = document.getElementById('task-description').value.trim();
-    const type = document.getElementById('task-type').value;
     const frequency = document.getElementById('task-frequency').value.trim() || null;
     const estimatedTime = parseInt(document.getElementById('task-estimated-time').value) || null;
     // Cost is calculated automatically, not stored
-    
-    // Get selected roles
-    const roleCheckboxes = document.querySelectorAll('#task-roles-container input[type="checkbox"]:checked');
-    const roleIds = Array.from(roleCheckboxes).map(cb => cb.value);
+    // Type and roles are now configured in processes, not in tasks
     
     // Parse execution steps (one per line)
     const executionStepsText = document.getElementById('task-execution-steps').value.trim();
@@ -599,17 +663,11 @@ if (taskFormElement) {
       return;
     }
 
-    if (type === 'with_role' && roleIds.length === 0) {
-      await showError('Las tareas con rol asignado deben tener al menos un rol seleccionado');
-      return;
-    }
-
     showSpinner('Guardando tarea...');
     try {
       const taskData = { 
         name,
         description: description || null,
-        type,
         frequency,
         estimatedTime,
         // Cost is calculated automatically, not stored
@@ -617,17 +675,8 @@ if (taskFormElement) {
         executionSteps,
         successCriteria,
         commonErrors
+        // Type and roles are now configured in processes, not stored in tasks
       };
-      
-      // Store roleIds as array (or null if empty or type is not with_role)
-      if (type === 'with_role' && roleIds.length > 0) {
-        taskData.roleIds = roleIds;
-        // Remove old roleId if exists (for migration)
-        taskData.roleId = null;
-      } else {
-        taskData.roleIds = null;
-        taskData.roleId = null;
-      }
       
       await saveTask(taskId || null, taskData);
       hideSpinner();
@@ -668,6 +717,14 @@ if (closeTaskFormBtn) {
 const backToTasksBtn = document.getElementById('back-to-tasks');
 if (backToTasksBtn) {
   backToTasksBtn.addEventListener('click', () => {
+    backToTasks();
+  });
+}
+
+// Close task detail button
+const closeTaskDetailBtn = document.getElementById('close-task-detail-btn');
+if (closeTaskDetailBtn) {
+  closeTaskDetailBtn.addEventListener('click', () => {
     backToTasks();
   });
 }

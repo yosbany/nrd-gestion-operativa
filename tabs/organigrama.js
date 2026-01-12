@@ -12,13 +12,30 @@ async function loadOrganigrama(editMode = false) {
   showSpinner('Cargando organigrama...');
   try {
     // Load all data
-    const [areas, roles, employees, processes] = await Promise.all([
+    let [areas, roles, employees, processes] = await Promise.all([
       nrd.areas.getAll(),
       nrd.roles.getAll(),
       nrd.employees.getAll(),
       nrd.processes.getAll()
     ]);
-    // processes already loaded from Promise.all above
+
+    // Convert arrays to objects with IDs as keys if needed
+    const convertToObject = (data, name) => {
+      if (Array.isArray(data)) {
+        const obj = {};
+        data.forEach((item, index) => {
+          const id = item.id || item.key || item.$id || index.toString();
+          obj[id] = item;
+        });
+        return obj;
+      }
+      return data || {};
+    };
+    
+    areas = convertToObject(areas, 'areas');
+    roles = convertToObject(roles, 'roles');
+    employees = convertToObject(employees, 'employees');
+    processes = convertToObject(processes, 'processes');
 
     // Build structure: Area -> Roles -> Employees
     const organigramaStructure = {};
@@ -32,7 +49,15 @@ async function loadOrganigrama(editMode = false) {
     });
 
     // Get tasks to find roles by process/area
-    const tasks = await nrd.tasks.getAll();
+    let tasks = await nrd.tasks.getAll();
+    tasks = Array.isArray(tasks) ? (() => {
+      const obj = {};
+      tasks.forEach((item, index) => {
+        const id = item.id || item.key || item.$id || index.toString();
+        obj[id] = item;
+      });
+      return obj;
+    })() : (tasks || {});
 
     // Map roles to areas through processes and tasks
     // First, map through processes' activities (new structure)

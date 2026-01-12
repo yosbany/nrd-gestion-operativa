@@ -1,20 +1,27 @@
 // Authentication state management
 let currentUser = null;
 
+// Escape HTML helper (from modal.js)
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // Listen for auth state changes using NRD Data Access
 nrd.auth.onAuthStateChanged((user) => {
   try {
     currentUser = user;
     if (user) {
+      logger.info('User authenticated, showing app screen', { uid: user.uid, email: user.email });
       showAppScreen();
     } else {
+      logger.info('User not authenticated, showing login screen');
       showLoginScreen();
-      // Hide initialize button when logged out
-      const initializeBtn = document.getElementById('initialize-btn');
-      if (initializeBtn) initializeBtn.classList.add('hidden');
     }
   } catch (error) {
-    console.error('Error in auth state change:', error);
+    logger.error('Error in auth state change', error);
     // Fallback: show login screen
     const loginScreen = document.getElementById('login-screen');
     const appScreen = document.getElementById('app-screen');
@@ -25,46 +32,31 @@ nrd.auth.onAuthStateChanged((user) => {
 
 // Show login screen
 function showLoginScreen() {
+  logger.debug('Showing login screen');
   try {
     const loginScreen = document.getElementById('login-screen');
     const appScreen = document.getElementById('app-screen');
     if (loginScreen) loginScreen.classList.remove('hidden');
     if (appScreen) appScreen.classList.add('hidden');
   } catch (error) {
-    console.error('Error showing login screen:', error);
+    logger.error('Error showing login screen', error);
   }
 }
 
 // Show app screen
 function showAppScreen() {
+  logger.debug('Showing app screen');
   try {
     const loginScreen = document.getElementById('login-screen');
     const appScreen = document.getElementById('app-screen');
     if (loginScreen) loginScreen.classList.add('hidden');
     if (appScreen) appScreen.classList.remove('hidden');
     
-    // Show/hide initialize button based on user email
-    checkInitializeButtonVisibility();
   } catch (error) {
-    console.error('Error showing app screen:', error);
+    logger.error('Error showing app screen', error);
   }
 }
 
-// Check if initialize button should be visible
-function checkInitializeButtonVisibility() {
-  try {
-    const initializeBtn = document.getElementById('initialize-btn');
-    if (!initializeBtn) return;
-    
-    if (currentUser && currentUser.email === 'yosbany@nrd.com') {
-      initializeBtn.classList.remove('hidden');
-    } else {
-      initializeBtn.classList.add('hidden');
-    }
-  } catch (error) {
-    console.error('Error checking initialize button visibility:', error);
-  }
-}
 
 // Login form handler
 const loginForm = document.getElementById('login-form');
@@ -77,39 +69,233 @@ if (loginForm) {
       const errorDiv = document.getElementById('login-error');
 
       if (!email || !password) {
+        logger.warn('Login attempt with empty fields');
         if (errorDiv) errorDiv.textContent = 'Por favor complete todos los campos';
         return;
       }
 
+      logger.info('Attempting user login', { email });
       if (errorDiv) errorDiv.textContent = '';
       showSpinner('Iniciando sesión...');
 
-      await nrd.auth.signIn(email, password);
+      const userCredential = await nrd.auth.signIn(email, password);
+      const user = userCredential.user;
+      logger.audit('USER_LOGIN', { email, uid: user.uid, timestamp: Date.now() });
+      logger.info('User login successful', { uid: user.uid, email });
       hideSpinner();
     } catch (error) {
       hideSpinner();
+      logger.error('Login failed', error);
       const errorDiv = document.getElementById('login-error');
       if (errorDiv) {
         errorDiv.textContent = error.message || 'Error al iniciar sesión';
       }
-      console.error('Login error:', error);
     }
   });
 }
 
-// Logout handler
-const logoutBtn = document.getElementById('logout-btn');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', async () => {
+// Show profile modal
+function showProfileModal() {
+  logger.debug('Showing profile modal');
+  const modal = document.getElementById('profile-modal');
+  const content = document.getElementById('profile-modal-content');
+  
+  if (!modal || !content) {
+    logger.warn('Profile modal elements not found');
+    return;
+  }
+  
+  const user = getCurrentUser();
+  if (!user) {
+    logger.warn('No user found when showing profile modal');
+    return;
+  }
+  
+  const isAdmin = user.email === 'yosbany@nrd.com';
+  logger.debug('Displaying user profile data', { uid: user.uid, email: user.email, isAdmin });
+  
+  // Display user data
+  let userDataHtml = `
+    <div class="space-y-3 sm:space-y-4">
+      <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+        <span class="text-gray-600 font-light text-sm sm:text-base">Email:</span>
+        <span class="font-light text-sm sm:text-base">${escapeHtml(user.email || 'N/A')}</span>
+      </div>
+      ${user.displayName ? `
+      <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+        <span class="text-gray-600 font-light text-sm sm:text-base">Nombre:</span>
+        <span class="font-light text-sm sm:text-base">${escapeHtml(user.displayName)}</span>
+      </div>
+      ` : ''}
+    </div>
+  `;
+  
+  // Only show initialize link and confirmation section for admin
+  if (isAdmin) {
+    userDataHtml += `
+      <div id="profile-initialize-link-container" class="pt-2 border-t border-gray-200">
+        <a id="profile-initialize-link" 
+          href="#" 
+          class="text-red-600 hover:text-red-700 hover:underline text-sm font-light cursor-pointer">
+          Inicializar Base de Datos
+        </a>
+      </div>
+      <div id="profile-initialize-confirm" class="hidden pt-4 border-t border-gray-200">
+        <p class="text-sm sm:text-base text-gray-700 mb-4 font-light">
+          ¿Está seguro de que desea inicializar la base de datos? Esta acción cargará todos los datos de la carpeta nrd-kb-generate (áreas, procesos, tareas, roles y empleados). Los datos existentes se mantendrán si ya existen.
+        </p>
+        <div class="flex gap-2 sm:gap-3">
+          <button id="profile-initialize-confirm-btn" 
+            class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+            Confirmar
+          </button>
+          <button id="profile-initialize-cancel-btn" 
+            class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    `;
+  }
+  
+  content.innerHTML = userDataHtml;
+  
+  // Attach event listeners if admin
+  if (isAdmin) {
+    const initializeLink = document.getElementById('profile-initialize-link');
+    if (initializeLink) {
+      initializeLink.addEventListener('click', handleInitializeClick);
+    }
+    
+    const confirmBtn = document.getElementById('profile-initialize-confirm-btn');
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', handleInitializeConfirm);
+    }
+    
+    const cancelBtn = document.getElementById('profile-initialize-cancel-btn');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', handleInitializeCancel);
+    }
+  }
+  
+  modal.classList.remove('hidden');
+  logger.debug('Profile modal shown');
+}
+
+// Close profile modal
+function closeProfileModal() {
+  logger.debug('Closing profile modal');
+  const modal = document.getElementById('profile-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    logger.debug('Profile modal closed');
+  }
+}
+
+// Profile button handler
+const profileBtn = document.getElementById('profile-btn');
+if (profileBtn) {
+  profileBtn.addEventListener('click', () => {
+    showProfileModal();
+  });
+}
+
+// Close profile modal button
+const closeProfileModalBtn = document.getElementById('close-profile-modal');
+if (closeProfileModalBtn) {
+  closeProfileModalBtn.addEventListener('click', () => {
+    closeProfileModal();
+  });
+}
+
+// Logout handler (from profile modal)
+const profileLogoutBtn = document.getElementById('profile-logout-btn');
+if (profileLogoutBtn) {
+  profileLogoutBtn.addEventListener('click', async () => {
     try {
+      const user = getCurrentUser();
+      logger.info('Attempting user logout', { uid: user?.uid, email: user?.email });
+      closeProfileModal();
       showSpinner('Cerrando sesión...');
       await nrd.auth.signOut();
+      logger.audit('USER_LOGOUT', { uid: user?.uid, email: user?.email, timestamp: Date.now() });
+      logger.info('User logout successful');
       hideSpinner();
     } catch (error) {
       hideSpinner();
-      console.error('Error al cerrar sesión:', error);
+      logger.error('Logout failed', error);
+      await showError('Error al cerrar sesión: ' + error.message);
     }
   });
+}
+
+// Initialize database handler (from profile modal link)
+function handleInitializeClick(e) {
+  e.preventDefault();
+  const user = getCurrentUser();
+  
+  // Verify user is authorized
+  if (!user || user.email !== 'yosbany@nrd.com') {
+    showError('No tienes permisos para inicializar la base de datos');
+    return;
+  }
+  
+  // Show confirmation section
+  const confirmSection = document.getElementById('profile-initialize-confirm');
+  const linkContainer = document.getElementById('profile-initialize-link-container');
+  
+  if (confirmSection) {
+    confirmSection.classList.remove('hidden');
+  }
+  if (linkContainer) {
+    linkContainer.classList.add('hidden');
+  }
+}
+
+// Confirm initialize handler
+function handleInitializeConfirm() {
+  (async () => {
+    try {
+      const user = getCurrentUser();
+      logger.audit('DATABASE_INITIALIZE', { uid: user?.uid, email: user?.email, timestamp: Date.now() });
+      logger.info('Initializing database', { uid: user?.uid, email: user?.email });
+      closeProfileModal();
+      await initializeSystem();
+      logger.info('Database initialization successful');
+    } catch (error) {
+      logger.error('Database initialization failed', error);
+      await showError('Error al inicializar: ' + error.message);
+    }
+  })();
+}
+
+// Cancel initialize handler
+function handleInitializeCancel() {
+  const confirmSection = document.getElementById('profile-initialize-confirm');
+  const linkContainer = document.getElementById('profile-initialize-link-container');
+  
+  if (confirmSection) {
+    confirmSection.classList.add('hidden');
+  }
+  if (linkContainer) {
+    linkContainer.classList.remove('hidden');
+  }
+}
+
+// Attach event listeners
+const profileInitializeLink = document.getElementById('profile-initialize-link');
+if (profileInitializeLink) {
+  profileInitializeLink.addEventListener('click', handleInitializeClick);
+}
+
+const profileInitializeConfirmBtn = document.getElementById('profile-initialize-confirm-btn');
+if (profileInitializeConfirmBtn) {
+  profileInitializeConfirmBtn.addEventListener('click', handleInitializeConfirm);
+}
+
+const profileInitializeCancelBtn = document.getElementById('profile-initialize-cancel-btn');
+if (profileInitializeCancelBtn) {
+  profileInitializeCancelBtn.addEventListener('click', handleInitializeCancel);
 }
 
 

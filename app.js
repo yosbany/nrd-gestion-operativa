@@ -6,8 +6,11 @@ let currentView = null;
 function switchView(viewName) {
   // Prevent duplicate loading
   if (currentView === viewName) {
+    logger.debug('View already active, skipping', { viewName });
     return;
   }
+  
+  logger.info('Switching view', { from: currentView, to: viewName });
   currentView = viewName;
 
   // Hide all views
@@ -23,6 +26,9 @@ function switchView(viewName) {
   const selectedView = document.getElementById(`${viewName}-view`);
   if (selectedView) {
     selectedView.classList.remove('hidden');
+    logger.debug('View shown', { viewName });
+  } else {
+    logger.warn('View element not found', { viewName });
   }
 
   // Update nav buttons
@@ -34,9 +40,12 @@ function switchView(viewName) {
   if (activeBtn) {
     activeBtn.classList.remove('border-transparent', 'text-gray-600');
     activeBtn.classList.add('border-red-600', 'text-red-600', 'bg-red-50', 'font-medium');
+  } else {
+    logger.warn('Active nav button not found', { viewName });
   }
 
   // Load data for the view
+  logger.debug('Loading view data', { viewName });
   if (viewName === 'inicio') {
     loadInicio();
   } else if (viewName === 'informacion') {
@@ -56,21 +65,28 @@ function switchView(viewName) {
   } else if (viewName === 'analytics') {
     loadAnalytics();
   }
+  
+  logger.debug('View switched successfully', { viewName });
 }
 
 // Nav button handlers
 document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const view = btn.dataset.view;
+    logger.debug('Nav button clicked', { view });
     switchView(view);
   });
 });
+logger.debug('Nav button handlers attached');
 
 // Initialize app
 nrd.auth.onAuthStateChanged((user) => {
   if (user) {
+    logger.info('User authenticated, initializing app', { uid: user.uid, email: user.email });
     // Default to inicio view
     switchView('inicio');
+  } else {
+    logger.debug('User not authenticated, app initialization skipped');
   }
 });
 

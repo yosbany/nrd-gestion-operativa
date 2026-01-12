@@ -61,9 +61,19 @@ function loadRoles() {
   }
 
   // Listen for roles using NRD Data Access
-  rolesListener = nrd.roles.onValue((data) => {
+  rolesListener = nrd.roles.onValue(async (data) => {
     if (!rolesList) return;
-    allRoles = data || {};
+    // If onValue returns array, convert to object with IDs as keys
+    if (Array.isArray(data)) {
+      const rolesObj = {};
+      data.forEach((role, index) => {
+        const id = role.id || role.key || role.$id || index.toString();
+        rolesObj[id] = role;
+      });
+      allRoles = rolesObj;
+    } else {
+      allRoles = data || {};
+    }
     
     // Get search term and filter
     const searchInput = document.getElementById('roles-search');
@@ -102,8 +112,23 @@ function showRoleForm(roleId = null) {
     if (roleIdInput) roleIdInput.value = roleId || '';
   }
 
+  const formHeader = document.getElementById('role-form-header');
+  const subtitle = document.getElementById('role-form-subtitle');
+  const saveBtn = document.getElementById('save-role-btn');
+  
   if (roleId) {
     if (title) title.textContent = 'Editar Rol';
+    if (subtitle) subtitle.textContent = 'Modifique la información del rol';
+    // Cambiar color del header a azul para edición
+    if (formHeader) {
+      formHeader.classList.remove('bg-green-600', 'bg-gray-600');
+      formHeader.classList.add('bg-blue-600');
+    }
+    // Cambiar color del botón guardar a azul
+    if (saveBtn) {
+      saveBtn.classList.remove('bg-green-600', 'border-green-600', 'hover:bg-green-700');
+      saveBtn.classList.add('bg-blue-600', 'border-blue-600', 'hover:bg-blue-700');
+    }
         nrd.roles.getById(roleId).then(role => {
       if (role) {
         const nameInput = document.getElementById('role-name');
@@ -114,6 +139,17 @@ function showRoleForm(roleId = null) {
     });
   } else {
     if (title) title.textContent = 'Nuevo Rol';
+    if (subtitle) subtitle.textContent = 'Defina un nuevo rol organizacional';
+    // Cambiar color del header a verde para nuevo
+    if (formHeader) {
+      formHeader.classList.remove('bg-blue-600', 'bg-gray-600');
+      formHeader.classList.add('bg-green-600');
+    }
+    // Cambiar color del botón guardar a verde
+    if (saveBtn) {
+      saveBtn.classList.remove('bg-blue-600', 'border-blue-600', 'hover:bg-blue-700');
+      saveBtn.classList.add('bg-green-600', 'border-green-600', 'hover:bg-green-700');
+    }
   }
 }
 
@@ -148,11 +184,6 @@ async function viewRole(roleId) {
     return;
   }
   
-  if (!roleId) {
-    await showError('ID de rol no válido');
-    return;
-  }
-  
   showSpinner('Cargando rol...');
   try {
     const role = await nrd.roles.getById(roleId);
@@ -176,11 +207,29 @@ async function viewRole(roleId) {
     if (detail) detail.classList.remove('hidden');
     if (searchContainer) searchContainer.style.display = 'none';
 
-    // Load tasks and processes for this role
-    const [allTasks, allProcesses] = await Promise.all([
+    // Load tasks, processes, and employees for this role
+    let [allTasks, allProcesses, allEmployees] = await Promise.all([
       nrd.tasks.getAll(),
-      nrd.processes.getAll()
+      nrd.processes.getAll(),
+      nrd.employees.getAll()
     ]);
+    
+    // Convert arrays to objects with IDs as keys if needed
+    const convertToObject = (data) => {
+      if (Array.isArray(data)) {
+        const obj = {};
+        data.forEach((item, index) => {
+          const id = item.id || item.key || item.$id || index.toString();
+          obj[id] = item;
+        });
+        return obj;
+      }
+      return data || {};
+    };
+    
+    allTasks = convertToObject(allTasks);
+    allProcesses = convertToObject(allProcesses);
+    allEmployees = convertToObject(allEmployees);
     
     // Create process map
     const processMap = {};
@@ -188,19 +237,40 @@ async function viewRole(roleId) {
       processMap[id] = process.name;
     });
     
-    const roleTasks = Object.entries(allTasks)
-      .filter(([id, task]) => {
+    // Deduce tasks for this role from process activities
+    const roleTasks = [];
+    Object.entries(allProcesses).forEach(([processId, process]) => {
+      if (process.activities && Array.isArray(process.activities)) {
+        process.activities.forEach(activity => {
+          if (activity.roleId === roleId && activity.taskId) {
+            const task = allTasks[activity.taskId];
+            if (task && !roleTasks.find(t => t.id === activity.taskId)) {
+              roleTasks.push({
+                id: activity.taskId,
+                ...task,
+                processId: processId,
+                processName: process.name,
+                activityName: activity.name
+              });
+            }
+          }
+        });
+      }
+    });
+    
+    // Also check tasks with roleIds (backward compatibility)
+    Object.entries(allTasks).forEach(([id, task]) => {
         const taskRoleIds = task.roleIds || (task.roleId ? [task.roleId] : []);
-        return taskRoleIds.includes(roleId);
-      })
-      .map(([id, task]) => ({ id, ...task }));
+      if (taskRoleIds.includes(roleId) && !roleTasks.find(t => t.id === id)) {
+        roleTasks.push({ id, ...task });
+      }
+    });
 
-    // Load employees with this role
-    const allEmployees = await nrd.employees.getAll();
+    // Get employees with this role
     const roleEmployees = Object.entries(allEmployees)
       .filter(([id, employee]) => {
-        const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
-        return roleIds.includes(roleId);
+        const employeeRoleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
+        return employeeRoleIds.includes(roleId);
       })
       .map(([id, employee]) => ({ id, ...employee }));
 
@@ -212,16 +282,13 @@ async function viewRole(roleId) {
           <h4 class="mb-3 sm:mb-4 text-xs uppercase tracking-wider text-gray-600">Tareas Asociadas: ${roleTasks.length}</h4>
           <div class="space-y-2">
             ${roleTasks.map(task => {
-              // Get process names (support both processId and processIds)
-              const taskProcessIds = task.processIds || (task.processId ? [task.processId] : []);
-              const processNames = taskProcessIds
-                .map(pid => processMap[pid])
-                .filter(n => n !== undefined);
-              const processName = processNames.length > 0 ? processNames.join(', ') : 'Sin proceso';
+              // Get process name (from deduced data or fallback)
+              const processName = task.processName || (task.processId ? processMap[task.processId] : null) || 'Sin proceso';
+              const activityName = task.activityName ? ` - ${task.activityName}` : '';
               
               return `
                 <div class="border border-gray-200 p-2 sm:p-3 hover:border-red-600 transition-colors cursor-pointer" onclick="viewTask('${task.id}')">
-                  <div class="font-light text-sm sm:text-base">${escapeHtml(task.name || 'Tarea sin nombre')}</div>
+                  <div class="font-light text-sm sm:text-base">${escapeHtml(task.name || 'Tarea sin nombre')}${escapeHtml(activityName)}</div>
                   <div class="text-xs text-gray-600 mt-1">Proceso: ${escapeHtml(processName)}</div>
                   ${task.description ? `<div class="text-xs text-gray-500 mt-1 line-clamp-2">${escapeHtml(task.description.substring(0, 100))}${task.description.length > 100 ? '...' : ''}</div>` : ''}
                 </div>
@@ -290,12 +357,52 @@ function backToRoles() {
 // Delete role handler
 async function deleteRoleHandler(roleId) {
   // Check if role has tasks or employees
-  const tasks = await nrd.tasks.getAll();
-  // tasks already loaded from nrd.tasks.getAll above
-  const hasTasks = Object.values(tasks).some(t => t.roleId === roleId);
+  let tasks = await nrd.tasks.getAll();
+  let employees = await nrd.employees.getAll();
   
-  const employees = await nrd.employees.getAll();
-  const hasEmployees = Object.values(employees).some(e => e.roleId === roleId);
+  // Convert arrays to objects if needed
+  const convertToObject = (data) => {
+    if (Array.isArray(data)) {
+      const obj = {};
+      data.forEach((item, index) => {
+        const id = item.id || item.key || item.$id || index.toString();
+        obj[id] = item;
+      });
+      return obj;
+    }
+    return data || {};
+  };
+  
+  tasks = convertToObject(tasks);
+  employees = convertToObject(employees);
+  
+  // Check for tasks with this role (from process activities or task.roleIds)
+  let hasTasks = false;
+  
+  // Check process activities
+  const processes = await nrd.processes.getAll();
+  const processesObj = convertToObject(processes);
+  Object.values(processesObj).forEach(process => {
+    if (process.activities && Array.isArray(process.activities)) {
+      if (process.activities.some(activity => activity.roleId === roleId)) {
+        hasTasks = true;
+      }
+    }
+  });
+  
+  // Check tasks with roleIds (backward compatibility)
+  if (!hasTasks) {
+    hasTasks = Object.values(tasks).some(t => {
+      const taskRoleIds = t.roleIds || (t.roleId ? [t.roleId] : []);
+      return taskRoleIds.includes(roleId);
+    });
+  }
+  
+  // Check employees with this role
+  const hasEmployees = Object.values(employees).some(e => {
+    const employeeRoleIds = e.roleIds || (e.roleId ? [e.roleId] : []);
+    return employeeRoleIds.includes(roleId);
+  });
   
   if (hasTasks || hasEmployees) {
     await showError('No se puede eliminar un rol que tiene tareas o empleados asociados');
@@ -376,11 +483,32 @@ if (backToRolesBtn) {
   });
 }
 
+// Close role detail button
+const closeRoleDetailBtn = document.getElementById('close-role-detail-btn');
+if (closeRoleDetailBtn) {
+  closeRoleDetailBtn.addEventListener('click', () => {
+    backToRoles();
+  });
+}
+
 // Load roles for task/employee forms
 function loadRolesForSelect() {
   return nrd.roles.getAll().then(roles => {
-    // roles already loaded from nrd.roles.getAll above
-    return Object.entries(roles).map(([id, role]) => ({ id, ...role }));
+    // Convert array to object if needed
+    const convertToObject = (data) => {
+      if (Array.isArray(data)) {
+        const obj = {};
+        data.forEach((item, index) => {
+          const id = item.id || item.key || item.$id || index.toString();
+          obj[id] = item;
+        });
+        return obj;
+      }
+      return data || {};
+    };
+    
+    const rolesObj = convertToObject(roles);
+    return Object.entries(rolesObj).map(([id, role]) => ({ id, ...role }));
   });
 }
 
