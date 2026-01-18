@@ -221,10 +221,22 @@ function showEmployeeForm(employeeId = null) {
         const emailInput = document.getElementById('employee-email');
         const phoneInput = document.getElementById('employee-phone');
         const salaryInput = document.getElementById('employee-salary');
+        const startDateInput = document.getElementById('employee-start-date');
+        const endDateInput = document.getElementById('employee-end-date');
         if (nameInput) nameInput.value = employee.name || '';
         if (emailInput) emailInput.value = employee.email || '';
         if (phoneInput) phoneInput.value = employee.phone || '';
         if (salaryInput) salaryInput.value = employee.salary || '';
+        if (startDateInput && employee.startDate) {
+          const startDate = new Date(employee.startDate);
+          startDateInput.value = startDate.toISOString().split('T')[0];
+        }
+        if (endDateInput && employee.endDate) {
+          const endDate = new Date(employee.endDate);
+          endDateInput.value = endDate.toISOString().split('T')[0];
+        } else if (endDateInput) {
+          endDateInput.value = ''; // Clear if no endDate
+        }
       }
     } else {
       if (title) title.textContent = 'Nuevo Empleado';
@@ -358,6 +370,18 @@ async function viewEmployee(employeeId) {
           <span class="font-light text-sm sm:text-base">$${parseFloat(employee.salary).toFixed(2)}</span>
         </div>
         ` : ''}
+        ${employee.startDate ? `
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Fecha de Ingreso:</span>
+          <span class="font-light text-sm sm:text-base">${new Date(employee.startDate).toLocaleDateString('es-CL')}</span>
+        </div>
+        ` : ''}
+        ${employee.endDate ? `
+        <div class="flex justify-between py-2 sm:py-3 border-b border-gray-200">
+          <span class="text-gray-600 font-light text-sm sm:text-base">Fecha de Egreso:</span>
+          <span class="font-light text-sm sm:text-base text-red-600">${new Date(employee.endDate).toLocaleDateString('es-CL')}</span>
+        </div>
+        ` : ''}
       </div>
     `;
 
@@ -423,6 +447,8 @@ if (employeeFormElement) {
     const email = document.getElementById('employee-email').value.trim();
     const phone = document.getElementById('employee-phone').value.trim();
     const salary = parseFloat(document.getElementById('employee-salary').value) || null;
+    const startDateInput = document.getElementById('employee-start-date').value;
+    const endDateInput = document.getElementById('employee-end-date').value;
     
     // Get selected roles
     const roleCheckboxes = document.querySelectorAll('#employee-roles-container input[type="checkbox"]:checked');
@@ -433,14 +459,28 @@ if (employeeFormElement) {
       return;
     }
 
+    if (!startDateInput) {
+      await showError('Por favor ingrese la fecha de ingreso');
+      return;
+    }
+
     showSpinner('Guardando empleado...');
     try {
       const employeeData = { 
         name, 
         email: email || null, 
         phone: phone || null,
-        salary: salary || null
+        salary: salary || null,
+        startDate: new Date(startDateInput).getTime()
       };
+      
+      // Add endDate if provided
+      if (endDateInput) {
+        employeeData.endDate = new Date(endDateInput).getTime();
+      } else {
+        // If clearing endDate, set to null
+        employeeData.endDate = null;
+      }
       
       // Store roleIds as array (or null if empty)
       if (roleIds.length > 0) {
