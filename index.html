@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1768854326048">
+  <link rel="stylesheet" href="styles.css?v=1768855691740">
   <meta name="theme-color" content="#dc2626">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -649,7 +649,11 @@
       <div id="profile-modal-content" class="p-4 sm:p-6 space-y-4">
         <!-- User data will be inserted here -->
       </div>
-      <div class="p-4 sm:p-6 border-t border-gray-200">
+      <div class="p-4 sm:p-6 border-t border-gray-200 space-y-2">
+        <a href="https://yosbany.github.io/nrd-portal" 
+          class="block w-full px-4 sm:px-6 py-2 bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light text-center">
+          Ir al Portal
+        </a>
         <button id="profile-logout-btn" 
           class="w-full px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
           Cerrar Sesión
@@ -659,18 +663,18 @@
   </div>
 
   <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js?v=1768854326048"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js?v=1768854326048"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js?v=1768854326048"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js?v=1768855691740"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js?v=1768855691740"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js?v=1768855691740"></script>
   
   <!-- NRD Data Access Library -->
-  <script src="https://cdn.jsdelivr.net/gh/yosbany/nrd-data-access@main/dist/nrd-data-access.js?v=1768854326048"></script>
+  <script src="https://cdn.jsdelivr.net/gh/yosbany/nrd-data-access@main/dist/nrd-data-access.js?v=1768855691740"></script>
   
   <!-- Logger (must load before other app scripts) -->
-  <script src="logger.js?v=1768854326048"></script>
+  <script src="logger.js?v=1768855691740"></script>
   
   <!-- jsPDF for PDF generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?v=1768854326048"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?v=1768855691740"></script>
   
   <!-- Initialize NRD Data Access Library -->
   <script>
@@ -680,19 +684,19 @@
   </script>
   
   <!-- App Scripts -->
-  <script src="modal.js?v=1768854326048"></script>
-  <script src="auth.js?v=1768854326048"></script>
-  <script src="initialize.js?v=1768854326048"></script>
-  <script src="tabs/areas.js?v=1768854326048"></script>
-  <script src="tabs/processes.js?v=1768854326048"></script>
-  <script src="tabs/tasks.js?v=1768854326048"></script>
-  <script src="tabs/roles.js?v=1768854326048"></script>
-  <script src="tabs/employees.js?v=1768854326048"></script>
-  <script src="tabs/analytics.js?v=1768854326048"></script>
-  <script src="tabs/inicio.js?v=1768854326048"></script>
-  <script src="tabs/informacion.js?v=1768854326048"></script>
-  <script src="tabs/organigrama.js?v=1768854326048"></script>
-  <script src="app.js?v=1768854326048"></script>
+  <script src="modal.js?v=1768855691740"></script>
+  <script src="auth.js?v=1768855691740"></script>
+  <script src="initialize.js?v=1768855691740"></script>
+  <script src="tabs/areas.js?v=1768855691740"></script>
+  <script src="tabs/processes.js?v=1768855691740"></script>
+  <script src="tabs/tasks.js?v=1768855691740"></script>
+  <script src="tabs/roles.js?v=1768855691740"></script>
+  <script src="tabs/employees.js?v=1768855691740"></script>
+  <script src="tabs/analytics.js?v=1768855691740"></script>
+  <script src="tabs/inicio.js?v=1768855691740"></script>
+  <script src="tabs/informacion.js?v=1768855691740"></script>
+  <script src="tabs/organigrama.js?v=1768855691740"></script>
+  <script src="app.js?v=1768855691740"></script>
 
   <script>
     // Global error handler
