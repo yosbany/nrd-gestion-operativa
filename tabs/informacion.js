@@ -11,7 +11,7 @@ async function loadInformacion() {
   try {
     const [companyInfo, contracts] = await Promise.all([
       nrd.companyInfo.get(),
-      nrd.contracts ? nrd.contracts.getAll() : firebase.database().ref('contracts').once('value').then(s => s.val() || {})
+      window.nrd.contracts.getAll()
     ]);
 
     // Show read mode
@@ -92,7 +92,7 @@ async function showEditMode(companyInfo) {
   if (visionInput) visionInput.value = companyInfo.vision || '';
   
   // Load contracts for editing
-  const contracts = nrd.contracts ? await nrd.contracts.getAll() : await firebase.database().ref('contracts').once('value').then(s => s.val() || {});
+  const contracts = await window.nrd.contracts.getAll();
   displayContractsEdit(contracts);
 }
 
@@ -117,7 +117,7 @@ if (cancelEditCompanyInfoBtn) {
     try {
       const [companyInfo, contracts] = await Promise.all([
         nrd.companyInfo.get(),
-        nrd.contracts ? nrd.contracts.getAll() : firebase.database().ref('contracts').once('value').then(s => s.val() || {})
+        window.nrd.contracts.getAll()
       ]);
       showReadMode(companyInfo, contracts);
     } catch (error) {
@@ -655,7 +655,7 @@ async function saveContract(contractDiv) {
     
     if (contractId && contractId !== 'new') {
       // Load existing documents and merge
-      const existing = nrd.contracts ? await nrd.contracts.getById(contractId) : await firebase.database().ref('contracts').child(contractId).once('value').then(s => s.val());
+      const existing = await window.nrd.contracts.getById(contractId);
       if (existing && existing.documents) {
         // Keep documents that weren't removed (preserve by index)
         const existingDocs = existing.documents.filter((doc, index) => {
@@ -665,18 +665,10 @@ async function saveContract(contractDiv) {
       } else {
         contractData.documents = newDocuments.length > 0 ? newDocuments : null;
       }
-      if (nrd.contracts) {
-        await nrd.contracts.update(contractId, contractData);
-      } else {
-        await firebase.database().ref('contracts').child(contractId).update(contractData);
-      }
+      await window.nrd.contracts.update(contractId, contractData);
     } else {
       contractData.documents = newDocuments.length > 0 ? newDocuments : null;
-      if (nrd.contracts) {
-        await nrd.contracts.create(contractData);
-      } else {
-        await firebase.database().ref('contracts').push(contractData);
-      }
+      await window.nrd.contracts.create(contractData);
     }
     
     hideSpinner();
@@ -698,11 +690,7 @@ async function deleteContractHandler(contractId) {
   
   showSpinner('Eliminando contrato/habilitación...');
   try {
-    if (nrd.contracts) {
-      await nrd.contracts.delete(contractId);
-    } else {
-      await firebase.database().ref('contracts').child(contractId).remove();
-    }
+    await window.nrd.contracts.delete(contractId);
     hideSpinner();
     await showSuccess('Contrato/habilitación eliminado exitosamente');
     loadInformacion();
