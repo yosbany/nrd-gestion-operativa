@@ -184,8 +184,7 @@ function showProfileModal() {
     return;
   }
   
-  const isAdmin = user.email === 'yosbany@nrd.com';
-  logger.debug('Displaying user profile data', { uid: user.uid, email: user.email, isAdmin });
+  logger.debug('Displaying user profile data', { uid: user.uid, email: user.email });
   
   // Display user data
   let userDataHtml = `
@@ -203,53 +202,7 @@ function showProfileModal() {
     </div>
   `;
   
-  // Only show initialize link and confirmation section for admin
-  if (isAdmin) {
-    userDataHtml += `
-      <div id="profile-initialize-link-container" class="pt-2 border-t border-gray-200">
-        <a id="profile-initialize-link" 
-          href="#" 
-          class="text-red-600 hover:text-red-700 hover:underline text-sm font-light cursor-pointer">
-          Inicializar Base de Datos
-        </a>
-      </div>
-      <div id="profile-initialize-confirm" class="hidden pt-4 border-t border-gray-200">
-        <p class="text-sm sm:text-base text-gray-700 mb-4 font-light">
-          ¿Está seguro de que desea inicializar la base de datos? Esta acción cargará todos los datos de la carpeta nrd-kb-generate (áreas, procesos, tareas, roles y empleados). Los datos existentes se mantendrán si ya existen.
-        </p>
-        <div class="flex gap-2 sm:gap-3">
-          <button id="profile-initialize-confirm-btn" 
-            class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
-            Confirmar
-          </button>
-          <button id="profile-initialize-cancel-btn" 
-            class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-red-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
-            Cancelar
-          </button>
-        </div>
-      </div>
-    `;
-  }
-  
   content.innerHTML = userDataHtml;
-  
-  // Attach event listeners if admin
-  if (isAdmin) {
-    const initializeLink = document.getElementById('profile-initialize-link');
-    if (initializeLink) {
-      initializeLink.addEventListener('click', handleInitializeClick);
-    }
-    
-    const confirmBtn = document.getElementById('profile-initialize-confirm-btn');
-    if (confirmBtn) {
-      confirmBtn.addEventListener('click', handleInitializeConfirm);
-    }
-    
-    const cancelBtn = document.getElementById('profile-initialize-cancel-btn');
-    if (cancelBtn) {
-      cancelBtn.addEventListener('click', handleInitializeCancel);
-    }
-  }
   
   modal.classList.remove('hidden');
   logger.debug('Profile modal shown');
@@ -301,76 +254,6 @@ if (profileLogoutBtn) {
     }
   });
 }
-
-// Initialize database handler (from profile modal link)
-function handleInitializeClick(e) {
-  e.preventDefault();
-  const user = getCurrentUser();
-  
-  // Verify user is authorized
-  if (!user || user.email !== 'yosbany@nrd.com') {
-    showError('No tienes permisos para inicializar la base de datos');
-    return;
-  }
-  
-  // Show confirmation section
-  const confirmSection = document.getElementById('profile-initialize-confirm');
-  const linkContainer = document.getElementById('profile-initialize-link-container');
-  
-  if (confirmSection) {
-    confirmSection.classList.remove('hidden');
-  }
-  if (linkContainer) {
-    linkContainer.classList.add('hidden');
-  }
-}
-
-// Confirm initialize handler
-function handleInitializeConfirm() {
-  (async () => {
-    try {
-      const user = getCurrentUser();
-      logger.audit('DATABASE_INITIALIZE', { uid: user?.uid, email: user?.email, timestamp: Date.now() });
-      logger.info('Initializing database', { uid: user?.uid, email: user?.email });
-      closeProfileModal();
-      await initializeSystem();
-      logger.info('Database initialization successful');
-    } catch (error) {
-      logger.error('Database initialization failed', error);
-      await showError('Error al inicializar: ' + error.message);
-    }
-  })();
-}
-
-// Cancel initialize handler
-function handleInitializeCancel() {
-  const confirmSection = document.getElementById('profile-initialize-confirm');
-  const linkContainer = document.getElementById('profile-initialize-link-container');
-  
-  if (confirmSection) {
-    confirmSection.classList.add('hidden');
-  }
-  if (linkContainer) {
-    linkContainer.classList.remove('hidden');
-  }
-}
-
-// Attach event listeners
-const profileInitializeLink = document.getElementById('profile-initialize-link');
-if (profileInitializeLink) {
-  profileInitializeLink.addEventListener('click', handleInitializeClick);
-}
-
-const profileInitializeConfirmBtn = document.getElementById('profile-initialize-confirm-btn');
-if (profileInitializeConfirmBtn) {
-  profileInitializeConfirmBtn.addEventListener('click', handleInitializeConfirm);
-}
-
-const profileInitializeCancelBtn = document.getElementById('profile-initialize-cancel-btn');
-if (profileInitializeCancelBtn) {
-  profileInitializeCancelBtn.addEventListener('click', handleInitializeCancel);
-}
-
 
 // Get current user
 function getCurrentUser() {
