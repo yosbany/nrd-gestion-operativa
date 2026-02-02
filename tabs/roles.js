@@ -3,16 +3,18 @@
 let rolesListener = null;
 let allRoles = {}; // Store all roles for filtering
 
-// Normalize text for search (remove accents, ñ->n, b->v, c->s)
-function normalizeSearchText(text) {
-  return text
-    .toLowerCase()
+// Use common normalizeSearchText from NRDCommon
+const normalizeSearchText = window.normalizeSearchText || window.NRDCommon?.normalizeSearchText || ((t) => {
+  // Fallback if NRDCommon not available
+  return (t || '').toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/ñ/g, 'n')
-    .replace(/b/g, 'v')
-    .replace(/c/g, 's');
-}
+    .replace(/v/g, 'b')
+    .replace(/c([ei])/g, 's$1')
+    .replace(/z/g, 's')
+    .replace(/ll/g, 'y');
+});
 
 // Filter and display roles
 function filterAndDisplayRoles(searchTerm = '') {
