@@ -61,7 +61,11 @@ function switchView(viewName) {
   } else if (viewName === 'roles') {
     loadRoles();
   } else if (viewName === 'employees') {
-    loadEmployees();
+    if (typeof window.loadEmployees === 'function') {
+      window.loadEmployees();
+    } else {
+      logger.error('loadEmployees no está disponible. Compruebe la red o vuelva a cargar; si persiste, desregistre el service worker o borre caché.');
+    }
   } else if (viewName === 'analytics') {
     loadAnalytics();
   }

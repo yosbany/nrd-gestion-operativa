@@ -553,5 +553,7 @@ function loadEmployeesForSelect() {
   });
 }
 
-// Make functions available globally
+// Make functions available globally (app.js y otras tabs deben ver estas funciones)
 window.viewEmployee = viewEmployee;
+window.loadEmployees = loadEmployees;
+window.loadEmployeesForSelect = loadEmployeesForSelect;
