@@ -4,18 +4,7 @@ let processesListener = null;
 let allProcesses = {}; // Store all processes for filtering
 let processAreaMap = {}; // Store area names for processes
 
-// Use common normalizeSearchText from NRDCommon
-const normalizeSearchText = window.normalizeSearchText || window.NRDCommon?.normalizeSearchText || ((t) => {
-  // Fallback if NRDCommon not available
-  return (t || '').toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/ñ/g, 'n')
-    .replace(/v/g, 'b')
-    .replace(/c([ei])/g, 's$1')
-    .replace(/z/g, 's')
-    .replace(/ll/g, 'y');
-});
+// Normalización: tabs/search-helpers.js define window.NRDGONormalizeSearchText
 
 // Filter and display processes
 async function filterAndDisplayProcesses(searchTerm = '') {
@@ -24,12 +13,12 @@ async function filterAndDisplayProcesses(searchTerm = '') {
   
   processesList.innerHTML = '';
   
-  const term = normalizeSearchText(searchTerm.trim());
+  const term = window.NRDGONormalizeSearchText(searchTerm.trim());
   const filteredProcesses = Object.entries(allProcesses).filter(([id, process]) => {
     if (!term) return true;
-    const name = normalizeSearchText(process.name || '');
-    const objective = normalizeSearchText(process.objective || '');
-    const areaName = normalizeSearchText(processAreaMap[process.areaId] || '');
+    const name = window.NRDGONormalizeSearchText(process.name || '');
+    const objective = window.NRDGONormalizeSearchText(process.objective || '');
+    const areaName = window.NRDGONormalizeSearchText(processAreaMap[process.areaId] || '');
     return name.includes(term) || objective.includes(term) || areaName.includes(term);
   });
 

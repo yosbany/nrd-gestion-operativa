@@ -3,18 +3,7 @@
 let rolesListener = null;
 let allRoles = {}; // Store all roles for filtering
 
-// Use common normalizeSearchText from NRDCommon
-const normalizeSearchText = window.normalizeSearchText || window.NRDCommon?.normalizeSearchText || ((t) => {
-  // Fallback if NRDCommon not available
-  return (t || '').toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/ñ/g, 'n')
-    .replace(/v/g, 'b')
-    .replace(/c([ei])/g, 's$1')
-    .replace(/z/g, 's')
-    .replace(/ll/g, 'y');
-});
+// Normalización: tabs/search-helpers.js define window.NRDGONormalizeSearchText
 
 // Filter and display roles
 function filterAndDisplayRoles(searchTerm = '') {
@@ -23,11 +12,11 @@ function filterAndDisplayRoles(searchTerm = '') {
   
   rolesList.innerHTML = '';
   
-  const term = normalizeSearchText(searchTerm.trim());
+  const term = window.NRDGONormalizeSearchText(searchTerm.trim());
   const filteredRoles = Object.entries(allRoles).filter(([id, role]) => {
     if (!term) return true;
-    const name = normalizeSearchText(role.name || '');
-    const description = normalizeSearchText(role.description || '');
+    const name = window.NRDGONormalizeSearchText(role.name || '');
+    const description = window.NRDGONormalizeSearchText(role.description || '');
     return name.includes(term) || description.includes(term);
   });
 

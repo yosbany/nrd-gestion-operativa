@@ -3,18 +3,7 @@
 let areasListener = null;
 let allAreas = {}; // Store all areas for filtering
 
-// Use common normalizeSearchText from NRDCommon
-const normalizeSearchText = window.normalizeSearchText || window.NRDCommon?.normalizeSearchText || ((t) => {
-  // Fallback if NRDCommon not available
-  return (t || '').toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/ñ/g, 'n')
-    .replace(/v/g, 'b')
-    .replace(/c([ei])/g, 's$1')
-    .replace(/z/g, 's')
-    .replace(/ll/g, 'y');
-});
+// Normalización: tabs/search-helpers.js define window.NRDGONormalizeSearchText
 
 // Filter and display areas
 function filterAndDisplayAreas(searchTerm = '') {
@@ -23,11 +12,11 @@ function filterAndDisplayAreas(searchTerm = '') {
   
   areasList.innerHTML = '';
   
-  const term = normalizeSearchText(searchTerm.trim());
+  const term = window.NRDGONormalizeSearchText(searchTerm.trim());
   const filteredAreas = Object.entries(allAreas).filter(([id, area]) => {
     if (!term) return true;
-    const name = normalizeSearchText(area.name || '');
-    const description = normalizeSearchText(area.description || '');
+    const name = window.NRDGONormalizeSearchText(area.name || '');
+    const description = window.NRDGONormalizeSearchText(area.description || '');
     return name.includes(term) || description.includes(term);
   });
 

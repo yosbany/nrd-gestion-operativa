@@ -114,18 +114,7 @@ async function calculateTaskCost(task, taskId = null) {
   }
 }
 
-// Use common normalizeSearchText from NRDCommon
-const normalizeSearchText = window.normalizeSearchText || window.NRDCommon?.normalizeSearchText || ((t) => {
-  // Fallback if NRDCommon not available
-  return (t || '').toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/ñ/g, 'n')
-    .replace(/v/g, 'b')
-    .replace(/c([ei])/g, 's$1')
-    .replace(/z/g, 's')
-    .replace(/ll/g, 'y');
-});
+// Normalización: tabs/search-helpers.js define window.NRDGONormalizeSearchText
 
 // Filter and display tasks
 async function filterAndDisplayTasks(searchTerm = '') {
@@ -134,17 +123,17 @@ async function filterAndDisplayTasks(searchTerm = '') {
   
   tasksList.innerHTML = '';
   
-  const term = normalizeSearchText(searchTerm.trim());
+  const term = window.NRDGONormalizeSearchText(searchTerm.trim());
   const filteredTasks = Object.entries(allTasks).filter(([id, task]) => {
     // Filter by search term
     if (!term) return true;
     
-    const name = normalizeSearchText(task.name || '');
-    const description = normalizeSearchText(task.description || '');
-      const processName = normalizeSearchText(taskProcessMap[id] || '');
-      const roleNames = normalizeSearchText(taskRoleMap[id] || '');
+    const name = window.NRDGONormalizeSearchText(task.name || '');
+    const description = window.NRDGONormalizeSearchText(task.description || '');
+      const processName = window.NRDGONormalizeSearchText(taskProcessMap[id] || '');
+      const roleNames = window.NRDGONormalizeSearchText(taskRoleMap[id] || '');
     
-    const frequency = normalizeSearchText(task.frequency || '');
+    const frequency = window.NRDGONormalizeSearchText(task.frequency || '');
     return name.includes(term) || description.includes(term) || processName.includes(term) || 
            roleNames.includes(term) || frequency.includes(term);
   });

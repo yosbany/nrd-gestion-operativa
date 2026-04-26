@@ -3,18 +3,7 @@
 let employeesListener = null;
 let allEmployees = {}; // Store all employees for filtering
 
-// Use common normalizeSearchText from NRDCommon
-const normalizeSearchText = window.normalizeSearchText || window.NRDCommon?.normalizeSearchText || ((t) => {
-  // Fallback if NRDCommon not available
-  return (t || '').toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/ñ/g, 'n')
-    .replace(/v/g, 'b')
-    .replace(/c([ei])/g, 's$1')
-    .replace(/z/g, 's')
-    .replace(/ll/g, 'y');
-});
+// Normalización: tabs/search-helpers.js define window.NRDGONormalizeSearchText
 
 // Filter and display employees
 async function filterAndDisplayEmployees(searchTerm = '') {
@@ -23,7 +12,7 @@ async function filterAndDisplayEmployees(searchTerm = '') {
   
   employeesList.innerHTML = '';
   
-  const term = normalizeSearchText(searchTerm.trim());
+  const term = window.NRDGONormalizeSearchText(searchTerm.trim());
   
   // Load roles for filtering by role names
   let roles = await nrd.roles.getAll();
@@ -49,13 +38,13 @@ async function filterAndDisplayEmployees(searchTerm = '') {
   
   const filteredEmployees = Object.entries(allEmployees).filter(([id, employee]) => {
     if (!term) return true;
-    const name = normalizeSearchText(employee.name || '');
-    const email = normalizeSearchText(employee.email || '');
-    const phone = normalizeSearchText(employee.phone || '');
+    const name = window.NRDGONormalizeSearchText(employee.name || '');
+    const email = window.NRDGONormalizeSearchText(employee.email || '');
+    const phone = window.NRDGONormalizeSearchText(employee.phone || '');
     
     // Check role names
     const roleIds = employee.roleIds || (employee.roleId ? [employee.roleId] : []);
-    const roleNames = normalizeSearchText(roleIds.map(rid => roleMap[rid] || '').join(' '));
+    const roleNames = window.NRDGONormalizeSearchText(roleIds.map(rid => roleMap[rid] || '').join(' '));
     
     return name.includes(term) || email.includes(term) || phone.includes(term) || roleNames.includes(term);
   });
