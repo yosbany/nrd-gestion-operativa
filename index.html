@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema de gestión operativa de panadería">
+  <title>NRD Gestión Operativa</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css?v=1777204968865">
+  <meta name="theme-color" content="#dc2626">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  
+  <!-- Validate version against server: if server has newer build, force reload to avoid stale cache -->
+  <script>
+    (function() {
+      var RELOAD_KEY = 'nrd-version-reload-ts';
+      var RELOAD_COOLDOWN_MS = 15000;
+      var lastReload = parseInt(sessionStorage.getItem(RELOAD_KEY) || '0', 10);
+      if (Date.now() - lastReload < RELOAD_COOLDOWN_MS) return;
+
+      var link = document.querySelector('link[rel="stylesheet"][href*=".css"]');
+      var match = link && link.href && link.href.match(/[?&]v=(\d+)/);
+      var localVersion = match ? String(match[1]) : null;
+      if (!localVersion) return;
+
+      fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+          var serverVersion = data && data.v != null ? String(data.v) : null;
+          if (!serverVersion) return;
+          if (serverVersion === localVersion) return;
+
+          sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+
+          var sw = ('serviceWorker' in navigator)
+            ? navigator.serviceWorker.getRegistrations().then(function(regs) {
+                regs.forEach(function(r) { r.unregister(); });
+              })
+            : Promise.resolve();
+
+          var cacheClear = ('caches' in window)
+            ? caches.keys().then(function(names) { names.forEach(function(n) { caches.delete(n); }); })
+            : Promise.resolve();
+
+          Promise.all([sw, cacheClear]).finally(function() {
+            window.location.reload();
+          });
+        })
+        .catch(function() {});
+    })();
+  </script>
+</head>
+<body class="bg-white text-black font-sans antialiased">
+  <!-- Loading Spinner -->
+  <div id="loading-spinner" class="fixed inset-0 bg-black/20 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 flex flex-col items-center gap-4 shadow-lg">
+      <div class="w-12 h-12 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin"></div>
+      <p class="text-sm text-gray-600 font-light">Cargando...</p>
+    </div>
+  </div>
+
+  <!-- Redirecting Screen -->
+  <div id="redirecting-screen" class="min-h-screen flex items-center justify-center bg-white">
+    <div class="flex flex-col items-center gap-4">
+      <div class="w-12 h-12 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin"></div>
+      <p class="text-sm text-gray-600 font-light">Redirigiendo...</p>
+    </div>
+  </div>
+
+  <!-- Login Screen -->
+  <div id="login-screen" class="min-h-screen flex items-center justify-center p-4 sm:p-6 hidden">
+    <div class="w-full max-w-sm">
+      <h1 class="text-xl sm:text-2xl font-light text-center mb-6 sm:mb-8 tracking-tight">NRD Gestión Operativa</h1>
+      <form id="login-form" class="space-y-3 sm:space-y-4">
+        <input type="email" id="login-email" placeholder="Email" required 
+          class="w-full px-0 py-2.5 sm:py-3 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+        <input type="password" id="login-password" placeholder="Contraseña" required 
+          class="w-full px-0 py-2.5 sm:py-3 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+        <button type="submit" 
+          class="w-full mt-4 sm:mt-6 py-2.5 sm:py-3 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+          Iniciar Sesión
+        </button>
+      </form>
+      <div id="login-error" class="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-gray-600"></div>
+    </div>
+  </div>
+
+  <!-- Main App Screen -->
+  <div id="app-screen" class="min-h-screen flex flex-col hidden">
+    <header class="bg-red-600 border-b border-red-700 px-3 sm:px-4 py-2.5 sm:py-3 flex justify-between items-center sticky top-0 z-10">
+            <div class="flex items-center gap-2 sm:gap-3">
+                <img src="icon-192.png" alt="NRD Gestión Operativa" class="w-8 h-8 sm:w-10 sm:h-10 rounded">
+      <h1 class="text-lg sm:text-xl font-light tracking-tight text-white">NRD Gestión Operativa</h1>
+            </div>
+      <div class="flex gap-2 items-center">
+        <button id="install-btn" 
+          class="px-3 sm:px-4 py-1.5 sm:py-2 border border-white/30 hover:border-white text-white hover:bg-white/10 transition-colors uppercase tracking-wider text-xs font-light hidden">
+          Instalar
+        </button>
+        <button id="profile-btn" 
+          class="px-3 sm:px-4 py-1.5 sm:py-2 border border-white/30 hover:border-white text-white hover:bg-white/10 transition-colors uppercase tracking-wider text-xs font-light">
+          Perfil
+        </button>
+      </div>
+    </header>
+
+    <nav class="bg-white border-b border-gray-200 flex overflow-x-auto sticky top-[45px] sm:top-[53px] z-10 bg-white">
+      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-red-600 text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="inicio">Inicio</button>
+      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="informacion">Información</button>
+      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="organigrama">Organigrama</button>
+      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="areas">Áreas</button>
+      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="processes">Procesos</button>
+      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="tasks">Tareas</button>
+      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="roles">Roles</button>
+      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="employees">Empleados</button>
+      <button class="nav-btn flex-1 px-3 sm:px-4 py-3 sm:py-3.5 border-b-2 border-transparent text-gray-600 hover:text-red-600 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light" data-view="analytics">Análisis</button>
+    </nav>
+
+    <main class="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto max-w-6xl mx-auto w-full">
+      <!-- Inicio View -->
+      <div id="inicio-view" class="view space-y-3 sm:space-y-4">
+        <div id="inicio-content"></div>
+      </div>
+
+      <!-- Información View -->
+      <div id="informacion-view" class="view space-y-3 sm:space-y-4 hidden">
+        <div class="border border-gray-200 p-3 sm:p-4 md:p-6">
+          <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
+            <h3 class="text-lg sm:text-xl font-light tracking-tight">Información de la Empresa</h3>
+          </div>
+          
+          <!-- Read Mode -->
+          <div id="company-info-read-mode">
+            <div class="space-y-4">
+              <div>
+                <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Razón Social</label>
+                <div id="company-legal-name-read" class="text-sm sm:text-base font-medium py-2">-</div>
+              </div>
+              <div>
+                <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Nombre Fantasía</label>
+                <div id="company-trade-name-read" class="text-sm sm:text-base font-medium py-2">-</div>
+              </div>
+              <div>
+                <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Número de Rut</label>
+                <div id="company-rut-read" class="text-sm sm:text-base font-medium py-2">-</div>
+              </div>
+              <div>
+                <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Dirección Fiscal</label>
+                <div id="company-address-read" class="text-sm sm:text-base font-medium py-2">-</div>
+              </div>
+              <div>
+                <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Número de teléfono</label>
+                <div id="company-phone-read" class="text-sm sm:text-base font-medium py-2">-</div>
+              </div>
+              <div>
+                <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Número de celular</label>
+                <div id="company-mobile-read" class="text-sm sm:text-base font-medium py-2">-</div>
+              </div>
+              <div>
+                <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Correo Electrónico</label>
+                <div id="company-email-read" class="text-sm sm:text-base font-medium py-2">-</div>
+              </div>
+              <div>
+                <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Misión</label>
+                <div id="company-mission-read" class="text-sm sm:text-base font-medium py-2 whitespace-pre-wrap">-</div>
+              </div>
+              <div>
+                <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Visión</label>
+                <div id="company-vision-read" class="text-sm sm:text-base font-medium py-2 whitespace-pre-wrap">-</div>
+              </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200 mt-6">
+              <button id="print-company-pdf-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Imprimir PDF</button>
+              <button id="edit-company-info-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar Información</button>
+            </div>
+            
+            <!-- Contratos y Habilitaciones -->
+            <div class="mt-8 pt-8 border-t border-gray-300">
+              <h2 class="text-xl sm:text-2xl font-light mb-4 sm:mb-6 text-gray-800 uppercase tracking-wider">Contratos y Habilitaciones</h2>
+              <div id="contracts-list" class="space-y-4 sm:space-y-6"></div>
+              <button id="add-contract-btn" class="mt-4 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+                + Nuevo Contrato/Habilitación
+              </button>
+            </div>
+          </div>
+
+          <!-- Edit Mode -->
+          <form id="company-info-form" class="hidden">
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Razón Social</label>
+              <input type="text" id="company-legal-name" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base" placeholder="Razón Social">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Nombre Fantasía</label>
+              <input type="text" id="company-trade-name" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base" placeholder="Nombre Fantasía">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Número de Rut</label>
+              <input type="text" id="company-rut" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base" placeholder="Número de Rut">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Dirección Fiscal</label>
+              <input type="text" id="company-address" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base" placeholder="Dirección Fiscal">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Número de teléfono</label>
+              <input type="tel" id="company-phone" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base" placeholder="Número de teléfono">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Número de celular</label>
+              <input type="tel" id="company-mobile" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base" placeholder="Número de celular">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Correo Electrónico</label>
+              <input type="email" id="company-email" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base" placeholder="Correo Electrónico">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Misión</label>
+              <textarea id="company-mission" rows="5" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base" placeholder="Describe la misión de la empresa..."></textarea>
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Visión</label>
+              <textarea id="company-vision" rows="5" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base" placeholder="Describe la visión de la empresa..."></textarea>
+            </div>
+            
+            <!-- Contratos y Habilitaciones -->
+            <div class="mt-8 pt-8 border-t border-gray-300">
+              <h2 class="text-xl sm:text-2xl font-light mb-4 sm:mb-6 text-gray-800 uppercase tracking-wider">Contratos y Habilitaciones</h2>
+              <div id="contracts-list-edit" class="space-y-4 sm:space-y-6"></div>
+              <button type="button" id="add-contract-btn-edit" class="mt-4 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+                + Nuevo Contrato/Habilitación
+              </button>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
+              <button type="button" id="cancel-edit-company-info-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="submit" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Organigrama View -->
+      <div id="organigrama-view" class="view space-y-3 sm:space-y-4 hidden">
+        <div class="border border-gray-200 p-3 sm:p-4 md:p-6">
+          <div class="mb-3 sm:mb-4 pb-3 sm:pb-4 border-b border-gray-200">
+            <h3 class="text-lg sm:text-xl font-light tracking-tight">Organigrama de la Empresa</h3>
+          </div>
+          <div id="organigrama-content" class="py-4">
+            <!-- Organigrama content will be inserted here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Areas View -->
+      <div id="areas-view" class="view space-y-3 sm:space-y-4 hidden">
+        <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
+          <button id="new-area-btn" 
+            class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+            Nueva Área
+          </button>
+        </div>
+        <div class="mb-2 sm:mb-3">
+          <input type="text" id="areas-search" placeholder="Buscar áreas..." 
+            class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+        </div>
+        <div id="areas-list" class="space-y-2 sm:space-y-3"></div>
+        <div id="area-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden overflow-hidden">
+          <div id="area-detail-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-gray-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg sm:text-xl font-semibold tracking-tight text-white">Detalle del Área</h3>
+                <p class="text-sm text-white/90 mt-1">Visualice la información completa del área operativa</p>
+              </div>
+              <button id="back-to-areas" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
+          </div>
+          <div id="area-detail-content"></div>
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+            <button id="delete-area-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="edit-area-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
+            <button id="close-area-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cerrar</button>
+          </div>
+        </div>
+        <div id="area-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden overflow-hidden">
+          <div id="area-form-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-green-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 id="area-form-title" class="text-lg sm:text-xl font-semibold tracking-tight text-white">Nueva Área</h3>
+                <p id="area-form-subtitle" class="text-sm text-white/90 mt-1">Cree una nueva área operativa de la organización</p>
+              </div>
+              <button id="close-area-form" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
+          </div>
+          <form id="area-form-element">
+            <input type="hidden" id="area-id">
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Nombre</label>
+              <input type="text" id="area-name" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Descripción</label>
+              <textarea id="area-description" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Empleado Encargado</label>
+              <select id="area-manager-select" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+                <option value="">Sin encargado</option>
+              </select>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
+              <button type="button" id="cancel-area-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="submit" id="save-area-btn" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Processes View -->
+      <div id="processes-view" class="view space-y-3 sm:space-y-4 hidden">
+        <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
+          <button id="new-process-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nuevo Proceso</button>
+        </div>
+        <div class="mb-2 sm:mb-3">
+          <input type="text" id="processes-search" placeholder="Buscar procesos..." 
+            class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+        </div>
+        <div id="processes-list" class="space-y-2 sm:space-y-3"></div>
+        <div id="process-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden overflow-hidden">
+          <div id="process-detail-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-gray-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg sm:text-xl font-semibold tracking-tight text-white">Detalle del Proceso</h3>
+                <p class="text-sm text-white/90 mt-1">Visualice la información completa del proceso</p>
+              </div>
+              <button id="back-to-processes" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
+          </div>
+          <div id="process-detail-content"></div>
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+            <button id="delete-process-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="view-process-diagram-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Ver Diagrama</button>
+            <button id="edit-process-flow-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar Flujo</button>
+            <button id="edit-process-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
+            <button id="close-process-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cerrar</button>
+          </div>
+        </div>
+        <div id="process-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden overflow-hidden">
+          <div id="process-form-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-green-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 id="process-form-title" class="text-lg sm:text-xl font-semibold tracking-tight text-white">Nuevo Proceso</h3>
+                <p id="process-form-subtitle" class="text-sm text-white/90 mt-1">Defina un nuevo proceso operativo</p>
+              </div>
+              <button id="close-process-form" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
+          </div>
+          <form id="process-form-element">
+            <input type="hidden" id="process-id">
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Nombre</label>
+              <input type="text" id="process-name" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Área</label>
+              <select id="process-area-select" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+                <option value="">Sin área</option>
+              </select>
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Objetivo</label>
+              <textarea id="process-objective" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
+              <button type="button" id="cancel-process-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="submit" id="save-process-btn" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tasks View -->
+      <div id="tasks-view" class="view space-y-3 sm:space-y-4 hidden">
+        <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
+          <button id="new-task-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nueva Tarea</button>
+        </div>
+        <div class="mb-2 sm:mb-3">
+          <input type="text" id="tasks-search" placeholder="Buscar tareas..." 
+            class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+        </div>
+        <div id="tasks-list" class="space-y-2 sm:space-y-3"></div>
+        <div id="task-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden overflow-hidden">
+          <div id="task-detail-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-gray-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg sm:text-xl font-semibold tracking-tight text-white">Detalle de la Tarea</h3>
+                <p class="text-sm text-white/90 mt-1">Visualice la información completa de la tarea</p>
+              </div>
+              <button id="back-to-tasks" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
+          </div>
+          <div id="task-detail-content"></div>
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+            <button id="delete-task-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="edit-task-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
+            <button id="close-task-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cerrar</button>
+          </div>
+        </div>
+        <div id="task-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden overflow-hidden">
+          <div id="task-form-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-green-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 id="task-form-title" class="text-lg sm:text-xl font-semibold tracking-tight text-white">Nueva Tarea</h3>
+                <p id="task-form-subtitle" class="text-sm text-white/90 mt-1">Cree una nueva tarea dentro de un proceso</p>
+              </div>
+              <button id="close-task-form" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
+          </div>
+          <form id="task-form-element">
+            <input type="hidden" id="task-id">
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Nombre</label>
+              <input type="text" id="task-name" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Descripción</label>
+              <textarea id="task-description" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Frecuencia</label>
+              <input type="text" id="task-frequency" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base" placeholder="Ej: Diaria, Semanal, Mensual">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Tiempo estimado (minutos)</label>
+              <input type="number" id="task-estimated-time" min="0" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Costo/Pago</label>
+              <input type="number" id="task-cost" min="0" step="0.01" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base" placeholder="0.00">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Pasos de Ejecución (uno por línea)</label>
+              <textarea id="task-execution-steps" rows="5" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Criterios de Ejecución Correcta (uno por línea)</label>
+              <textarea id="task-success-criteria" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Errores Comunes (uno por línea)</label>
+              <textarea id="task-common-errors" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
+              <button type="button" id="cancel-task-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="submit" id="save-task-btn" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Roles View -->
+      <div id="roles-view" class="view space-y-3 sm:space-y-4 hidden">
+        <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
+          <button id="new-role-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nuevo Rol</button>
+        </div>
+        <div class="mb-2 sm:mb-3">
+          <input type="text" id="roles-search" placeholder="Buscar roles..." 
+            class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+        </div>
+        <div id="roles-list" class="space-y-2 sm:space-y-3"></div>
+        <div id="role-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden overflow-hidden">
+          <div id="role-detail-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-gray-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg sm:text-xl font-semibold tracking-tight text-white">Detalle del Rol</h3>
+                <p class="text-sm text-white/90 mt-1">Visualice la información completa del rol</p>
+              </div>
+              <button id="back-to-roles" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
+          </div>
+          <div id="role-detail-content"></div>
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+            <button id="delete-role-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="edit-role-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
+            <button id="close-role-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cerrar</button>
+          </div>
+        </div>
+        <div id="role-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden overflow-hidden">
+          <div id="role-form-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-green-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 id="role-form-title" class="text-lg sm:text-xl font-semibold tracking-tight text-white">Nuevo Rol</h3>
+                <p id="role-form-subtitle" class="text-sm text-white/90 mt-1">Defina un nuevo rol organizacional</p>
+              </div>
+              <button id="close-role-form" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
+          </div>
+          <form id="role-form-element">
+            <input type="hidden" id="role-id">
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Nombre</label>
+              <input type="text" id="role-name" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Descripción</label>
+              <textarea id="role-description" rows="3" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent resize-y text-sm sm:text-base"></textarea>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
+              <button type="button" id="cancel-role-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="submit" id="save-role-btn" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Employees View -->
+      <div id="employees-view" class="view space-y-3 sm:space-y-4 hidden">
+        <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
+          <button id="new-employee-btn" class="w-full sm:w-auto px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Nuevo Empleado</button>
+        </div>
+        <div class="mb-2 sm:mb-3">
+          <input type="text" id="employees-search" placeholder="Buscar empleados..." 
+            class="w-full px-3 sm:px-4 py-2 border border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+        </div>
+        <div id="employees-list" class="space-y-2 sm:space-y-3"></div>
+        <div id="employee-detail" class="border border-gray-200 p-3 sm:p-4 md:p-6 hidden overflow-hidden">
+          <div id="employee-detail-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-gray-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg sm:text-xl font-semibold tracking-tight text-white">Detalle del Empleado</h3>
+                <p class="text-sm text-white/90 mt-1">Visualice la información completa del empleado</p>
+              </div>
+              <button id="back-to-employees" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
+          </div>
+          <div id="employee-detail-content"></div>
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+            <button id="delete-employee-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Eliminar</button>
+            <button id="edit-employee-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Editar</button>
+            <button id="close-employee-detail-btn" class="flex-1 px-4 sm:px-6 py-2 bg-gray-600 text-white border border-gray-600 hover:bg-gray-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cerrar</button>
+          </div>
+        </div>
+        <div id="employee-form" class="border border-gray-200 p-3 sm:p-4 md:p-6 mt-3 sm:mt-4 hidden overflow-hidden">
+          <div id="employee-form-header" class="px-4 sm:px-6 py-4 sm:py-5 -mx-3 sm:-mx-4 md:-mx-6 -mt-3 sm:-mt-4 md:-mt-6 mb-3 sm:mb-4 bg-green-600">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 id="employee-form-title" class="text-lg sm:text-xl font-semibold tracking-tight text-white">Nuevo Empleado</h3>
+                <p id="employee-form-subtitle" class="text-sm text-white/90 mt-1">Registre un nuevo empleado en el sistema</p>
+              </div>
+              <button id="close-employee-form" class="text-white hover:text-gray-200 text-2xl font-light w-8 h-8 flex items-center justify-center hover:bg-white/20 transition-colors">×</button>
+            </div>
+          </div>
+          <form id="employee-form-element">
+            <input type="hidden" id="employee-id">
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Nombre</label>
+              <input type="text" id="employee-name" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Email</label>
+              <input type="email" id="employee-email" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Teléfono</label>
+              <input type="tel" id="employee-phone" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Roles</label>
+              <div id="employee-roles-container" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 p-3 rounded">
+                <!-- Roles checkboxes will be inserted here -->
+              </div>
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Costo Salarial</label>
+              <input type="number" id="employee-salary" min="0" step="0.01" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base" placeholder="0.00">
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Fecha de Ingreso</label>
+              <input type="date" id="employee-start-date" required class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+              <p class="text-xs text-gray-500 mt-1">Usada para calcular días de licencia acumulados</p>
+            </div>
+            <div class="mb-4 sm:mb-6">
+              <label class="block mb-1.5 sm:mb-2 text-xs uppercase tracking-wider text-gray-600">Fecha de Egreso</label>
+              <input type="date" id="employee-end-date" class="w-full px-0 py-2 border-0 border-b border-gray-300 focus:outline-none focus:border-red-600 bg-transparent text-sm sm:text-base">
+              <p class="text-xs text-gray-500 mt-1">Opcional. Usada para calcular licencia no gozada al egreso</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
+              <button type="button" id="cancel-employee-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+              <button type="submit" id="save-employee-btn" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Analytics View -->
+      <div id="analytics-view" class="view space-y-3 sm:space-y-4 hidden">
+        <div id="analytics-content"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Custom Modal -->
+  <div id="custom-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-md w-full border border-gray-200 shadow-lg">
+      <div class="p-4 sm:p-6">
+        <h3 id="modal-title" class="text-lg sm:text-xl font-light mb-3 sm:mb-4 text-black"></h3>
+        <p id="modal-message" class="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6"></p>
+        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <button id="modal-cancel" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+            Cancelar
+          </button>
+          <button id="modal-confirm" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Alert -->
+  <div id="custom-alert" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-md w-full border border-gray-200 shadow-lg">
+      <div class="p-4 sm:p-6">
+        <h3 id="alert-title" class="text-lg sm:text-xl font-light mb-3 sm:mb-4 text-black"></h3>
+        <p id="alert-message" class="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6"></p>
+        <div class="flex justify-end">
+          <button id="alert-ok" class="px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+            Aceptar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Process Diagram Modal -->
+  <div id="process-diagram-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] border border-gray-200 shadow-lg flex flex-col">
+      <div class="p-4 sm:p-6 border-b border-gray-200 flex items-center justify-between">
+        <h3 id="process-diagram-title" class="text-lg sm:text-xl font-light text-black"></h3>
+        <button id="close-process-diagram" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+      </div>
+      <div id="process-diagram-content" class="p-4 sm:p-6 overflow-y-auto flex-1">
+        <!-- Diagram content will be inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Process Flow Edit Modal -->
+  <div id="process-flow-edit-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] border border-gray-200 shadow-lg flex flex-col">
+      <div class="p-4 sm:p-6 border-b border-gray-200 flex items-center justify-between">
+        <h3 id="process-flow-edit-title" class="text-lg sm:text-xl font-light text-black"></h3>
+        <button id="close-process-flow-edit" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+      </div>
+      <div id="process-flow-edit-content" class="p-4 sm:p-6 overflow-y-auto flex-1">
+        <!-- Flow edit content will be inserted here -->
+      </div>
+      <div class="p-4 sm:p-6 border-t border-gray-200 flex gap-2 sm:gap-4">
+        <button id="cancel-process-flow-edit-btn" class="flex-1 px-4 sm:px-6 py-2 border border-gray-300 hover:border-gray-400 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Cancelar</button>
+        <button id="save-process-flow-btn" class="flex-1 px-4 sm:px-6 py-2 bg-green-600 text-white border border-green-600 hover:bg-green-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">Guardar Cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div id="profile-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-md w-full border border-gray-200 shadow-lg">
+      <div class="p-4 sm:p-6 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-lg sm:text-xl font-light tracking-tight">Perfil de Usuario</h3>
+        <button id="close-profile-modal" class="text-gray-400 hover:text-red-600 text-xl font-light">×</button>
+      </div>
+      <div id="profile-modal-content" class="p-4 sm:p-6 space-y-4">
+        <!-- User data will be inserted here -->
+      </div>
+      <div class="p-4 sm:p-6 border-t border-gray-200 space-y-2">
+        <a href="https://yosbany.github.io/nrd-portal" 
+          class="block w-full px-4 sm:px-6 py-2 bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light text-center">
+          Ir al Portal
+        </a>
+        <button id="profile-logout-btn" 
+          class="w-full px-4 sm:px-6 py-2 bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors uppercase tracking-wider text-xs sm:text-sm font-light">
+          Cerrar Sesión
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NRD Data Access Library (incluye Firebase) -->
+  <script src="https://cdn.jsdelivr.net/gh/yosbany/nrd-data-access@main/dist/nrd-data-access.js?v=1777204968865"></script>
+  
+  <!-- Logger (must load before other app scripts) -->
+  <script src="logger.js?v=1777204968865"></script>
+  
+  <!-- jsPDF for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?v=1777204968865"></script>
+  
+  <!-- Initialize NRD Data Access Library -->
+  <script>
+    // Initialize NRD Data Access Library
+    // Esta librería maneja la inicialización de Firebase y el acceso a datos para todas las entidades
+    const nrd = new NRDDataAccess();
+  </script>
+  
+  <!-- App Scripts -->
+  <script src="modal.js?v=1777204968865"></script>
+  <script src="auth.js?v=1777204968865"></script>
+  <script src="initialize.js?v=1777204968865"></script>
+  <script src="tabs/search-helpers.js?v=1777204968865"></script>
+  <script src="tabs/areas.js?v=1777204968865"></script>
+  <script src="tabs/processes.js?v=1777204968865"></script>
+  <script src="tabs/tasks.js?v=1777204968865"></script>
+  <script src="tabs/roles.js?v=1777204968865"></script>
+  <script src="tabs/employees.js?v=1777204968865"></script>
+  <script src="tabs/analytics.js?v=1777204968865"></script>
+  <script src="tabs/inicio.js?v=1777204968865"></script>
+  <script src="tabs/informacion.js?v=1777204968865"></script>
+  <script src="tabs/organigrama.js?v=1777204968865"></script>
+  <script src="app.js?v=1777204968865"></script>
+
+  <script>
+    // Global error handler
+    window.addEventListener('error', (event) => {
+      console.error('Global error:', event.error);
+      // Show error message if app screen is visible
+      const appScreen = document.getElementById('app-screen');
+      if (appScreen && !appScreen.classList.contains('hidden')) {
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'fixed top-20 left-0 right-0 bg-red-600 text-white p-4 z-50 text-center';
+        errorMsg.textContent = 'Error al cargar la aplicación. Por favor, recarga la página.';
+        document.body.appendChild(errorMsg);
+        setTimeout(() => errorMsg.remove(), 5000);
+      }
+    });
+
+    // Unhandled promise rejection handler
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('Unhandled promise rejection:', event.reason);
+    });
+
+    // Check if page is loaded after timeout
+    let pageLoaded = false;
+    setTimeout(() => {
+      if (!pageLoaded) {
+        const loginScreen = document.getElementById('login-screen');
+        const appScreen = document.getElementById('app-screen');
+        if (loginScreen && loginScreen.classList.contains('hidden') && 
+            appScreen && appScreen.classList.contains('hidden')) {
+          // Both screens are hidden, something is wrong
+          console.error('App screens not visible, forcing login screen');
+          if (loginScreen) loginScreen.classList.remove('hidden');
+          if (appScreen) appScreen.classList.add('hidden');
+        }
+      }
+    }, 3000);
+
+    // Mark as loaded when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        pageLoaded = true;
+      });
+    } else {
+      pageLoaded = true;
+    }
+
+    // Register service worker (non-blocking)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        // Register service worker without version parameter
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => {
+            console.log('Service Worker registered');
+            
+            // Check for updates every time
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New service worker available, reload page
+                  console.log('New service worker available, reloading...');
+                  window.location.reload();
+                }
+              });
+            });
+            
+            // Check for updates periodically
+            setInterval(() => {
+              reg.update();
+            }, 60000); // Check every minute
+            
+            // Force update on page load
+            reg.update();
+          })
+          .catch(err => {
+            console.log('Service Worker registration failed:', err);
+          });
+      });
+    }
+
+    // PWA Install prompt
+    let deferredPrompt = null;
+    const installBtn = document.getElementById('install-btn');
+
+    // Debug: Log PWA installability
+    function checkInstallability() {
+      console.log('=== PWA Installability Check ===');
+      console.log('Service Worker:', 'serviceWorker' in navigator ? 'Available' : 'Not available');
+      console.log('Standalone mode:', window.matchMedia('(display-mode: standalone)').matches ? 'Yes (already installed)' : 'No');
+      console.log('Install button element:', installBtn ? 'Found' : 'Not found');
+      console.log('Deferred prompt:', deferredPrompt ? 'Available' : 'Not available');
+      
+      // Check manifest
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(reg => {
+          console.log('Service Worker registered:', reg ? 'Yes' : 'No');
+        });
+      }
+    }
+
+    // Check if app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches || 
+        window.navigator.standalone === true) {
+      // App is installed, hide install button
+      if (installBtn) installBtn.classList.add('hidden');
+      console.log('App is already installed');
+    }
+
+    // Listen for beforeinstallprompt event (Chrome, Edge, etc.)
+    window.addEventListener('beforeinstallprompt', (e) => {
+      console.log('beforeinstallprompt event fired');
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later
+      deferredPrompt = e;
+      // Show install button
+      if (installBtn) {
+        installBtn.classList.remove('hidden');
+        console.log('Install button shown');
+      }
+    });
+
+    // Handle install button click
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        console.log('Install button clicked');
+        
+        if (!deferredPrompt) {
+          // Show manual install instructions
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          const isAndroid = /Android/.test(navigator.userAgent);
+          
+          let message = 'Para instalar la app:\n\n';
+          if (isIOS) {
+            message += '1. Toca el botón "Compartir" (cuadrado con flecha)\n';
+            message += '2. Selecciona "Agregar a pantalla de inicio"\n';
+            message += '3. Confirma la instalación';
+          } else if (isAndroid) {
+            message += '1. Abre el menú del navegador (3 puntos)\n';
+            message += '2. Busca "Instalar app" o "Agregar a pantalla de inicio"\n';
+            message += '3. Confirma la instalación';
+          } else {
+            message += 'Chrome: Menú → "Instalar app"\n';
+            message += 'Safari: Compartir → "Agregar a pantalla de inicio"';
+          }
+          
+          await showInfo(message);
+          return;
+        }
+        
+        try {
+          // Show the install prompt
+          deferredPrompt.prompt();
+          
+          // Wait for the user to respond to the prompt
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log(`User response to the install prompt: ${outcome}`);
+          
+          if (outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+          } else {
+            console.log('User dismissed the install prompt');
+          }
+          
+          // Clear the deferredPrompt
+          deferredPrompt = null;
+          
+          // Hide install button
+          installBtn.classList.add('hidden');
+        } catch (error) {
+          console.error('Error showing install prompt:', error);
+          await showError('Error al mostrar la opción de instalación. Intenta desde el menú del navegador.');
+        }
+      });
+    }
+
+    // Listen for app installed event
+    window.addEventListener('appinstalled', () => {
+      console.log('PWA was installed');
+      deferredPrompt = null;
+      if (installBtn) installBtn.classList.add('hidden');
+    });
+
+    // Run check after page loads
+    setTimeout(checkInstallability, 2000);
+  </script>
+</body>
+</html>

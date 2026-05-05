@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+*.log
+.env
+.idea/
+.vscode/
+nrd-kb-generate/
+.server.pid
