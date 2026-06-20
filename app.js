@@ -83,14 +83,11 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 logger.debug('Nav button handlers attached');
 
-// Initialize app
-nrd.auth.onAuthStateChanged((user) => {
-  if (user) {
-    logger.info('User authenticated, initializing app', { uid: user.uid, email: user.email });
-    // Default to inicio view
-    switchView('inicio');
-  } else {
-    logger.debug('User not authenticated, app initialization skipped');
-  }
+(window.NRDCommon?.startApp || function(fn, opts) {
+  window.__nrdStartQueue = window.__nrdStartQueue || [];
+  window.__nrdStartQueue.push({ onReady: fn, options: opts || {} });
+})(function(user) {
+  logger.info('User authenticated, initializing app', { uid: user.uid, email: user.email });
+  switchView('inicio');
 });
 
