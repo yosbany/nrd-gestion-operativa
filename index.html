@@ -7,7 +7,7 @@
   <title>NRD Gestión Operativa</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css?v=1781980090799">
+  <link rel="stylesheet" href="styles.css?v=1781980977469">
   <meta name="theme-color" content="#dc2626">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -55,6 +55,8 @@
 </head>
 <body class="bg-white text-black font-sans antialiased">
   <!-- Spinner de procesamiento: inyectado por NRDCommon -->
+  <div id="loading-spinner" class="hidden" aria-hidden="true"></div>
+
 
   <!-- Auth redirect: spinner unificado via NRDCommon -->
   <div id="redirecting-screen" class="hidden" aria-hidden="true"></div>
@@ -702,12 +704,12 @@
   </script>
 
   <!-- Logger (must load before other app scripts) -->
-  <script src="logger.js?v=1781980090799"></script>
+  <script src="logger.js?v=1781980977469"></script>
 
   <!-- jsPDF for PDF generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?v=1781980090799"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?v=1781980977469"></script>
 
-  <script src="modal.js?v=1781980090799"></script>
+  <script src="modal.js?v=1781980977469"></script>
   <script>
     (function(cfg) {
       var start = Date.now();
@@ -729,18 +731,18 @@
       }, 100);
     })({ appName: 'NRD Gestión Operativa', legacyNrdAlias: true });
   </script>
-  <script src="initialize.js?v=1781980090799"></script>
-  <script src="tabs/search-helpers.js?v=1781980090799"></script>
-  <script src="tabs/areas.js?v=1781980090799"></script>
-  <script src="tabs/processes.js?v=1781980090799"></script>
-  <script src="tabs/tasks.js?v=1781980090799"></script>
-  <script src="tabs/roles.js?v=1781980090799"></script>
-  <script src="tabs/employees.js?v=1781980090799"></script>
-  <script src="tabs/analytics.js?v=1781980090799"></script>
-  <script src="tabs/inicio.js?v=1781980090799"></script>
-  <script src="tabs/informacion.js?v=1781980090799"></script>
-  <script src="tabs/organigrama.js?v=1781980090799"></script>
-  <script src="app.js?v=1781980090799"></script>
+  <script src="initialize.js?v=1781980977469"></script>
+  <script src="tabs/search-helpers.js?v=1781980977469"></script>
+  <script src="tabs/areas.js?v=1781980977469"></script>
+  <script src="tabs/processes.js?v=1781980977469"></script>
+  <script src="tabs/tasks.js?v=1781980977469"></script>
+  <script src="tabs/roles.js?v=1781980977469"></script>
+  <script src="tabs/employees.js?v=1781980977469"></script>
+  <script src="tabs/analytics.js?v=1781980977469"></script>
+  <script src="tabs/inicio.js?v=1781980977469"></script>
+  <script src="tabs/informacion.js?v=1781980977469"></script>
+  <script src="tabs/organigrama.js?v=1781980977469"></script>
+  <script src="app.js?v=1781980977469"></script>
 
   <script>
     // Global error handler
